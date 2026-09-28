@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Study Quest">
+  <title>Study Quest</title>
+  <defs>
+    <linearGradient id="sq-tile" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6366F1"/>
+      <stop offset="0.55" stop-color="#4F46E5"/>
+      <stop offset="1" stop-color="#7C3AED"/>
+    </linearGradient>
+    <radialGradient id="sq-glow" cx="0.28" cy="0.18" r="0.8">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.30"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="sq-gold" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0" stop-color="#FDE68A"/>
+      <stop offset="1" stop-color="#F59E0B"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="116" fill="url(#sq-tile)"/>
+  <rect width="512" height="512" rx="116" fill="url(#sq-glow)"/>
+
+  <g transform="translate(0 40)">
+    <!-- gold quest star -->
+    <path d="M256 82c9.6 38.4 9.6 38.4 48 48-38.4 9.6-38.4 9.6-48 48-9.6-38.4-9.6-38.4-48-48 38.4-9.6 38.4-9.6 48-48z" fill="url(#sq-gold)"/>
+    <!-- open book -->
+    <path d="M256 200c-40-28-96-36-144-28v158c48-8 104 0 144 26z" fill="#FFFFFF"/>
+    <path d="M256 200c40-28 96-36 144-28v158c-48-8-104 0-144 26z" fill="#FFFFFF"/>
+    <path d="M256 204v150" fill="none" stroke="#4338CA" stroke-opacity="0.22" stroke-width="7" stroke-linecap="round"/>
+  </g>
+</svg>

@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="brand/logo-lockup.svg" alt="Study Quest" width="420" />
+</p>
+
 # Study Quest
 
 > Don't just tell students what they need to study. Help them actually learn it.
@@ -8,7 +12,8 @@ tick off tasks", it guides you through the whole learning journey:
 
 **Plan → Study → Understand → Practice → Quiz → Review → Improve**
 
-The full specification lives in [`Study Quest PRD.docx`](Study%20Quest%20PRD.docx).
+The full specification lives in [`docs/PRD.md`](docs/PRD.md) (source document:
+[`Study Quest PRD.docx`](Study%20Quest%20PRD.docx)).
 
 ---
 
@@ -109,8 +114,15 @@ types · social features · leaderboards · shared study groups · advanced pers
 
 ```
 Study quest/
-├── README.md            # this file
-└── Study Quest PRD.docx # product requirements document (v1.0, by Praise)
+├── README.md                 # this file
+├── Study Quest PRD.docx      # original requirements document (v1.0, by Praise)
+├── brand/                    # logo and brand assets
+│   ├── logo-mark.svg         # app icon
+│   ├── logo-lockup.svg       # logo + wordmark
+│   ├── logo-mono.svg         # single-colour mark
+│   └── favicon.svg           # simplified small-size mark
+└── docs/
+    └── PRD.md                # requirements document in Markdown
 ```
 
 ## Status
