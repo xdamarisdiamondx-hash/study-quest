@@ -13,8 +13,8 @@ This one document contains everything needed to build the product:
 Product requirements: [PRD.md](PRD.md) · Original source document: `Study Quest PRD.docx`
 
 **Decisions at a glance:** mobile-first PWA running entirely on one computer at zero cost ·
-React + Vite + Hono + SQLite · provider-agnostic AI (local Ollama first) · everything else
-free and open source.
+React + Vite + Hono + PostgreSQL (Docker) · Better Auth · Cloudflare R2 for files ·
+provider-agnostic AI (local Ollama first) · everything else free and open source.
 
 ---
 
@@ -361,40 +361,72 @@ ConfirmDialog, CommandPalette (⌘K, global search).
 
 ## 14. Context and constraints
 
+**The app and the database run locally on the developer's computer.** This is the current,
+deliberate posture: the Node server, the PostgreSQL instance and the PWA all live on one
+Windows machine, started with one command. There is no cloud deployment. The only exception is
+file storage (Cloudflare R2), which is a chosen, isolated dependency — see ADR-027.
+
 These drove every decision below:
 
-1. **Runs locally on the developer's computer.** One command starts everything. No cloud
-   account, no hosting bill, no deploy pipeline required to use the app.
-2. **Zero recurring cost.** Every dependency is free, open source, or local.
+1. **The app and database run locally.** One command starts the database container and the
+   server. No cloud hosting, no deploy pipeline, nothing to keep running elsewhere. Access is
+   from this machine, and optionally from a phone on the same Wi-Fi.
+2. **Zero recurring cost.** Every dependency is free, open source, or local. The one external
+   service, Cloudflare R2, has a free tier (§14.2) and the app degrades gracefully without it.
 3. **Single user, single device owner** — but the data model is multi-user from day one so it
    can move to a server later without a rewrite.
 4. **Mobile-first PWA.** The primary interface is a phone; the same build runs on desktop.
 5. **AI features are the product's differentiator**, and must work with whatever model the user
    has — a local Ollama model at zero cost, or any cloud provider key.
-6. **Student data is sensitive.** Notes are the student's own words; nothing leaves the machine
-   except an explicit AI request, and there is no telemetry by default.
+6. **Student data is sensitive.** Notes are the student's own words. Nothing leaves the machine
+   except an explicit AI request and any file the user deliberately uploads. No telemetry, no
+   analytics, no third-party scripts.
 
 ### 14.1 Chosen stack
 
-| Layer | Choice | Cost |
-| --- | --- | --- |
-| Runtime | Node.js 22 LTS | Free |
-| Package manager | pnpm workspaces | Free |
-| Frontend | React 19 + TypeScript + Vite | Free |
-| Styling | Tailwind CSS v4 + CSS variable tokens | Free |
-| Routing | React Router (SPA) | Free |
-| Server | Hono on Node (`@hono/node-server`) | Free |
-| Database | SQLite via `better-sqlite3` | Free |
-| ORM + migrations | Drizzle ORM | Free |
-| Validation | Zod (shared contracts) | Free |
-| Server state | TanStack Query | Free |
-| UI state | Zustand | Free |
-| AI | Provider adapters: Ollama (local) / Gemini / Groq / OpenAI-compatible / mock | Free tiers |
-| Speech | Web Speech API (browser) | Free |
-| Search | SQLite FTS5 | Built in |
-| Components | Storybook | Free |
-| Tests | Vitest + React Testing Library + Playwright | Free |
-| PWA | vite-plugin-pwa | Free |
+Named and decided — these are the project's technology choices.
+
+| Layer | Choice | Cost | Runs where |
+| --- | --- | --- | --- |
+| **App framework** | **React 19 + TypeScript + Vite** (SPA, PWA) | Free | Local |
+| **Database** | **PostgreSQL 17** in Docker, with Drizzle ORM | Free | **Local container** |
+| **Authentication** | **Better Auth** (email + password, session cookies) | Free | Local |
+| **File storage** | **Cloudflare R2** (S3-compatible object storage) | Free tier | Cloud |
+| Runtime | Node.js 22 LTS | Free | Local |
+| Package manager | pnpm workspaces | Free | — |
+| Styling | Tailwind CSS v4 + CSS variable tokens | Free | — |
+| Routing | React Router | Free | — |
+| Server | Hono on Node (`@hono/node-server`) | Free | Local |
+| Validation | Zod (shared contracts) | Free | — |
+| Server state | TanStack Query | Free | — |
+| UI state | Zustand | Free | — |
+| AI | Provider adapters: Ollama (local) / Gemini / Groq / OpenAI-compatible / mock | Free tiers | Local or cloud |
+| Speech | Web Speech API (browser) | Free | Browser |
+| Search | PostgreSQL full-text search + `pg_trgm` | Built in | Local container |
+| Components | Storybook | Free | Local |
+| Tests | Vitest + React Testing Library + Playwright | Free | Local |
+| PWA | vite-plugin-pwa | Free | — |
+| Containerisation | Docker (database only) | Free | Local |
+
+The same decisions, with the reasoning behind each one, are also recorded in
+[PRD.md Appendix A](PRD.md#appendix-a--technical-approach-and-decisions).
+
+### 14.2 The one external service: Cloudflare R2
+
+Chosen for file storage (photos, PDFs, exports). Everything else is local.
+
+| | |
+| --- | --- |
+| Free tier | 10 GB-month storage · 1M Class A (write) operations/month · 10M Class B (read) operations/month · **free egress** |
+| Paid beyond that | $0.015/GB-month, $4.50/M writes, $0.36/M reads — so the failure mode is a small bill, never a large one |
+| Requirement | A free Cloudflare account and an R2 API token |
+| Credential handling | Token lives in `config.local.json` (git-ignored), server-side only |
+| Offline behaviour | Attachments are unavailable offline; the app shows a clear "reconnect to view" state and never blocks the rest of the app |
+| Fallback | A `FileStore` interface with a local-disk implementation, so the app is fully usable with zero configuration (ADR-027) |
+
+**Privacy consequence to be explicit about:** with R2 configured, uploaded files leave the
+machine. The app must therefore never auto-upload anything, show a clear file-storage indicator
+in Settings, and state plainly in the privacy page which files are stored off-device.
 
 ---
 
@@ -421,32 +453,46 @@ flowchart LR
         REC[Recommendation engine]
         TTS[Text-to-speech bridge]
       end
-      DB[(SQLite<br/>studyquest.db + FTS5)]
-      CFG[config.local.json<br/>AI keys, preferences]
+      PG[(PostgreSQL 17<br/>Docker container<br/>full-text + pg_trgm)]
+      CFG[config.local.json / .env<br/>AI keys, R2 token, preferences]
       MODELS[Ollama<br/>optional local models]
     end
 
     P -->|http://&lt;lan-ip&gt;:4321| API
     D -->|http://localhost:4321| API
     UI -->|fetch, same origin| API
-    API --> DB
-    SCH --> DB
+    API --> PG
+    SCH --> PG
     API --> AI
     API --> GAM
     API --> PLAN
     API --> REC
     API --> TTS
+    API --> FS[FileStore<br/>R2 or local disk]
     AI --> CFG
     AI -.->|optional| MODELS
     AI -.->|optional, HTTPS| EXT[Cloud AI provider<br/>free tier or BYO key]
-    GAM --> DB
-    PLAN --> DB
-    REC --> DB
+    FS -.->|HTTPS, files only| R2[(Cloudflare R2<br/>bucket)]
+    GAM --> PG
+    PLAN --> PG
+    REC --> PG
 ```
 
-**In production mode there is exactly one process.** The Node server serves the built SPA and
-the API on the same port, so there are no CORS issues and no second terminal to manage.
-**In development**, Vite runs on 5173 and proxies `/api` to 4321 with hot reload.
+**In production mode there is exactly one Node process.** The server serves the built SPA and the
+API on the same port, so there are no CORS issues and no second terminal to manage. The only
+container is the PostgreSQL database (ADR-028, ADR-029). **In development**, `docker compose up
+-d db` keeps the database up while Vite runs on 5173 and proxies `/api` to 4321 with hot reload.
+
+**What runs where, at a glance**
+
+| Component | Location |
+| --- | --- |
+| Web app (PWA) | Local — browser, installed to phone over LAN |
+| API + engines | Local — Node process on `:4321` |
+| Database | Local — PostgreSQL 17 in Docker, `localhost:5432` |
+| Authentication | Local — Better Auth, sessions in PostgreSQL |
+| AI provider | Local (Ollama) or cloud, per user choice |
+| Files (photos, PDFs) | Cloudflare R2, with a local-disk fallback |
 
 ---
 
@@ -468,9 +514,11 @@ study-quest/
 │  └─ server/                  # Hono API + engines
 │     └─ src/
 │        ├─ routes/            # one router per domain
-│        ├─ services/          # gamification, planning, recommendations, tts
+│        ├─ services/          # gamification, planning, recommendations, tts, files
 │        ├─ ai/                # adapters, prompts, schemas, cache
-│        ├─ db/                # drizzle client + migrations
+│        ├─ db/                # drizzle client + migrations + connection pool
+│        ├─ auth/              # Better Auth server + session middleware
+│        ├─ storage/           # FileStore: R2 adapter + local-disk adapter
 │        ├─ scheduler/         # cron-ish local scheduler
 │        └─ index.ts
 ├─ packages/
@@ -485,10 +533,13 @@ study-quest/
 │  │  └─ src/schema/*.ts
 │  └─ ui/                      # design-system components + tokens + Storybook
 ├─ brand/                      # logo + brand assets
-├─ docs/                       # PRD, design system, architecture, plan
-├─ scripts/                    # setup, backup, icon generation, dev launcher
-├─ data/                       # sqlite db + backups (git-ignored)
-└─ config.local.json           # AI keys, local settings (git-ignored)
+├─ docs/                       # PRD and this plan
+├─ scripts/                    # setup, dev, backup, db tasks, icon generation
+├─ db/                         # local Postgres helpers (git-ignored)
+│  ├─ init.sql                 # database, role, extensions
+│  └─ seed.sql                 # optional bootstrap data
+├─ data/                       # local file-storage fallback + backups (git-ignored)
+└─ config.local.json           # DATABASE_URL, AI keys, R2 credentials (git-ignored)
 ```
 
 **Rule:** `packages/core` and `packages/db` never import from `apps/*`. `packages/ui` never
@@ -501,12 +552,14 @@ imports from anything else. Dependencies point inward only.
 Each ADR records the decision, the reason, and what it costs us. Full detail lives in
 `docs/decisions/ADR-XXX.md` when a decision is revisited.
 
-### ADR-001 — Local-first, single-machine deployment
-**Decision.** The whole system runs on one Windows machine. The app is useless without that
-machine running, by design.
-**Why.** Zero cost, no accounts, no data leaving the device, works offline.
+### ADR-001 — The app and database run locally
+**Decision.** The Node server and a local PostgreSQL instance both run on one Windows machine.
+The app is unusable without that machine running, by design. There is no cloud deployment.
+**Why.** Zero hosting cost, no accounts needed, notes stay on the machine, works offline, and
+the whole system is inspectable by one person.
 **Cost.** No multi-device sync, no always-on reminders when the PC is off, single point of
-failure. Mitigated by ADR-022 (one-file backup) and by keeping the data model multi-user.
+failure. Mitigated by ADR-022 (automated local backups) and by keeping the data model
+multi-user so ADR-026 can move it later without a rewrite.
 
 ### ADR-002 — React + Vite SPA, not Next.js
 **Decision.** Client-side SPA served by the Hono server; no SSR.
@@ -515,15 +568,20 @@ requirement. A Vite SPA is faster to build, faster to run locally, and has no se
 cold-start cost. Next.js would only add a second rendering model to maintain.
 **Cost.** No SSR/OG previews. Acceptable for a private study tool.
 
-### ADR-003 — SQLite + Drizzle ORM
-**Decision.** `better-sqlite3`, single file `data/studyquest.db`, Drizzle for schema and
-migrations. FTS5 for search.
-**Why.** Zero setup, no server to run, no Docker, synchronous API that keeps transaction logic
-simple, excellent full-text search, and trivially backed up by copying a file. Drizzle gives
-typed queries and real SQL migrations, so moving to Postgres later (ADR-026) is a
-schema-dialect change, not a rewrite.
-**Cost.** Single-writer concurrency — irrelevant for one user. Storage ceiling far above any
-real use. Keep heavy analytics out of SQL; do them in TypeScript.
+### ADR-003 — PostgreSQL (local) + Drizzle ORM
+**Decision.** PostgreSQL 17, running in a Docker container on `localhost:5432`, database
+`studyquest`, with Drizzle ORM for typed queries and real SQL migrations. Search uses
+PostgreSQL full-text search with `pg_trgm` (ADR-013). Files are not stored here (ADR-027).
+Container setup is ADR-028.
+**Why.** It is the right tool for a heavily relational domain — subjects → topics → notes →
+quizzes → attempts → answers, with constraints, unique keys for XP idempotency, joins for
+progress rollups, and `jsonb` for AI artifacts and settings. Postgres is also the destination
+if the app is ever hosted (ADR-026), so choosing it now avoids a migration later. It is free and
+runs entirely on this machine.
+**Cost.** A running database process to install, start, secure and back up — real operational
+overhead that SQLite avoided. Mitigated by ADR-028 (scripted setup, auto-start, `pg_dump`
+backups) and by Drizzle keeping the access layer portable. Also: `postgres` types must be kept
+strict (`text` + `check` rather than loose `any`), and connections must be pooled.
 
 ### ADR-004 — Hono API server
 **Decision.** One Hono app on Node, serving `/api/*` and (in production) the static SPA.
@@ -595,21 +653,28 @@ common source of bugs in apps of this size. Derived state (progress %, level) is
 stored twice.
 
 ### ADR-012 — Local authentication
-**Decision.** Email + password accounts, scrypt password hashing (Node `crypto`, no native
-dependency), opaque session tokens in an httpOnly, SameSite=Lax cookie, sessions in the
-database, sliding 30-day expiry.
-**Why.** The app is on a private machine; there is no third-party auth worth its cost or
-complexity. Self-hosted auth keeps data local and costs nothing.
-**Cost.** We own password reset and session security. Rate-limit the login route, and add an
-optional LAN-access PIN before exposing the server to the network.
+**Decision.** Better Auth running server-side in the Node process, with email + password,
+scrypt/argon2 hashing, opaque session tokens in an httpOnly, SameSite=Lax cookie, and sessions
+stored in PostgreSQL. A LAN PIN guards access when the server is exposed to the network.
+**Why.** It is a mature, open-source (MIT) auth library purpose-built for exactly this shape —
+self-hosted, database-backed sessions, no third-party service. It removes the need to
+hand-roll password hashing, session rotation, and remember-me, all of which are easy to get
+subtly wrong, while keeping every byte of credential data local and costing nothing.
+**Cost.** A real dependency whose schema and API we must track; we still own the LAN PIN, route
+rate-limiting, and the decision of which endpoints require a session. Its admin/plugin surface
+is large, so we enable only what we need (email+password, and later passkey or OAuth if wanted).
 
-### ADR-013 — SQLite FTS5 for search
-**Decision.** A `search_index` FTS5 virtual table, maintained by triggers on notes, tasks,
-quizzes, questions, flashcards, subjects and topics. Queries use BM25 ranking plus a prefix
-match so "Newt" finds "Newton".
-**Why.** PRD §29 asks for search across every entity; Postgres full-text is unnecessary for a
-local single-file database.
-**Cost.** Triggers must be kept in sync with schema migrations.
+### ADR-013 — PostgreSQL full-text search for search
+**Decision.** A `search_index` table maintained by database triggers on notes, tasks, quizzes,
+questions, flashcards, subjects and topics, queried with a `tsvector` column
+(`to_tsvector('english', …)`) plus `pg_trgm` for typo and prefix tolerance ("Newt" finds
+"Newton"). Results ranked with `ts_rank` and grouped by entity type.
+**Why.** PRD §29 asks for search across every entity. Postgres gives ranked, typo-tolerant
+search with no extra service, and the same code runs unchanged if the database is ever hosted.
+`pg_trgm` is enabled in the container image (ADR-028), so the extension is part of the pinned
+setup rather than a manual step.
+**Cost.** Triggers must be kept in sync with migrations, `tsvector` must be regenerated on
+update, and `pg_trgm` indexes cost write throughput and disk — irrelevant at this scale.
 
 ### ADR-014 — Web Speech API for Read My Notes
 **Decision.** Browser `speechSynthesis` for "read aloud", with a `TtsProvider` interface so a
@@ -670,43 +735,100 @@ React Testing Library for components; Playwright for a handful of end-to-end jou
 **Why.** The risky code is the rules engine and the AI output validation, both of which are
 cheap to test in isolation. E2E is reserved for the five journeys that define the product.
 
-### ADR-022 — One-file backup
-**Decision.** `data/studyquest.db` is the entire database. `pnpm backup` copies it to
-`data/backups/studyquest-YYYYMMDD-HHmmss.db` (keeping the last 14) and can export a
-`.zip` of everything. A GitHub Action-free reminder: the README documents that the only thing
-to back up is that one folder.
-**Why.** Local-first only works if losing the machine is survivable.
-**Cost.** Manual discipline; mitigated by a scheduled Windows task and a "back up" nudge in
-Settings.
+### ADR-022 — Automated local backups
+**Decision.** `scripts/db-backup.ps1` runs `docker compose exec -T db pg_dump -Fc` into
+`data/backups/studyquest-YYYYMMDD-HHmmss.dump` (keeping the last 14) and can export a full
+`.zip` of the database, the local file folder and a config template. Restore is `pg_restore`.
+R2 is the one exception: uploaded files are backed up by the provider, and the export includes a
+manifest of R2 object keys so a bucket sync is reproducible.
+**Why.** A container's named volume is just as easy to lose as a data folder — and easier to
+delete by accident with `docker compose down -v` — so backups must be automated, not manual.
+**Cost.** Manual discipline; mitigated by a scheduled Windows task, a "last backup" indicator in
+Settings, and a restore drill in P22.
 
 ### ADR-023 — Security posture
 **Decision.** The server binds `127.0.0.1` by default. LAN access is an explicit opt-in in
-Settings that also requires a 4-digit app PIN for unlocking. AI keys live in
-`config.local.json` (git-ignored, never sent to the browser). No analytics, no telemetry, no
-third-party scripts, no CDN fonts. CORS is same-origin only.
-**Why.** Student notes and any paid API keys are on this machine.
+Settings that also requires a 4-digit app PIN for unlocking. The local database listens on
+loopback with a dedicated role and a generated password, and is never exposed on the network.
+Credentials — AI provider keys and the R2 API token — live in `config.local.json`
+(git-ignored, never sent to the browser; R2 keys are write-only in the UI). No analytics, no
+telemetry, no third-party scripts, no CDN fonts. CORS is same-origin only.
+**Why.** Student notes, paid API keys, and now an R2 token that can read and delete a bucket
+are all reachable from this machine.
 **Cost.** Remote access from outside the home network is not supported without extra work
-(a tunnel would break the "no accounts, no cost" rule).
+(a tunnel would break the "no accounts, no cost" rule). R2 credentials mean the app is not
+fully offline-capable once files are used — hence the local-disk fallback (ADR-027).
 
 ### ADR-024 — Windows ergonomics
-**Decision.** PowerShell scripts for `setup`, `dev`, `start`, `backup`, `migrate`, and
-`install-autostart` (a scheduled task at logon). Paths are resolved relative to the repo root;
-no absolute paths are committed.
-**Why.** The target machine is Windows; `npm run dev` alone should not require the user to
-remember a third terminal.
+**Decision.** PowerShell scripts for `setup`, `dev`, `start`, `db:up`, `db:down`, `db:migrate`,
+`db:seed`, `db:backup`, `db:restore`, and `install-autostart` (a scheduled task at logon that
+starts Docker Desktop, the database container, and the Node server). Paths are resolved relative
+to the repo root; no absolute paths are committed. The local-disk file fallback lives in
+`data/`.
+**Why.** The target machine is Windows, and the app now supervises a container plus a Node
+process — the user should never have to remember that, nor type a Docker command.
 
 ### ADR-025 — Cost guardrails
 **Decision.** The server tracks token usage and estimated cost per request in
 `ai_artifacts`, exposes a monthly estimate in Settings, enforces a per-user daily AI call cap,
-and caches aggressively (ADR-008). Default prompts are tuned for small models.
+and caches aggressively (ADR-008). Default prompts are tuned for small models. R2 usage is
+surfaced in Settings with a warning at 80 % of the free tier.
 **Why.** The whole point of the free stack is that it stays free; a runaway loop must not
-produce a surprise bill.
+produce a surprise bill on either the AI provider or R2.
 
 ### ADR-026 — Reversibility
-**Decision.** Every layer is swappable behind an interface: SQLite→Postgres (Drizzle dialect),
-Ollama→any provider (ADR-006), local server→hosted (same API), SPA→wrapped native app
+**Decision.** Every layer is swappable behind an interface: local PostgreSQL→hosted Postgres
+(same dialect, same Drizzle schema), `FileStore` R2→local disk or any S3-compatible provider,
+Ollama→any AI provider (ADR-006), local server→hosted (same API), SPA→wrapped native app
 (Capacitor, same build).
-**Why.** The plan should not create a dead end if the app later needs to be public.
+**Why.** The plan should not create a dead end if the app later needs to be public — and
+choosing Postgres and S3-compatible R2 now is precisely what keeps that door open.
+
+### ADR-027 — Cloudflare R2 for file storage
+**Decision.** Uploaded files (photos, PDFs, exports) are stored in a private Cloudflare R2
+bucket via its S3-compatible API, behind a `FileStore` interface with a local-disk
+implementation as the default when R2 is not configured. The database stores only metadata and
+the object key (§18.1 `attachments`).
+**Why.** R2 has a genuinely usable free tier — 10 GB-month storage, 1M writes, 10M reads and
+**no egress fees** — and an S3-compatible API, so it will not lock the app in. It is also the
+only part of the system that genuinely benefits from being off-machine: large study documents
+and photos do not bloat local backups, and the app can serve them to a phone over LAN without
+streaming everything through the PC.
+**Cost.** This is a cloud dependency and it is the one place student content leaves the
+machine. It requires a Cloudflare account and a token, it is unusable offline, and if R2 is
+misconfigured the app must degrade rather than break — hence the interface and the local-disk
+default. Attachments are therefore opt-in: the app never uploads anything without an explicit
+user action, and Settings states plainly which files live off-device.
+
+### ADR-028 — PostgreSQL runs in Docker
+**Decision.** PostgreSQL 17 runs as a container defined in `docker-compose.yml`
+(`postgres:17-alpine`), bound to `127.0.0.1:5432` only, with a named volume (`sq_pgdata`)
+holding the data directory, a healthcheck, and credentials from `.env`. Everything else — the
+Node server, the Vite dev server — still runs natively on Windows. The only container is the
+database.
+**Why.** Docker is the cleanest way to run *the* PostgreSQL — the exact version, the exact
+extensions (`pg_trgm`), the same configuration on any machine — without installing a Windows
+service, worrying about registry entries, or leaving a database running after the project is
+abandoned. `docker compose down -v` gives a clean delete of all data, which is a genuine
+advantage for a local-first project. It also keeps the PostgreSQL version pinned in the repo, so
+the app cannot silently break when a service updates itself.
+**Cost.** Docker Desktop must be installed and running, which is a heavyweight dependency on
+Windows (it needs WSL 2, and it is the largest thing installed on the machine). Two processes
+to start, though only one is a container. Mitigation: `scripts/setup.ps1` checks for Docker and
+fails with the exact install command; `scripts/dev.ps1` waits for the database healthcheck before
+starting the server; and `install-autostart.ps1` starts Docker Desktop and the container at
+logon. If Docker is unacceptable, the documented fallback is a native PostgreSQL install with
+the same `DATABASE_URL` — nothing in the code changes.
+
+### ADR-029 — One container, not a containerised stack
+**Decision.** Only PostgreSQL is containerised. The app server runs natively via `pnpm`, in
+development and in production.
+**Why.** A fully containerised stack (app + web + db) would be the "textbook" answer, but on
+Windows it means slower file watching over bind mounts, worse hot reload, and a slower edit →
+see-it loop — for no benefit, since there is no deployment to standardise. A single database
+container captures all the value (versioned Postgres, trivial teardown) without the friction.
+**Cost.** The dev and production environments differ in how the server starts, so
+`scripts/start.ps1` must be kept honest; the trade is explicitly accepted.
 
 ---
 
@@ -734,19 +856,50 @@ erDiagram
     users ||--o{ xp_ledger : earns
     users ||--o{ user_achievements : unlocks
     users ||--o{ reminders : receives
+    users ||--o{ attachments : uploads
+    notes |o--o{ attachments : has
+    topics |o--o{ attachments : has
 ```
 
-### 18.1 Core tables
+### 18.1 PostgreSQL conventions
 
-**Identity**
+Applied to every table in §18.1:
 
-- `users(id, email, password_hash, display_name, created_at, settings_json)`
-- `sessions(id, user_id, token_hash, expires_at, created_at, last_seen_at, ip, user_agent)`
+| Concern | Convention |
+| --- | --- |
+| Primary key | `uuid` with `gen_random_uuid()` default (Drizzle-generated) — no sequence guessing, safe to merge data later |
+| Timestamps | `timestamptz`, always UTC. The app formats for display; the database never stores local time |
+| Money/limits | `integer` (XP cents, minutes, milliseconds), never floats |
+| Flexible payloads | `jsonb` for `options_json`, `output_json`, `settings_json`, `criteria_json` with a `jsonb` GIN index where queried |
+| Enumerations | `text` + `check` constraint, not a Postgres `enum` type — adding a value must never require a type migration |
+| Enforced invariants | Unique indexes in SQL, not just application code: `xp_ledger (user_id, reason, source_type, source_id)` and `ai_artifacts (kind, source_id, input_hash, prompt_version, provider, model)` |
+| Search | `search_index(entity_type, entity_id, title, body, tsv tsvector, …)` maintained by triggers, GIN on `tsv`, GIN trigram on `title` |
+| Cascades | Deleting a subject cascades to topics; a topic with content is archived instead of deleted (§18.1 `archived_at`) |
+| Row ownership | Every user-owned table carries `user_id` so queries are always scoped and a future hosted version needs no schema change |
+| Migrations | Drizzle-generated SQL checked into `packages/db/migrations`; never edit the live database by hand |
+
+### 18.2 Core tables
+
+**Identity** (Better Auth owns the first three; see ADR-012)
+
+- `user(id, email, display_name, created_at, updated_at)` — Better Auth
+- `session(id, user_id, token, expires_at, ip_address, user_agent)` — Better Auth
+- `account(id, user_id, provider_id, password, …)` — Better Auth, holds the password hash
+- `users(id, auth_user_id, settings_json, theme, timezone, created_at)` — app-level profile, keyed
+  to the Better Auth user, so auth can be replaced without touching the domain
 
 **Structure**
 
 - `subjects(id, user_id, name, colour, icon, order_index, archived_at, created_at)`
 - `topics(id, subject_id, name, description, order_index, status, progress_cache, last_studied_at)`
+
+**Files** (ADR-027 — metadata in Postgres, bytes in R2 or local disk)
+
+- `attachments(id, user_id, note_id, topic_id, filename, mime_type, bytes, storage_provider[r2|local], object_key, sha256, created_at)`
+  - `object_key` is a stable key such as `u/<user_id>/<yyyy>/<uuid>.<ext>`; nothing user-visible
+    is ever used as a path
+  - `sha256` enables dedupe and integrity checks; deleting a row schedules the object for
+    deletion rather than leaking storage
 
 **Notes and AI**
 
@@ -793,9 +946,10 @@ erDiagram
 
 - `reminders(id, user_id, type, ref_type, ref_id, fire_at, delivered_at, channel, enabled)`
 - `activity_log(id, user_id, kind, ref_type, ref_id, meta_json, created_at)`
-- `search_index` — FTS5 (`title`, `body`, `subject_id`, `topic_id`, `entity_type`, `entity_id`)
+- `search_index` — `tsvector` search table (`title`, `body`, `subject_id`, `topic_id`,
+  `entity_type`, `entity_id`, `tsv tsvector`) with GIN and trigram indexes, maintained by triggers
 
-### 18.2 Rules that are code, not data
+### 18.3 Rules that are code, not data
 
 | Rule | Implementation | Source |
 | --- | --- | --- |
@@ -820,8 +974,9 @@ All routes are under `/api`, JSON in and out, Zod-validated. Auth is cookie-base
 never handles tokens.
 
 ```
-POST   /auth/register            POST   /auth/login      POST /auth/logout
-GET    /auth/me                  PATCH  /auth/password
+/auth/*                       Better Auth mounts its own handlers (register, login, logout,
+                              session, change-password). Everything else requires a session.
+/api/health                   DB reachable, migrations current, AI provider status, R2 status
 
 GET    /subjects                 POST   /subjects        PATCH/DELETE /subjects/:id
 POST   /subjects/reorder         POST   /subjects/import-template
@@ -833,6 +988,10 @@ GET    /topics/:id               GET    /topics/:id/overview
 GET    /notes                    POST   /notes           PATCH/DELETE /notes/:id
 GET    /notes/:id                GET    /notes/:id/versions        POST /notes/:id/restore
 POST   /notes/import-text
+
+POST   /files/presign            # returns a short-lived upload target (R2 or local)
+POST   /attachments              POST   /attachments/:id/delete
+GET    /attachments/:id          # streams from the FileStore; signed when stored in R2
 
 POST   /ai/summary               POST   /ai/explain      POST /ai/quiz
 POST   /ai/flashcards            POST   /ai/plan         POST   /ai/chat
@@ -942,10 +1101,11 @@ UI never receives an existing key back, only a "configured / not configured" fla
 | Cold start | App usable in < 2 s locally; API p95 < 50 ms for local queries |
 | First contentful paint | < 1.5 s on a mid-range phone over Wi-Fi |
 | Bundle | < 200 KB gzipped initial JS, route-level code splitting, lazy AI routes |
-| Offline | App shell and last-viewed data available with no network |
-| Data | 10 years of study history < 50 MB (SQLite ceiling is far higher) |
+| Offline | App shell and last-viewed data available with no network; attachments require R2 |
+| Data | 10 years of study history well under the 10 GB R2 free tier and far below any local disk limit |
+| Database | Connection pool of 10; migrations < 2 s; no query over 100 ms on seeded data |
 | AI | Structured generations validated 100 %; no unvalidated model output reaches the UI |
-| Privacy | Zero telemetry; no third-party requests except the AI provider the user chooses |
+| Privacy | Zero telemetry; no third-party requests except the AI provider and R2 the user configures |
 | Accessibility | WCAG 2.1 AA for all MVP screens |
 
 ---
@@ -956,7 +1116,12 @@ UI never receives an existing key back, only a "configured / not configured" fla
 | --- | --- | --- |
 | Local model quality varies | Weak quizzes/summaries | Structured output + validation, cache by model, prompt tuned for small models, easy provider swap |
 | AI service unreachable | Feature dead-ends | Offline mode, cached artifacts, clear "connect a model" guidance |
-| SQLite write contention | Jank on long sessions | WAL mode, short transactions, batched writes (one transaction per completed activity) |
+| R2 is a cloud dependency | Attachments need network + an account; student files leave the machine | `FileStore` interface with a local-disk default; strict opt-in uploads; write-only token; offline state in the UI (ADR-027) |
+| R2 free tier exceeded | Small bill; uploads stop working | Usage shown in Settings with an 80 % warning; local fallback; per-file size cap |
+| R2 token compromise | Bucket read/delete | Token server-side in a git-ignored config, write-only in the UI, scoped to one bucket, rotatable |
+| Docker not installed or not running | App cannot start | Health check waits for the container and fails with the exact fix command; `dev.ps1` starts the DB first |
+| Database volume deleted | Total data loss | Automated `pg_dump` backups, warning in Settings, restore drill (ADR-022) |
+| Connection pool exhaustion | Requests hang under load | Pool of 10, short transactions, one transaction per completed activity |
 | Scheduler depends on machine being on | Missed reminders | Catch-up window of 24 h on start, all reminders evaluated lazily on read as well |
 | PWA cache staleness | Students see old data | Network-first for data, versioned cache names, explicit "update available" prompt |
 | Scope creep (23 phases) | Nothing ships | Milestone gates; MVP is M0–M4, everything after is explicitly optional |
@@ -976,7 +1141,10 @@ Milestone map, phases P0–P22, and everything needed to execute them.
 - Every phase has **exit criteria** — a checklist that must be fully ticked before the next
   phase starts. That is the only definition of "done".
 - The MVP is **Milestones 0–4 (P0–P19)**. Milestone 5 hardens and ships. Anything after P22 is
-  the post-MVP backlog (§8).
+  the post-MVP backlog (§29).
+- **Decided stack** (§14.1): React + Vite · PostgreSQL 17 in Docker · Better Auth · Cloudflare
+  R2 for files. The app and database run locally; the same decisions and their rationale are in
+  [PRD.md Appendix A](PRD.md#appendix-a--technical-approach-and-decisions).
 - Effort figures are **developer-days** for one person working full time, including tests and
   docs. They are estimates for planning, not commitments.
 
@@ -996,15 +1164,18 @@ Milestone map, phases P0–P22, and everything needed to execute them.
 
 | Milestone | Phases | Theme | Outcome | Effort |
 | --- | --- | --- | --- | --- |
-| **M0 Foundation** | P0–P3 | Tooling, design system, data, shell | App runs locally, looks like Study Quest, has an account | 12 d |
+| **M0 Foundation** | P0–P3 | Tooling, design system, data, shell | App runs locally with Postgres in Docker, looks like Study Quest, has an account | 13 d |
 | **M1 Learn** | P4–P6 | Subjects, notes, AI platform | Can organise subjects and write notes; AI works | 12 d |
 | **M2 Understand & Practice** | P7–P10 | Summaries, quizzes, flashcards, reading | The full Plan→Review loop works | 18 d |
 | **M3 Organise** | P11–P14 | Tasks, planning, quests, sessions | Study Quest guides the day | 15 d |
 | **M4 Motivate** | P15–P19 | XP, progress, recommendations, reminders, search | Progress visible, "what's next?" always answered | 15 d |
-| **M5 Ship** | P20–P22 | PWA, quality bar, release | Installable, accessible, backed up, running daily | 10 d |
-| | | | **Total** | **≈ 82 d** |
+| **M5 Ship** | P20–P22 | PWA, quality bar, release | Installable, accessible, backed up, running daily | 11 d |
+| | | | **Total** | **≈ 83 d** |
 
 Realistic elapsed time for one person studying part-time: **5–7 months**. Full time: 4 months.
+
+The estimate includes the extra day in P0 for the Docker database setup and the day in P2 for
+the R2 storage service.
 
 ---
 
@@ -1013,22 +1184,29 @@ Realistic elapsed time for one person studying part-time: **5–7 months**. Full
 ## P0 · Repository and toolchain
 **Goal:** a clean machine can clone, install and run the app with one command.
 
-- [ ] Install and pin Node 22 LTS, pnpm, Git, GitHub CLI
+- [ ] Install and pin Node 22 LTS, pnpm, Git, GitHub CLI, **Docker Desktop** (WSL 2 backend)
 - [ ] Initialise pnpm workspaces: `apps/web`, `apps/server`, `packages/core`, `packages/db`,
       `packages/ui`
+- [ ] `docker-compose.yml` with the PostgreSQL 17 service, loopback-only port, named volume,
+      healthcheck, and `db/init.sql` enabling `pg_trgm` (§14.1, ADR-028)
+- [ ] `.env.example` with `DATABASE_URL`, R2 and AI variables; `.env` git-ignored
 - [ ] TypeScript strict config shared across packages; path aliases (`@sq/core`,
       `@sq/db`, `@sq/ui`, `@sq/schemas`)
 - [ ] ESLint + Prettier; rule banning raw hex colours and `any` (§13)
 - [ ] Editor config, `.editorconfig`, pre-commit hook (lint + format + typecheck)
-- [ ] `scripts/setup.ps1` — checks prerequisites, installs, initialises DB, generates icons
-- [ ] `scripts/dev.ps1` — runs server + web with hot reload, one command
+- [ ] `scripts/setup.ps1` — checks prerequisites (Node, pnpm, Docker), copies `.env.example`,
+      starts the database, waits for healthy, installs deps, generates icons
+- [ ] `scripts/db-up.ps1` / `db-down.ps1` / `db-logs.ps1` — thin `docker compose` wrappers
+- [ ] `scripts/dev.ps1` — starts the database, then server + web with hot reload, one command
 - [ ] `scripts/start.ps1` — production build served by the server on `:4321`
-- [ ] `.env.example` and `config.local.json.example`
-- [ ] CI: GitHub Actions — install, typecheck, lint, test on every push (free for public repos)
+- [ ] `scripts/install-autostart.ps1` — scheduled task at logon: Docker Desktop, container,
+      server
+- [ ] CI: GitHub Actions — install, typecheck, lint, test on every push; a `compose.yaml`
+      service container for database-backed tests (free for public repos)
 
-**Exit:** `.\scripts\setup.ps1` then `.\scripts\dev.ps1` gives a running app with a health
-endpoint and a green CI badge.
-**Effort:** 2 d · **Depends on:** none
+**Exit:** `.\scripts\setup.ps1` then `.\scripts\dev.ps1` gives a running app against a healthy
+Postgres container, a working `/api/health`, and a green CI badge.
+**Effort:** 3 d · **Depends on:** none
 
 ## P1 · Design system and brand
 **Goal:** every later screen is assembled from this, and it looks like one product.
@@ -1056,31 +1234,41 @@ story; a real screen built only from these looks finished.
 ## P2 · Data foundation
 **Goal:** the domain is modelled, migrated and seedable; the server speaks Zod.
 
-- [ ] Drizzle schema for all tables in §18 (auth, structure, notes, AI artifacts,
-      practice, tasks, planning, quests, gamification, platform)
-- [ ] Migration scripts + `drizzle-kit` config; `migrate.ps1`
+- [ ] Drizzle schema for all tables in §18.2 (identity, files, structure, notes, AI artifacts,
+      practice, tasks, planning, quests, gamification, platform), following the PostgreSQL
+      conventions in §18.1
+- [ ] `attachments` table for file metadata (ADR-027)
+- [ ] Migration scripts + `drizzle-kit` config; `db-migrate.ps1` / `db-seed.ps1`
 - [ ] Seed data: 8 example subjects with topics, a realistic note, a sample quiz, achievement
       definitions, 50 levels
-- [ ] FTS5 `search_index` table with triggers for all searchable entities
+- [ ] `search_index` table with `tsvector` + triggers for all searchable entities, GIN indexes
+- [ ] `FileStore` interface with two adapters: `LocalDiskStore` (default, `data/files/`) and
+      `R2Store`; credentials read from env, absent config falls back to local with a Settings
+      note
 - [ ] Repository layer `packages/db/repositories/*` — the only place SQL is written
-- [ ] Hono server: `/api/health`, request logging, Zod validation middleware, error envelope,
-      auth middleware (session cookie)
-- [ ] Backup endpoint + `scripts/backup.ps1` (ADR-022)
-- [ ] Tests: repository smoke tests against an in-memory SQLite file
+- [ ] Hono server: `/api/health` (DB, migrations, AI provider, R2 status), request logging,
+      Zod validation middleware, error envelope
+- [ ] Backup endpoint + `db-backup.ps1` / `db-restore.ps1` using `pg_dump -Fc` (ADR-022)
+- [ ] Tests: repository smoke tests against a throwaway Postgres container
 
-**Exit:** `migrate` + `seed` + `backup` + `restore` all work from the command line; API
-returns a typed error for a bad request.
-**Effort:** 3 d · **Depends on:** P0, P1 (for types)
+**Exit:** `migrate` + `seed` + `backup` + `restore` all work from the command line; the API
+returns a typed error for a bad request; `/api/health` reports each dependency.
+**Effort:** 4 d · **Depends on:** P0, P1 (for types)
 
 ## P3 · Auth, onboarding and app shell
 **Goal:** the app opens, you sign in, and you can move between the five sections.
 
-- [ ] Register / login / logout screens, scrypt hashing, session cookie, route protection
+- [ ] Better Auth wired into the Hono server with its Drizzle adapter (ADR-012); only the
+      email + password plugin enabled
+- [ ] Register / login / logout / change-password screens built on Better Auth's client
+- [ ] App-level `users` profile row created on first sign-in, keyed to the Better Auth user
 - [ ] Onboarding: welcome, display name, first subject, "how Study Quest works" carousel
       (Plan → Study → … → Progress), reminder permission prompt
 - [ ] App shell: bottom tabs (mobile) / left rail (desktop), header, command palette shell
 - [ ] Route map for all five sections with lazy loading and 404 / error boundaries
-- [ ] Settings: theme, display name, LAN access toggle with PIN, backup, data export
+- [ ] Settings: theme, display name, LAN access toggle with PIN, backup, data export, and a
+      **File storage panel** showing whether R2 is configured, where files live, and free-tier
+      usage (ADR-027)
 - [ ] PWA manifest + install prompt (full offline work in P20)
 - [ ] Empty states for every section ("No subjects yet — add your first")
 
@@ -1117,6 +1305,8 @@ and appear everywhere the subject is referenced.
 - [ ] Note detail: rendered reading view, edit toggle, pin, duplicate, export (`.md`)
 - [ ] Versions: last 20 revisions with restore (`note_revisions`)
 - [ ] Import plain text → note
+- [ ] Attach a file to a note (image or PDF) through the `FileStore`, with upload progress, size
+      and type limits, and an offline state that explains the file is unreachable (ADR-027)
 - [ ] Note action bar (disabled with a hint until P6): Summarise, Explain, Generate quiz,
       Generate flashcards, Read aloud, Start study session
 
@@ -1178,7 +1368,7 @@ are cached and regenerable.
 - [ ] Results screen: score donut, per-question review with explanations, time spent,
       **weak topics list** (PRD §12)
 - [ ] Retry quiz: from wrong answers → group by concept tag → 5-question focused retry
-      (§18.2), with its own results and an improvement comparison
+      (§18.3), with its own results and an improvement comparison
 - [ ] `question_mastery` updates on every answer, feeding progress and recommendations
 - [ ] Quiz history per topic with trend sparkline
 
@@ -1195,7 +1385,7 @@ cycle of PRD §13 works end to end.
 - [ ] Due counts on Home and in the deck list; "review 20 now" quick action
 - [ ] Mastery view: cards by due date, hard cards, and per-topic coverage
 - [ ] Manual card CRUD, import/export as TSV or Anki-compatible text
-- [ ] XP awarded per reviewed batch (§18.2)
+- [ ] XP awarded per reviewed batch (§18.3)
 
 **Exit:** generate a deck, study it, and see due counts and coverage update tomorrow.
 **Effort:** 4 d · **Depends on:** P6, P8 (mastery data)
@@ -1292,7 +1482,7 @@ XP and update subject progress.
 ## P15 · Gamification
 **Goal:** rewards that encourage learning, not app opening (principle 1).
 
-- [ ] XP ledger with idempotent awards and all reasons from §18.2
+- [ ] XP ledger with idempotent awards and all reasons from §18.3
 - [ ] Levels: curve, titles, progress bar to next level, level-up celebration
 - [ ] Streaks: current/longest, freeze mechanics, streak calendar, gentle recovery messaging
 - [ ] Achievements: First Quest, Quiz Master, Consistent Learner, Subject Explorer, Comeback,
@@ -1309,7 +1499,7 @@ XP and update subject progress.
 
 - [ ] Home progress strip: level, XP to next, streak, today's progress ring
 - [ ] Progress engine in `packages/core/progress`: mastery, review coverage, session coverage,
-      quest completion (§18.2)
+      quest completion (§18.3)
 - [ ] Subject progress pages: overall %, per-topic bars, trend over 30/90 days
 - [ ] Study time: today, this week, per subject, heatmap calendar
 - [ ] Quiz history: scores over time, improvement per topic, retry impact
@@ -1351,7 +1541,8 @@ notification at the right time, and can be snoozed or switched off per type.
 ## P19 · Global search
 **Goal:** find anything, fast (PRD §29).
 
-- [ ] FTS5 index populated by triggers; prefix matching so "Newt" finds "Newton"
+- [ ] `tsvector` + `pg_trgm` index populated by triggers; ranked results with typo and prefix
+      matching so "Newt" finds "Newton"
 - [ ] Search palette (⌘K / Ctrl+K) and a search screen
 - [ ] Results grouped by entity with subject/topic context and jump-to-highlight
 - [ ] Filters by type and subject; recent searches
@@ -1359,7 +1550,7 @@ notification at the right time, and can be snoozed or switched off per type.
 
 **Exit:** searching "Newton" returns the Motion notes, the Newton's Laws quiz, its flashcards
 and the related revision task.
-**Effort:** 2 d · **Depends on:** P2 (FTS5), P5, P8, P9, P11
+**Effort:** 2 d · **Depends on:** P2 (search index), P5, P8, P9, P11
 
 ---
 
@@ -1513,7 +1704,8 @@ Ordered by value once the MVP loop works:
 6. **Leaderboards and social** — highest risk, lowest value for a single user; deliberately last
 7. **Deeper personalisation** — adaptive difficulty, per-subject pacing
 8. **Native wrapper** — Capacitor shell for the store, same build (ADR-026)
-9. **Cloud sync** — move SQLite to Postgres, add object storage for attachments
+9. **Cloud sync** — host the same PostgreSQL schema, keep R2 (or swap to any S3-compatible
+   provider), add real-time sync between devices
 
 ---
 

@@ -6,6 +6,10 @@
 | **Version** | 1.0 |
 | **Author** | Praise |
 | **Source** | `Study Quest PRD.docx` |
+| **Addenda** | [Appendix A](#appendix-a--technical-approach-and-decisions) — technology choices and rationale (added after v1.0) |
+
+> Sections 1–34 are the original requirements, unchanged. Appendix A records the technical
+> decisions taken to build it.
 
 ---
 
@@ -599,3 +603,153 @@ to:
 > Complete Quest → Earn XP → Track Progress
 
 That is what makes Study Quest more than just a task manager or study app.
+
+---
+
+# Appendix A — Technical approach and decisions
+
+Added after v1.0 · Full detail in
+[IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md)
+
+This appendix records **which** technologies were chosen to build Study Quest, **where** each
+one runs, and **why** — including the alternatives that were considered and what each choice
+costs us.
+
+## A.1 Decision summary
+
+| Concern | Decision | Runs |
+| --- | --- | --- |
+| App framework | React 19 + TypeScript + Vite (PWA) | Local |
+| Database | PostgreSQL 17 + Drizzle ORM, in Docker | Local container |
+| Authentication | Better Auth — email + password, session cookies | Local |
+| File storage | Cloudflare R2 (S3-compatible) | Cloud (the only exception) |
+| Server | Hono on Node.js 22 | Local |
+| Styling | Tailwind CSS v4 + design tokens | — |
+| AI | Provider-agnostic adapters; Ollama first | Local or cloud |
+| Search | PostgreSQL full-text + `pg_trgm` | Local container |
+| Cost | Everything on a free tier or free software | $0 |
+
+**The app and the database run locally** on one Windows machine. `pnpm dev` starts the database
+container and the app server; access is from that machine, or from a phone on the same Wi-Fi.
+There is no cloud deployment.
+
+## A.2 What changed, and why
+
+Four decisions changed after the first draft of the technical plan.
+
+### Database: SQLite → PostgreSQL
+
+**Was:** a single SQLite file with no server to run.
+**Now:** PostgreSQL 17 in a Docker container.
+**Why:**
+- The data is deeply relational — subjects → topics → notes → quizzes → attempts → answers,
+  plus XP events, streaks and quest steps. Postgres enforces that with real constraints and
+  foreign keys; SQLite would leave integrity to application code.
+- XP must never be double-counted. That needs a database-level unique constraint
+  (`user_id, reason, source_type, source_id`) — natural in Postgres, awkward in SQLite.
+- Progress rollups (subject %, topic mastery) are aggregate queries over joins. Postgres does
+  this well; SQLite requires denormalising and hand-rolled aggregation.
+- AI output, settings and achievement criteria are irregular shapes that map cleanly to
+  `jsonb`.
+- Search is built in: full-text with `pg_trgm` gives ranked, typo-tolerant results across
+  every entity type (§29) with no extra service.
+- It is the same database the app would use if ever hosted, so nothing has to be rewritten
+  later.
+
+**Why Docker rather than a Windows service:** Docker pins the exact Postgres version and the
+`pg_trgm` extension in the repository, so the database cannot change underneath the app. It
+also gives a complete, clean delete of all data (`docker compose down -v`) and leaves nothing
+behind on the machine.
+**Cost:** Docker Desktop must be installed (needs WSL 2) and is the largest dependency on the
+system; one extra process to start. Mitigated by a single `pnpm dev` command and a health check
+that waits for the database before the app boots.
+
+### Authentication: hand-rolled sessions → Better Auth
+
+**Was:** custom email + password with scrypt hashing and session cookies written by hand.
+**Now:** Better Auth, self-hosted inside the app server.
+**Why:**
+- Password hashing, session rotation, and expiry are easy to get subtly wrong. Better Auth is
+  a mature, MIT-licensed library that does them correctly, and it keeps all credential data in
+  the local database — nothing is sent to a third party.
+- It is free, runs on our own machine, and supports exactly the model we need (email +
+  password, database-backed sessions, httpOnly cookies).
+- Less bespoke security code to maintain in a project this size.
+**Cost:** a real dependency whose schema and API we must track, and we still own LAN-access
+PINs and route rate-limiting.
+
+### File storage: local disk → Cloudflare R2
+
+**Was:** uploaded files in a folder next to the database.
+**Now:** a private Cloudflare R2 bucket, via its S3-compatible API, with local disk as the
+fallback.
+**Why:**
+- R2's free tier is genuinely usable: **10 GB-month storage, 1M writes/month, 10M reads/month,
+  and no egress fees**. Beyond that it is $0.015/GB-month — so the failure mode is a small
+  bill, never a large one.
+- Photos and PDFs stay out of local backups and out of the database, so backups stay small and
+  fast, and a phone on the LAN can load a large file without streaming it through the PC.
+- The S3-compatible API means this is not a dead end: any other S3 provider, or a local disk
+  folder, can be swapped in behind the same interface.
+**Cost — and this is the important trade-off:** R2 is a cloud service, so it is the one place
+student content leaves the machine. It needs a free Cloudflare account, it does not work
+offline, and a leaked token could read or delete a bucket. Therefore: uploads are strictly
+opt-in, nothing is ever uploaded without an explicit user action, the token is stored
+server-side in a git-ignored config file and is write-only in the UI, the app is fully usable
+with no R2 configured, and Settings states plainly which files are stored off-device.
+
+### AI: unchanged, but confirmed local-first
+
+Provider-agnostic adapters with **Ollama (running locally) first**, then a free cloud tier, then
+the user's own key. The app must work with no AI configured at all, showing clear setup
+guidance rather than broken buttons.
+
+## A.3 Alternatives considered and rejected
+
+| Choice | Alternative | Why not |
+| --- | --- | --- |
+| PostgreSQL | SQLite | Needs aggregates, constraints and full-text search; harder to host later |
+| PostgreSQL in Docker | Native Windows service | Version drift, registry entries, a service that runs forever |
+| Better Auth | Hand-rolled sessions | Security-critical code is easy to get wrong |
+| Better Auth | Hosted auth (Clerk, Auth0) | Sends credentials off-machine, breaks the local-only rule |
+| Cloudflare R2 | Local folder | Large files bloat local backups; no phone-friendly streaming |
+| Cloudflare R2 | S3 / Backblaze | S3 has egress fees; R2 is free and S3-compatible |
+| React + Vite | Next.js | The app is private and behind a login; SSR adds a second rendering model for no benefit |
+| React + Vite | SvelteKit, Nuxt | Less ecosystem for the interactive study flows this product needs |
+| Node + Hono | Next.js API, Firebase | Keeps the stack one language, one process, zero cost |
+| Ollama first | Cloud AI only | Local models are free, private, and work offline |
+
+## A.4 What this does not change
+
+The product requirements are unaffected. §32 (MVP scope) still holds, and none of these
+decisions add or remove a user-facing feature. Photo notes and PDF upload remain **later
+features** per §32 — the R2 decision prepares for them (and enables attachments) but does not
+bring them into the MVP.
+
+## A.5 Prerequisites this now requires
+
+| Requirement | Why | Notes |
+| --- | --- | --- |
+| Node.js 22 LTS | Runs the app server and the web build | Free |
+| pnpm | Workspace management | Free |
+| Docker Desktop | Runs PostgreSQL | Free; needs WSL 2 |
+| A Cloudflare account | R2 file storage | Optional — the app works without it |
+| An AI provider | Summaries, quizzes, flashcards | Optional — Ollama is free and local |
+
+## A.6 Cost position
+
+Everything is free. The two services that could ever cost money are capped:
+
+| Service | Free allowance | Cost beyond that |
+| --- | --- | --- |
+| Cloudflare R2 | 10 GB storage, 1M writes, 10M reads, free egress | ~$0.015/GB-month |
+| AI provider | Free tiers, or a local Ollama model | Varies; the app tracks usage and enforces a daily cap |
+
+## A.7 Where the detail lives
+
+| Topic | Location |
+| --- | --- |
+| Phase-by-phase build plan | [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) — Part III |
+| Full architecture decisions (ADRs) | [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) — Part II, §17 |
+| Data model | [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) — §18 |
+| Design system | [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) — Part I |

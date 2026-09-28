@@ -16,10 +16,22 @@ build/
 out/
 *.tsbuildinfo
 
-# Environment
+# Environment and secrets
 .env
 .env.*
 !.env.example
+config.local.json
+config.local.json.example
+
+# Local data: database backups, local-disk file fallback, uploads
+data/
+db/*.dump
+db/*.sql.gz
+
+# Test and coverage output
+coverage/
+playwright-report/
+test-results/
 
 # IDE
 .vscode/

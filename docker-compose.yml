@@ -1,0 +1,44 @@
+# Study Quest — local services
+#
+# Only the database runs in Docker (ADR-028 / ADR-029). The app server and the
+# web dev server run natively via pnpm, which keeps hot reload fast on Windows.
+#
+#   docker compose up -d db      start the database
+#   docker compose ps            check it is healthy
+#   docker compose down          stop it (data is kept)
+#   docker compose down -v       stop it and DELETE all data
+#
+# Credentials come from .env — copy .env.example to .env and change them.
+
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: studyquest-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-studyquest}
+      POSTGRES_USER: ${POSTGRES_USER:-studyquest}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-studyquest}
+    ports:
+      # Bound to loopback only: the database is never reachable from the network.
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - sq_pgdata:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/10-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-studyquest} -d ${POSTGRES_DB:-studyquest}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    command:
+      # Checksums catch silent data corruption; log lines stay readable for a local app.
+      - postgres
+      - -c
+      - data_checksums=on
+      - -c
+      - log_min_messages=warning
+
+volumes:
+  sq_pgdata:
+    name: sq_pgdata

@@ -110,27 +110,48 @@ types · social features · leaderboards · shared study groups · advanced pers
 5. **Always answer "What's next?"** — after finishing something, help the student choose what
    to do next.
 
+## ## Running the app
+
+The app and the database both run locally. The database is the only container.
+
+```bash
+pnpm setup     # checks Node/pnpm/Docker, creates .env, starts Postgres, installs deps
+pnpm dev       # database + API on :4321 + web on :5173
+```
+
+Prerequisites: Node 22 LTS, pnpm, Docker Desktop. Optionally a Cloudflare account for R2 file
+storage and an AI provider — the app runs without either.
+
+See the [Repository Contents](#repository-contents) below for what lives where, and
+[docs/PRD.md](docs/PRD.md#appendix-a--technical-approach-and-decisions) Appendix A for the
+technology decisions and their rationale.
+
 ## Repository Contents
 
 ```
 Study quest/
-├── README.md                 # this file
-├── Study Quest PRD.docx      # original requirements document (v1.0, by Praise)
-├── brand/                    # logo and brand assets
-│   ├── logo-mark.svg         # app icon
-│   ├── logo-lockup.svg       # logo + wordmark
-│   ├── logo-mono.svg         # single-colour mark
-│   └── favicon.svg           # simplified small-size mark
-└── docs/
-    ├── PRD.md                 # requirements document in Markdown
-    └── IMPLEMENTATION_PLAN.md # design system + architecture + all 23 phases
+├── README.md                  # this file
+├── Study Quest PRD.docx       # original requirements document (v1.0, by Praise)
+├── docker-compose.yml         # local PostgreSQL 17 (the only container)
+├── .env.example               # DATABASE_URL, R2 and AI settings
+├── brand/                     # logo and brand assets
+│   ├── logo-mark.svg          # app icon
+│   ├── logo-lockup.svg        # logo + wordmark
+│   ├── logo-mono.svg          # single-colour mark
+│   └── favicon.svg            # simplified small-size mark
+├── db/
+│   └── init.sql               # extensions on first container start
+├── docs/
+│   ├── PRD.md                 # requirements + Appendix A (tech decisions and why)
+│   └── IMPLEMENTATION_PLAN.md # design system + architecture + all 23 phases
+└── (created during P0) apps/, packages/, scripts/, data/
 ```
 
 ## Documentation
 
 | Document | What it covers |
 | --- | --- |
-| [docs/PRD.md](docs/PRD.md) | The full product requirements, in Markdown |
+| [docs/PRD.md](docs/PRD.md) | The product requirements, plus Appendix A recording the technology decisions and their rationale |
 | [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) | Everything needed to build the product, in one document |
 
 The implementation plan has three parts:
@@ -143,17 +164,24 @@ The implementation plan has three parts:
 
 ## Technical direction
 
-The app is designed to run entirely on your own computer at no cost:
+The app and the database run locally, at no cost:
 
-- **Frontend** — React + TypeScript + Vite, installable as a PWA on phone and desktop
-- **Backend** — Hono (Node) serving the API and the app from one process
-- **Database** — SQLite in a single file, with full-text search
-- **AI** — provider-agnostic: Ollama running locally (free and offline) or any cloud provider
-  key you add; the app works without AI configured
-- **Everything else** — Tailwind CSS, Zod, TanStack Query, Storybook, Vitest, Playwright
+| Concern | Choice | Runs |
+| --- | --- | --- |
+| App framework | React 19 + TypeScript + Vite, installable as a PWA | Local |
+| Database | PostgreSQL 17 + Drizzle ORM, in Docker | Local container |
+| Authentication | Better Auth (email + password, local sessions) | Local |
+| File storage | Cloudflare R2 (10 GB free, no egress fees) | Cloud — the only exception |
+| Server | Hono on Node.js 22, serving the app and API from one process | Local |
+| AI | Provider-agnostic: Ollama locally (free, offline) or any cloud key | Local or cloud |
+| Search | PostgreSQL full-text + `pg_trgm` | Local container |
+| Also | Tailwind CSS v4, Zod, TanStack Query, Storybook, Vitest, Playwright | Local |
+
+The reasoning behind each choice, the alternatives considered, and the trade-offs are recorded
+in [docs/PRD.md](docs/PRD.md#appendix-a--technical-approach-and-decisions) Appendix A.
 
 See Part II of the [implementation plan](docs/IMPLEMENTATION_PLAN.md#14-context-and-constraints)
-for the reasoning behind each choice.
+for the architecture behind each choice.
 
 ## Status
 
