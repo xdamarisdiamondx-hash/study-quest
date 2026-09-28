@@ -43,8 +43,11 @@ Additional design rules:
 - **Mobile-first.** The primary design target is a 390 × 844 phone. Desktop is an enhancement.
 - **Calm, not childish.** Secondary-school and university students, not 8-year-olds. Rounded
   and warm, but restrained. No comic fonts, no mascot characters.
-- **Progress is visible but not shaming.** Never show red for "behind". Use neutral greys for
-  zero-progress and indigo/green for achieved.
+- **Progress is visible but not shaming.** Never show red for "behind". Use `sand-200` fills for
+  zero-progress and the accent for achieved.
+- **Restraint over decoration.** Colour is scarce on purpose (§3.0). A screen that needs a
+  gradient to look finished has too many competing elements. If a screen feels busy, remove
+  colour before removing content.
 
 ---
 
@@ -53,38 +56,46 @@ Additional design rules:
 ### 2.1 Logo concept
 
 An **open book** (study) beneath a **four-point quest star** (reward, progress, the "quest" in
-Study Quest), set on an indigo→violet gradient tile. Indigo communicates focus and study;
-gold communicates achievement and XP. The pairing is used consistently throughout the UI:
-indigo for actions, gold for rewards.
+Study Quest), on a violet gradient tile. The book's white is the only pure white in the brand —
+which is why every card in the app is also white, so the mark feels like it belongs.
+
+**One mark, used everywhere.** The primary logo is `brand/logo-mark.svg`, and it is the *only*
+logo in the product. The favicon and monochrome variants exist purely as technical
+derivations of that one mark, not as alternative designs to choose between — the favicon is the
+same drawing with the spine detail removed, because the spine is invisible below 32 px.
 
 ### 2.2 Files
 
-| File | Use |
-| --- | --- |
-| `brand/logo-mark.svg` | Primary app icon, 512 × 512, gradient + gold star |
-| `brand/logo-lockup.svg` | Mark + "Study Quest" wordmark + tagline, for headers and marketing |
-| `brand/logo-mono.svg` | Single-colour mark (`currentColor`), for print, stamps, watermarks, one-colour contexts |
-| `brand/favicon.svg` | Simplified mark (thicker shapes, no spine detail) for ≤ 32 px |
+| File | Status | Use |
+| --- | --- | --- |
+| `brand/logo-mark.svg` | **The logo** | Everywhere in the product: header, splash, login, app icon, favicon |
+| `brand/favicon.svg` | Derivative | Generated from the mark for ≤ 32 px (spine detail removed) |
+| `brand/logo-mono.svg` | Derivative | Single-colour fallback when the gradient cannot render — print, email, watermarks |
+
+There is no wordmark lockup file. In the app, and in the repository header, the mark sits beside
+an already-typeset product name at 8 px gap — a second baked-in wordmark would be redundant and
+would fight the type.
 
 ### 2.3 Usage rules
 
 - **Clear space:** keep at least the height of the gold star (≈ 25 % of the mark's height) free
   on all sides. Nothing enters the clear space.
-- **Minimum sizes:** mark ≥ 24 px; lockup ≥ 120 px wide; favicon variant for anything smaller.
-- **Allowed backgrounds:** white, neutral-50, neutral-950, or the indigo gradient itself.
-  On photography, place the mark on a solid neutral surface — never directly on a busy image.
-- **Do not:** rotate, stretch, skew, outline, add a drop shadow, recolour the star, replace
-  the gradient with a flat fill, or re-typeset the wordmark with a different font.
-- **Wordmark:** set in Inter ExtraBold, `-3` letter-spacing, with "Study" in indigo-900 and
-  "Quest" in violet-600. Any change to the lockup requires updating this document.
+- **Sizes:** 20 px inline beside a header title · 32 px in the top bar · 96–128 px on the splash
+  and login screen · 512 px as the installed app icon.
+- **Backgrounds:** white, `sand-50`, `sand-950`, or an ambient gradient wash. The mark's own
+  gradient means it does not need a coloured plate around it.
+- **Do not:** rotate, stretch, skew, outline, drop-shadow, recolour the star, flatten the
+  gradient, place it on photography, or surround it with a second logo variant.
+- **Beside text:** 8 px gap, baseline aligned so the mark's optical centre sits on the first
+  line of text — never vertically centred against a two-line block.
 
 ### 2.4 App icon
 
-PWA icons are generated from `brand/logo-mark.svg` by `scripts/generate-icons.mjs` into:
+PWA icons are generated from `brand/logo-mark.svg` by `scripts/generate-icons.mjs`:
 
 ```
 public/icons/icon-192.png   public/icons/icon-512.png
-public/icons/maskable-512.png   (with 20 % safe-area padding, solid indigo field)
+public/icons/maskable-512.png   (20 % safe-area padding, solid iris-600 field)
 apple-touch-icon.png
 favicon.ico
 ```
@@ -96,28 +107,56 @@ favicon.ico
 All values are CSS custom properties in `packages/ui/src/styles/tokens.css` and are exposed to
 Tailwind v4 through `@theme`. Never hard-code a hex value in a component.
 
-### 3.1 Brand — Indigo (actions, progress, primary surfaces)
+> **Token names changed.** `indigo-*` → `iris-*`, `slate-*` → `sand-*`, semantic
+> `success/warning/danger/info` → `ok-*/warn-*/bad-*`, and `violet-*` is folded into the accent.
+> Migrate in one pass: `indigo-600` → `iris-600`, `slate-500` → `sand-500`, and so on. The
+> subject palette is gone entirely (§3.5).
+
+### 3.0 The one rule
+
+**One accent hue. Everything else is a tint of it or a warm neutral.**
+
+The previous palette had eight subject colours, four semantic colours, violet as a second brand
+hue, and gold as a third. That is what made the app look like a generic AI product: colour
+carrying no meaning, competing for attention, and turning every screen into a rainbow.
+
+The new system inverts that. Colour is *scarce*, so when it appears it means something.
+
+| Layer | What it is | How much |
+| --- | --- | --- |
+| Accent | One hue, `iris` | Buttons, active states, progress, focus |
+| Reward | `gold`, used **only** for XP / levels / streaks | Rare — a few moments per session |
+| Neutrals | Warm greys (`sand`) | ~95 % of every screen |
+| Status | Three, desaturated | Only on error, overdue, and completion |
+| Ambient | Very low-opacity accent gradients | Decoration behind hero areas only |
+
+Gradients are **ambient only** — they sit behind headers, empty states and onboarding, blurred
+and washed out. Never on a button, a progress bar, a chart series, or anything the user must
+read. This is the single most important rule in this section: gradients are atmosphere, never
+information.
+
+### 3.1 Accent — Iris
+
+A single violet-leaning hue, chosen to sit close to the logo gradient so the mark never fights
+the interface.
 
 | Token | Value | Use |
 | --- | --- | --- |
-| `indigo-50` | `#EEF2FF` | Tint backgrounds, hover on light cards |
-| `indigo-100` | `#E0E7FF` | Selected row background |
-| `indigo-200` | `#C7D2FE` | Borders on tinted surfaces |
-| `indigo-300` | `#A5B4FC` | Disabled fills, dividers on dark |
-| `indigo-400` | `#818CF8` | Chart series 2 |
-| `indigo-500` | `#6366F1` | Gradient start |
-| `indigo-600` | `#4F46E5` | **Primary action**, active progress |
-| `indigo-700` | `#4338CA` | Primary hover / pressed |
-| `indigo-800` | `#3730A3` | Primary text on light backgrounds |
-| `indigo-900` | `#312E81` | Wordmark "Study", headings on light |
-| `indigo-950` | `#1E1B4B` | Dark-mode page background |
+| `iris-50` | `#F7F5FF` | Tinted surface, hover on a card |
+| `iris-100` | `#EEE9FE` | Selected row, progress track |
+| `iris-200` | `#DDD3FE` | Border on a tinted surface |
+| `iris-300` | `#C4B5FD` | Decorative gradient stop, disabled fill |
+| `iris-400` | `#A78BFA` | Decorative gradient stop, dark-theme accent |
+| `iris-500` | `#8B5CF6` | Ambient gradient midpoint |
+| `iris-600` | `#7C3AED` | **Primary action**, active progress, focus ring |
+| `iris-700` | `#6D28D9` | Primary hover / pressed |
+| `iris-800` | `#5B21B6` | Accent text on light surfaces |
+| `iris-900` | `#4C1D95` | Headings on light, dark-theme text |
+| `iris-950` | `#2E1065` | Dark-mode page background |
 
-### 3.2 Brand — Violet (gradient partner, progress highlights)
+### 3.2 Reward — Gold
 
-`violet-400 #A78BFA` · `violet-500 #8B5CF6` · `violet-600 #7C3AED` (gradient end) ·
-`violet-700 #6D28D9`
-
-### 3.3 Accent — Gold (XP, levels, achievements, celebration **only**)
+Unchanged in value, reduced in use.
 
 | Token | Value | Use |
 | --- | --- | --- |
@@ -125,47 +164,94 @@ Tailwind v4 through `@theme`. Never hard-code a hex value in a component.
 | `gold-200` | `#FDE68A` | Star gradient start |
 | `gold-300` | `#FCD34D` | Gold star on dark |
 | `gold-400` | `#FBBF24` | Star gradient end, streak flame |
-| `gold-500` | `#F59E0B` | XP bar fill |
-| `gold-600` | `#D97706` | XP text on light backgrounds |
+| `gold-500` | `#F59E0B` | XP bar fill, level badge |
+| `gold-600` | `#D97706` | XP text on light surfaces |
 
-**Gold rule:** gold is *never* used for a primary button, a link, or body text. If something is
-gold, it is a reward. Text on gold is always `indigo-950`.
+**Gold rule:** gold is never a button, a link, a chart series or body text. If something is
+gold, it is a reward. Text on gold is always `iris-950`. Gold appears on roughly one element per
+screen — never on a whole card or a whole section.
 
-### 3.4 Semantic
+### 3.3 Status — three, desaturated
 
-| Token | 500 | 600 | Use |
-| --- | --- | --- | --- |
-| Success | `#10B981` | `#059669` | Correct answers, completed quests, improvements |
-| Warning | `#F59E0B` | `#D97706` | Due soon, low mastery |
-| Danger | `#EF4444` | `#DC2626` | Overdue, destructive actions, wrong answers |
-| Info | `#3B82F6` | `#2563EB` | Neutral notices, AI-generated content badge |
+Deliberately muted so a success state does not shout. Full-strength red and green are an
+"AI dashboard" tell.
 
-### 3.5 Neutrals (slate)
+| Token | Value | Use |
+| --- | --- | --- |
+| `ok-500` | `#0E9F6E` | Correct answers, completed quests, improvement |
+| `ok-100` | `#D1FAE5` | Tinted background for a correct answer |
+| `warn-500` | `#B45309` | Due soon, low mastery |
+| `warn-100` | `#FEF3C7` | Tinted background for a warning |
+| `bad-500` | `#DC2626` | Overdue, destructive action, wrong answer |
+| `bad-100` | `#FEE2E2` | Tinted background for an error |
 
-`slate-50 #F8FAFC` · `slate-100 #F1F5F9` · `slate-200 #E2E8F0` · `slate-300 #CBD5E1` ·
-`slate-400 #94A3B8` · `slate-500 #64748B` · `slate-600 #475569` · `slate-700 #334155` ·
-`slate-800 #1E293B` · `slate-900 #0F172A` · `slate-950 #020617`
+### 3.4 Neutrals — Sand
 
-Surfaces: light page `slate-50`, card `white`, border `slate-200`, body text `slate-800`,
-muted text `slate-500`. Dark page `indigo-950`, card `slate-900`, border `slate-800`,
-body text `slate-100`, muted `slate-400`.
+Warm greys, not blue-greys. The warmth is what makes the interface feel considered rather than
+default, and it pairs with the pink-violet cast of the reference aesthetic.
 
-### 3.6 Subject colours (assignable palette, AA on white)
+| Token | Value | Use |
+| --- | --- | --- |
+| `sand-50` | `#FAFAF9` | Page background |
+| `sand-100` | `#F5F5F4` | Subtle fill, track backgrounds |
+| `sand-200` | `#E7E5E4` | Borders, dividers |
+| `sand-300` | `#D6D3D1` | Disabled borders |
+| `sand-400` | `#A8A29E` | Muted icons |
+| `sand-500` | `#78716C` | Secondary text |
+| `sand-600` | `#57534E` | Body text on light |
+| `sand-700` | `#44403C` | Strong body text |
+| `sand-800` | `#292524` | Headings on light |
+| `sand-900` | `#1C1917` | Dark card, dark text |
+| `sand-950` | `#0C0A09` | Dark page background |
 
-Eight fixed, pre-approved subject colours so charts stay readable and consistent:
+**Light theme surfaces:** page `sand-50` · card `#FFFFFF` · border `sand-200` · body `sand-700`
+· muted `sand-500`.
+**Dark theme surfaces:** page `sand-950` · card `sand-900` · border `#292524` ·
+body `sand-100` · muted `sand-400`.
 
-`#4F46E5` indigo · `#0EA5E9` sky · `#14B8A6` teal · `#F59E0B` amber · `#EF4444` red ·
-`#EC4899` pink · `#8B5CF6` violet · `#65A30D` lime
+### 3.5 Subjects: no colour palette
 
-The subject colour is used for the subject's avatar tile, its progress ring, and its chart
-series. Progress **state** (done / in progress / not started) is always shown by fill, icon and
-label as well as colour.
+The old eight-colour subject palette is **removed**. Subjects are distinguished by
+**monogram, not hue** — a warm neutral avatar tile with the subject's initials, in the accent hue
+only when the subject is the active one.
+
+This is the change that most affects how the app looks. A list of subjects is now a list of
+restrained, quiet tiles rather than a row of competing colours, and the eye goes to the one
+subject in focus. Where a chart genuinely needs multiple series (subject progress over time),
+the series use **tints of the single accent** — `iris-300` through `iris-700` — which stays
+readable because the series are already separated by position and label.
+
+### 3.6 Ambient gradients
+
+The soft, out-of-focus colour washes from the reference aesthetic, used sparingly:
+
+```css
+/* Decorative only. Always aria-hidden, always low opacity, never behind body text. */
+.ambient {
+  position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  filter: blur(64px); opacity: .55;
+  background:
+    radial-gradient(40% 50% at 20% 15%, var(--iris-300) 0%, transparent 70%),
+    radial-gradient(35% 45% at 85% 25%, #F9A8D4 0%, transparent 70%),
+    radial-gradient(45% 55% at 60% 90%, var(--iris-400) 0%, transparent 70%);
+}
+```
+
+Where it is allowed: onboarding, the empty state, the Home greeting, a completed quest, the
+login screen. Where it is forbidden: task lists, quiz screens, note reading mode, the progress
+tables, anywhere with dense data.
+
+On light themes the opacity drops to ~.35 and tints shift to `iris-200` and rose-200 so it stays
+subtle. Dark mode uses the same gradients at .45 over `sand-950`.
 
 ### 3.7 Contrast and accessibility
 
 - Body text ≥ 4.5:1 against its background; large text and UI borders ≥ 3:1 (WCAG AA).
 - No information is conveyed by colour alone. Every progress ring, status dot and mastery badge
   has a text label or icon.
+- Reducing the palette must not reduce legibility: `sand-500` on white is 4.6:1 and is the
+  lightest permitted body-adjacent text. Status colours are checked at their 600/700 values on
+  tinted backgrounds, not their 400s.
 - Dark mode is a first-class theme, not an afterthought: it is a Phase 1 deliverable.
 
 ---
@@ -211,13 +297,13 @@ offline. Tabular numerals enabled for all stat displays.
 
 | Token | Use |
 | --- | --- |
-| `e0` | Flat — cards on `slate-50` use a border, no shadow |
+| `e0` | Flat — cards on `sand-50` use a border, no shadow |
 | `e1` | Resting cards: `0 1px 2px rgb(15 23 42 / 0.06), 0 1px 3px rgb(15 23 42 / 0.10)` |
 | `e2` | Raised: sticky headers, floating action button |
 | `e3` | Popovers, dropdowns, active drag |
 | `e4` | Modals and sheets only |
 
-**Focus ring** — `0 0 0 2px <surface>, 0 0 0 4px indigo-500`. Always visible on keyboard focus,
+**Focus ring** — `0 0 0 2px <surface>, 0 0 0 4px iris-600`. Always visible on keyboard focus,
 never removed without a replacement.
 
 ---
@@ -285,14 +371,14 @@ Every component below ships with Storybook stories covering default, hover, acti
 disabled, loading, error and empty states.
 
 **Actions** — Button (primary / secondary / ghost / danger / gold-reward, sm / md / lg, loading
-spinner), IconButton, FAB, SegmentedControl, Chip (filter, removable, subject colour), Link.
+spinner), IconButton, FAB, SegmentedControl, Chip (filter, removable, subject tag), Link.
 
 **Inputs** — TextInput, Textarea, RichNoteEditor, Select, Combobox (subject/topic picker),
 DatePicker, TimePicker, Slider (difficulty), Toggle, Checkbox, Radio, SegmentedChoice
 (summary length/format, quiz options), SearchInput, FileInput (Phase 22).
 
 **Data display** — Card, StatTile, ProgressBar, ProgressRing (0–100 %, ARIA value), XpBar
-(gold), LevelBadge, StreakFlame, Badge/AchievementTile, SubjectCard, TopicRow, SubjectAvatar,
+(gold), LevelBadge, StreakFlame, Badge/AchievementTile, SubjectCard, TopicRow, MonogramTile,
 EmptyState, Skeleton, Table (progress history), ListRow.
 
 **Domain components** — NoteCard, NoteActionBar, SummaryPanel, ExplanationCard, QuizRunner,
@@ -312,6 +398,8 @@ ConfirmDialog, CommandPalette (⌘K, global search).
   and is stored in `localStorage` + the `settings` table.
 - Theme switch is a three-state control: System / Light / Dark.
 - Charts must be readable in both themes; series colours are theme-aware tokens, not literals.
+  Multi-series charts use **tints of the single accent** (`iris-300` → `iris-700`), never a
+  multi-hue palette — the series are already separated by position and label (§3.5).
 
 ---
 
@@ -890,7 +978,8 @@ Applied to every table in §18.1:
 
 **Structure**
 
-- `subjects(id, user_id, name, colour, icon, order_index, archived_at, created_at)`
+- `subjects(id, user_id, name, monogram, icon, order_index, archived_at, created_at)`
+  - no `colour` column: subjects are identified by monogram, not hue (§3.5)
 - `topics(id, subject_id, name, description, order_index, status, progress_cache, last_studied_at)`
 
 **Files** (ADR-027 — metadata in Postgres, bytes in R2 or local disk)
@@ -1211,7 +1300,8 @@ Postgres container, a working `/api/health`, and a green CI badge.
 ## P1 · Design system and brand
 **Goal:** every later screen is assembled from this, and it looks like one product.
 
-- [ ] **Logo** — finalise `brand/` assets (done: mark, lockup, mono, favicon), generate
+- [ ] **Logo** — `brand/` finalised (done: one mark plus its favicon and mono derivatives),
+      generate
       `icon-192/512`, `maskable-512`, `apple-touch-icon`, `favicon.ico` via
       `scripts/generate-icons.mjs`
 - [ ] Token file `tokens.css`: colour ramps, semantic aliases, spacing, radius, elevation,
@@ -1222,7 +1312,9 @@ Postgres container, a working `/api/health`, and a green CI badge.
       SegmentedControl, Slider, Chip, Card, Badge, Avatar, Divider, Skeleton, EmptyState,
       Tooltip, Popover, Modal, BottomSheet, Toast (with live region)
 - [ ] Data components: ProgressBar, ProgressRing, XpBar, LevelBadge, StreakFlame, StatTile
-- [ ] Domain components (first pass): SubjectCard, SubjectAvatar, TopicRow, NoteCard, TaskRow
+- [ ] Domain components (first pass): SubjectCard, MonogramTile, TopicRow, NoteCard, TaskRow
+- [ ] `Ambient` decorative layer: blurred low-opacity accent gradients, `aria-hidden`, allowed
+      only on onboarding, empty states, the Home greeting and quest completion (§3.6)
 - [ ] Storybook configured with both themes and the token reference page
 - [ ] Dark mode switch wired end to end (system / light / dark)
 - [ ] Keyboard focus system and reduced-motion handling verified across the set
@@ -1282,7 +1374,8 @@ returns a typed error for a bad request; `/api/health` reports each dependency.
 ## P4 · Subjects and topics
 **Goal:** the structure everything else hangs from.
 
-- [ ] Subject CRUD: name, colour (8-palette picker), icon, order, archive
+- [ ] Subject CRUD: name, auto-derived monogram, optional icon, order, archive (no colour
+      picker — §3.5)
 - [ ] Reorder subjects and topics by drag or keyboard
 - [ ] Topic CRUD within a subject, with status (not started / learning / mastered)
 - [ ] Import template: pick a subject set (e.g. Biology, Chemistry, Mathematics) with sensible

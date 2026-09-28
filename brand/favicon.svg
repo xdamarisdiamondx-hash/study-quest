@@ -1,7 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Study Quest">
   <title>Study Quest</title>
-  <!-- Simplified mark for <=32px: thicker shapes, no spine detail, no gradient on the star -->
-  <rect width="64" height="64" rx="15" fill="#4F46E5"/>
+  <!-- Derivative of brand/logo-mark.svg, generated for <=32px: the book spine
+       is removed because it is invisible at favicon sizes. Same mark, not a
+       different design. Do not edit independently of logo-mark.svg. -->
+  <rect width="64" height="64" rx="15" fill="#7C3AED"/>
   <g transform="translate(0 5) scale(0.1094)">
     <path d="M256 82c9.6 38.4 9.6 38.4 48 48-38.4 9.6-38.4 9.6-48 48-9.6-38.4-9.6-38.4-48-48 38.4-9.6 38.4-9.6 48-48z" fill="#FBBF24"/>
     <path d="M256 200c-40-28-96-36-144-28v158c48-8 104 0 144 26z" fill="#FFFFFF"/>

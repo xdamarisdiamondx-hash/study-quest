@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="brand/logo-lockup.svg" alt="Study Quest" width="420" />
+  <img src="brand/logo-mark.svg" alt="Study Quest" width="120" />
 </p>
 
 # Study Quest
@@ -134,11 +134,7 @@ Study quest/
 ├── Study Quest PRD.docx       # original requirements document (v1.0, by Praise)
 ├── docker-compose.yml         # local PostgreSQL 17 (the only container)
 ├── .env.example               # DATABASE_URL, R2 and AI settings
-├── brand/                     # logo and brand assets
-│   ├── logo-mark.svg          # app icon
-│   ├── logo-lockup.svg        # logo + wordmark
-│   ├── logo-mono.svg          # single-colour mark
-│   └── favicon.svg            # simplified small-size mark
+├── design-preview.html        # design system preview, open it in a browser
 ├── db/
 │   └── init.sql               # extensions on first container start
 ├── docs/
@@ -146,6 +142,19 @@ Study quest/
 │   └── IMPLEMENTATION_PLAN.md # design system + architecture + all 23 phases
 └── (created during P0) apps/, packages/, scripts/, data/
 ```
+
+## Brand
+
+| File | Status | Use |
+| --- | --- | --- |
+| [`brand/logo-mark.svg`](brand/logo-mark.svg) | **The logo** | Everywhere in the product |
+| `brand/favicon.svg` | Derivative | ≤ 32 px — the same mark, spine detail removed |
+| `brand/logo-mono.svg` | Derivative | Single colour, for print and watermarks |
+
+The mark is an open book beneath a gold quest star. The interface uses one accent hue
+(`iris`) and warm neutrals (`sand`); gold appears only on rewards. Subjects are identified by
+monogram, not colour. See [Part I §2–§3](docs/IMPLEMENTATION_PLAN.md) of the plan for the rules,
+and open [`design-preview.html`](design-preview.html) to see it rendered.
 
 ## Documentation
 
