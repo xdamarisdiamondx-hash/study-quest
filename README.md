@@ -122,10 +122,8 @@ Study quest/
 │   ├── logo-mono.svg         # single-colour mark
 │   └── favicon.svg           # simplified small-size mark
 └── docs/
-    ├── PRD.md                # requirements document in Markdown
-    ├── DESIGN_SYSTEM.md      # brand, colours, typography, components, a11y
-    ├── ARCHITECTURE.md       # stack, ADRs, data model, API, AI layer
-    └── IMPLEMENTATION_PLAN.md# 23 phases in 6 milestones
+    ├── PRD.md                 # requirements document in Markdown
+    └── IMPLEMENTATION_PLAN.md # design system + architecture + all 23 phases
 ```
 
 ## Documentation
@@ -133,9 +131,15 @@ Study quest/
 | Document | What it covers |
 | --- | --- |
 | [docs/PRD.md](docs/PRD.md) | The full product requirements, in Markdown |
-| [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md) | Logo usage, colour, typography, spacing, motion, component inventory, accessibility rules |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Local-first stack, 26 architecture decisions, data model, API surface, AI provider layer |
-| [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) | Every phase from toolchain to release, with exit criteria, effort and risks |
+| [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) | Everything needed to build the product, in one document |
+
+The implementation plan has three parts:
+
+| Part | Sections | What it covers |
+| --- | --- | --- |
+| **I — Design system** | §1–§13 | Brand and logo usage, colour, typography, spacing, motion, layout, component inventory, theming, voice, accessibility |
+| **II — Architecture** | §14–§22 | Stack, system shape, repository layout, 26 architecture decisions, data model, API surface, AI layer, non-functional targets, technical risks |
+| **III — Delivery plan** | §23–§30 | 23 phases in 6 milestones, with checklists, exit criteria, effort, traceability, risks and backlog |
 
 ## Technical direction
 
@@ -148,13 +152,13 @@ The app is designed to run entirely on your own computer at no cost:
   key you add; the app works without AI configured
 - **Everything else** — Tailwind CSS, Zod, TanStack Query, Storybook, Vitest, Playwright
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the reasoning behind each choice.
+See Part II of the [implementation plan](docs/IMPLEMENTATION_PLAN.md#14-context-and-constraints)
+for the reasoning behind each choice.
 
 ## Status
 
-Requirements defined (PRD v1.0), brand and design system defined, architecture decided, and a
-23-phase implementation plan written. Next step is Phase 0 of the
-[implementation plan](docs/IMPLEMENTATION_PLAN.md): local toolchain and project skeleton.
+Requirements defined (PRD v1.0), design system and architecture decided, and a 23-phase
+implementation plan written. Next step is Phase 0: local toolchain and project skeleton.
 
 ## License
 
