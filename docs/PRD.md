@@ -6,10 +6,10 @@
 | **Version** | 1.0 |
 | **Author** | Praise |
 | **Source** | `Study Quest PRD.docx` |
-| **Addenda** | [Appendix A](#appendix-a--technical-approach-and-decisions) — technology choices and rationale (added after v1.0) |
+| **Notes** | [Appendix A](#appendix-a--notes-technical-approach-and-decisions) — technology choices, rationale and trade-offs (added after v1.0) |
 
-> Sections 1–34 are the original requirements, unchanged. Appendix A records the technical
-> decisions taken to build it.
+> Sections 1–34 are the original requirements, unchanged. Appendix A is an engineering note
+> recording the decisions taken to build it.
 
 ---
 
@@ -606,14 +606,23 @@ That is what makes Study Quest more than just a task manager or study app.
 
 ---
 
-# Appendix A — Technical approach and decisions
+# Appendix A — Notes: technical approach and decisions
 
-Added after v1.0 · Full detail in
+**Status:** working notes · **Added:** after PRD v1.0 · **Detail:**
 [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md)
 
-This appendix records **which** technologies were chosen to build Study Quest, **where** each
-one runs, and **why** — including the alternatives that were considered and what each choice
-costs us.
+## What this appendix is
+
+This is a **working note**, not a signed-off specification. Sections 1–34 above are the product
+requirements. Everything below this line is the engineering record kept alongside them: which
+technologies were chosen to build the product, where each one runs, why, what was rejected, and
+what each decision costs.
+
+It is expected to change as the build goes on — that is the point of writing it down. Treat §1–34
+as the requirements and this appendix as the reasoning behind them.
+
+**Decided so far:** React 19 + Vite · PostgreSQL 17 in Docker · Better Auth · Cloudflare R2 for
+files · provider-agnostic AI with Ollama first. The app and database run locally.
 
 ## A.1 Decision summary
 

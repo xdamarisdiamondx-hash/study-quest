@@ -409,7 +409,7 @@ Named and decided — these are the project's technology choices.
 | Containerisation | Docker (database only) | Free | Local |
 
 The same decisions, with the reasoning behind each one, are also recorded in
-[PRD.md Appendix A](PRD.md#appendix-a--technical-approach-and-decisions).
+[PRD.md Appendix A](PRD.md#appendix-a--notes-technical-approach-and-decisions).
 
 ### 14.2 The one external service: Cloudflare R2
 
@@ -1144,7 +1144,7 @@ Milestone map, phases P0–P22, and everything needed to execute them.
   the post-MVP backlog (§29).
 - **Decided stack** (§14.1): React + Vite · PostgreSQL 17 in Docker · Better Auth · Cloudflare
   R2 for files. The app and database run locally; the same decisions and their rationale are in
-  [PRD.md Appendix A](PRD.md#appendix-a--technical-approach-and-decisions).
+  [PRD.md Appendix A](PRD.md#appendix-a--notes-technical-approach-and-decisions).
 - Effort figures are **developer-days** for one person working full time, including tests and
   docs. They are estimates for planning, not commitments.
 

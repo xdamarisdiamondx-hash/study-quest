@@ -123,7 +123,7 @@ Prerequisites: Node 22 LTS, pnpm, Docker Desktop. Optionally a Cloudflare accoun
 storage and an AI provider — the app runs without either.
 
 See the [Repository Contents](#repository-contents) below for what lives where, and
-[docs/PRD.md](docs/PRD.md#appendix-a--technical-approach-and-decisions) Appendix A for the
+[docs/PRD.md](docs/PRD.md#appendix-a--notes-technical-approach-and-decisions) Appendix A for the
 technology decisions and their rationale.
 
 ## Repository Contents
@@ -142,7 +142,7 @@ Study quest/
 ├── db/
 │   └── init.sql               # extensions on first container start
 ├── docs/
-│   ├── PRD.md                 # requirements + Appendix A (tech decisions and why)
+│   ├── PRD.md                 # requirements + Appendix A (notes: tech decisions)
 │   └── IMPLEMENTATION_PLAN.md # design system + architecture + all 23 phases
 └── (created during P0) apps/, packages/, scripts/, data/
 ```
@@ -151,7 +151,7 @@ Study quest/
 
 | Document | What it covers |
 | --- | --- |
-| [docs/PRD.md](docs/PRD.md) | The product requirements, plus Appendix A recording the technology decisions and their rationale |
+| [docs/PRD.md](docs/PRD.md) | The product requirements, plus Appendix A — notes on the technology decisions, their rationale and trade-offs |
 | [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) | Everything needed to build the product, in one document |
 
 The implementation plan has three parts:
@@ -178,7 +178,7 @@ The app and the database run locally, at no cost:
 | Also | Tailwind CSS v4, Zod, TanStack Query, Storybook, Vitest, Playwright | Local |
 
 The reasoning behind each choice, the alternatives considered, and the trade-offs are recorded
-in [docs/PRD.md](docs/PRD.md#appendix-a--technical-approach-and-decisions) Appendix A.
+in [docs/PRD.md](docs/PRD.md#appendix-a--notes-technical-approach-and-decisions) Appendix A.
 
 See Part II of the [implementation plan](docs/IMPLEMENTATION_PLAN.md#14-context-and-constraints)
 for the architecture behind each choice.
