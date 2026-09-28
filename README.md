@@ -122,13 +122,39 @@ Study quest/
 │   ├── logo-mono.svg         # single-colour mark
 │   └── favicon.svg           # simplified small-size mark
 └── docs/
-    └── PRD.md                # requirements document in Markdown
+    ├── PRD.md                # requirements document in Markdown
+    ├── DESIGN_SYSTEM.md      # brand, colours, typography, components, a11y
+    ├── ARCHITECTURE.md       # stack, ADRs, data model, API, AI layer
+    └── IMPLEMENTATION_PLAN.md# 23 phases in 6 milestones
 ```
+
+## Documentation
+
+| Document | What it covers |
+| --- | --- |
+| [docs/PRD.md](docs/PRD.md) | The full product requirements, in Markdown |
+| [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md) | Logo usage, colour, typography, spacing, motion, component inventory, accessibility rules |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Local-first stack, 26 architecture decisions, data model, API surface, AI provider layer |
+| [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) | Every phase from toolchain to release, with exit criteria, effort and risks |
+
+## Technical direction
+
+The app is designed to run entirely on your own computer at no cost:
+
+- **Frontend** — React + TypeScript + Vite, installable as a PWA on phone and desktop
+- **Backend** — Hono (Node) serving the API and the app from one process
+- **Database** — SQLite in a single file, with full-text search
+- **AI** — provider-agnostic: Ollama running locally (free and offline) or any cloud provider
+  key you add; the app works without AI configured
+- **Everything else** — Tailwind CSS, Zod, TanStack Query, Storybook, Vitest, Playwright
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the reasoning behind each choice.
 
 ## Status
 
-Early stage — the product requirements are defined and the MVP is scoped. Implementation is
-the next step.
+Requirements defined (PRD v1.0), brand and design system defined, architecture decided, and a
+23-phase implementation plan written. Next step is Phase 0 of the
+[implementation plan](docs/IMPLEMENTATION_PLAN.md): local toolchain and project skeleton.
 
 ## License
 
