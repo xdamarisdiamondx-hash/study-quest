@@ -615,14 +615,21 @@ That is what makes Study Quest more than just a task manager or study app.
 
 This is a **working note**, not a signed-off specification. Sections 1–34 above are the product
 requirements. Everything below this line is the engineering record kept alongside them: which
-technologies were chosen to build the product, where each one runs, why, what was rejected, and
-what each decision costs.
+technologies were chosen to build the product, where each one runs, why, what was rejected, what
+each decision costs, and what changed as the design was reviewed.
 
 It is expected to change as the build goes on — that is the point of writing it down. Treat §1–34
 as the requirements and this appendix as the reasoning behind them.
 
+| Section | Covers |
+| --- | --- |
+| A.1 – A.6 | Technology decisions: stack, what changed and why, alternatives, cost |
+| A.7 | Design changes made to the first preview, and why |
+| A.8 | Where the full detail lives |
+
 **Decided so far:** React 19 + Vite · PostgreSQL 17 in Docker · Better Auth · Cloudflare R2 for
-files · provider-agnostic AI with Ollama first. The app and database run locally.
+files · provider-agnostic AI with Ollama first. The app and database run locally. The interface
+uses one accent hue (`iris`), warm neutrals (`sand`), and one logo.
 
 ## A.1 Decision summary
 
@@ -754,7 +761,108 @@ Everything is free. The two services that could ever cost money are capped:
 | Cloudflare R2 | 10 GB storage, 1M writes, 10M reads, free egress | ~$0.015/GB-month |
 | AI provider | Free tiers, or a local Ollama model | Varies; the app tracks usage and enforces a daily cap |
 
-## A.7 Where the detail lives
+## A.7 Design changes made to the first preview
+
+Recorded after reviewing the first rendered design. The first preview looked machine-made: too
+many colours, nothing meaningful distinguishing them, and four logo variants implying four
+different brands. Five changes were made.
+
+### 1. One accent hue instead of a rainbow
+
+**Was:** `indigo` + `violet` as two brand hues, four semantic colours, and an eight-colour
+subject palette. A subject list was a row of competing hues where no colour carried meaning.
+
+**Now:** a single accent, `iris`, in ten steps. Warm neutrals (`sand`) carry everything else.
+
+**Why:**
+- Colour has to *mean* something to be worth using. With eight subject hues, none of them
+  indicated importance — you could not tell "this needs attention" from "this is just a subject".
+- Two brand hues (indigo and violet) plus semantic colours plus gold put eleven hues in play on
+  a subject-heavy screen. That is a palette, not a system.
+- Warm greys instead of blue-greys, because the warmth is most of what separates a considered
+  interface from a default-looking one.
+
+**Cost:** subjects can no longer be colour-coded, which is a real loss of quick visual scanning.
+§A.8 covers how that was recovered.
+
+### 2. Subjects identified by monogram, not colour
+
+**Was:** `subjects.colour` column and a picker with eight approved colours.
+
+**Now:** no colour column. A subject is a neutral tile with its initials; the accent appears
+only on the one that is active. Multi-series charts use tints of the single accent
+(`iris-300` → `iris-700`).
+
+**Why:** scanning is preserved through position, label and the active state, and the eye is
+drawn to the subject in focus rather than to whichever hue is loudest. Restoring scanability
+with six tints of one hue also removes the "status by colour" problem, where a green subject
+could be mistaken for a completed one.
+
+**Cost:** the `subjects` table loses its `colour` column, and P4 loses a colour picker.
+
+### 3. Ambient gradients, restricted
+
+**Was:** gradients reserved for the logo only.
+
+**Now:** soft, blurred, low-opacity accent washes are allowed as an `Ambient` layer, and
+explicitly forbidden behind data. Permitted on onboarding, empty states, the Home greeting,
+quest completion and login. Forbidden on task lists, quiz screens, reading mode, and anywhere
+with dense data.
+
+**Why:** the reference aesthetic depends on soft colour wash behind hero areas — it is what
+gives the interface its depth. Without it the same layout reads as flat and generic. The
+restriction is what keeps it from becoming decoration everywhere.
+
+**Cost:** an extra decorative layer that must be `aria-hidden`, `pointer-events: none`, and
+opacity-limited, plus a lint-level rule so it never creeps onto a data screen.
+
+### 4. One logo, not four variants
+
+**Was:** `logo-mark`, `logo-lockup`, `logo-mono`, `favicon` presented as four usable options.
+
+**Now:** `logo-mark.svg` is *the* logo and the only one used in the product. `favicon.svg` and
+`logo-mono.svg` remain, but are documented as **derivatives** — the favicon is the same drawing
+with the spine removed, because the spine is invisible below 32 px. `logo-lockup.svg` was
+**deleted**; the app uses the mark beside an already-typeset product name, so a baked-in wordmark
+was redundant.
+
+**Why:** four variants of a mark read as four different brands, and the product had no way to
+choose between them at runtime. One mark with documented technical derivatives is unambiguous
+and still covers favicon and print.
+
+**Cost:** none material. The lockup is gone from the README, replaced by the mark alone.
+
+### 5. Softer geometry and lighter type
+
+**Was:** 8–32 px radii, 44 px touch targets, headings at weight 700–800, a green/gold level
+badge, and heavy weights throughout.
+
+**Now:** fully rounded (`999px`) buttons, inputs and chips; 46 px touch targets; headings at
+weight 600; one level badge in gold per screen.
+
+**Why:** heavy weights and tight corners were a second contributor to the machine-made feel —
+alongside the palette, they were the other giveaway. Dropping heading weight 800 → 600 and
+rounding the primary controls to pills matches the reference's softness. The gold level badge
+was competing with the accent; gold now appears on roughly one element per screen.
+
+**Cost:** larger radii and taller targets need a little more vertical space in dense lists.
+
+### Net effect
+
+| | First preview | Now |
+| --- | --- | --- |
+| Hues in play | 11 (indigo, violet, gold, 4 semantic, 8 subjects) | 1 accent + gold + 3 status + neutrals |
+| Subject identification | Colour picker | Monogram, accent when active |
+| Logo variants in the product | 4 | 1, plus 2 documented derivatives |
+| Heading weight | 700–800 | 600 |
+| Primary control shape | 12 px radius | Fully rounded |
+| Decorative gradients | Logo only | Ambient layer, data screens forbidden |
+
+The token rename is a one-pass migration: `indigo-*` → `iris-*`, `slate-*` → `sand-*`,
+`success/warning/danger/info` → `ok-*/warn-*/bad-*`, and `violet-*` folded into the accent.
+Nothing changes for the user; only the token names in code.
+
+## A.8 Where the detail lives
 
 | Topic | Location |
 | --- | --- |
@@ -762,3 +870,5 @@ Everything is free. The two services that could ever cost money are capped:
 | Full architecture decisions (ADRs) | [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) — Part II, §17 |
 | Data model | [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) — §18 |
 | Design system | [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) — Part I |
+| Rendered colour, type, buttons and inputs | [`design.html`](../design.html) |
+| Full preview with screens and dark mode | [`design-preview.html`](../design-preview.html) |

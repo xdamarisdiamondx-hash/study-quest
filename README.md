@@ -134,7 +134,8 @@ Study quest/
 ├── Study Quest PRD.docx       # original requirements document (v1.0, by Praise)
 ├── docker-compose.yml         # local PostgreSQL 17 (the only container)
 ├── .env.example               # DATABASE_URL, R2 and AI settings
-├── design-preview.html        # design system preview, open it in a browser
+├── design.html                # colour, type, buttons and inputs reference
+├── design-preview.html        # full preview with screens, light and dark
 ├── db/
 │   └── init.sql               # extensions on first container start
 ├── docs/
@@ -154,7 +155,15 @@ Study quest/
 The mark is an open book beneath a gold quest star. The interface uses one accent hue
 (`iris`) and warm neutrals (`sand`); gold appears only on rewards. Subjects are identified by
 monogram, not colour. See [Part I §2–§3](docs/IMPLEMENTATION_PLAN.md) of the plan for the rules,
-and open [`design-preview.html`](design-preview.html) to see it rendered.
+and what changed from the first preview in
+[PRD Appendix A §A.7](docs/PRD.md#a7-design-changes-made-to-the-first-preview).
+
+**See it rendered:**
+
+| File | Shows |
+| --- | --- |
+| [`design.html`](design.html) | Colour ramps, type scale, buttons, inputs — the reference sheet |
+| [`design-preview.html`](design-preview.html) | The above plus Home, an empty state, and a dark theme |
 
 ## Documentation
 

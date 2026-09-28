@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Study Quest — Design System</title>
+<style>
+  /* ============================================================
+     Study Quest design tokens
+     One accent hue (iris). Warm neutrals (sand). Gold only for
+     rewards. Source: docs/IMPLEMENTATION_PLAN.md, Part I
+     ============================================================ */
+  :root {
+    --iris-50:#F7F5FF;  --iris-100:#EEE9FE; --iris-200:#DDD3FE; --iris-300:#C4B5FD;
+    --iris-400:#A78BFA; --iris-500:#8B5CF6; --iris-600:#7C3AED; --iris-700:#6D28D9;
+    --iris-800:#5B21B6; --iris-900:#4C1D95; --iris-950:#2E1065;
+
+    --gold-100:#FEF3C7; --gold-200:#FDE68A; --gold-300:#FCD34D;
+    --gold-400:#FBBF24; --gold-500:#F59E0B; --gold-600:#D97706;
+
+    --ok-500:#0E9F6E;    --ok-100:#D1FAE5;
+    --warn-500:#B45309; --warn-100:#FEF3C7;
+    --bad-500:#DC2626;  --bad-100:#FEE2E2;
+
+    --sand-50:#FAFAF9;  --sand-100:#F5F5F4; --sand-200:#E7E5E4; --sand-300:#D6D3D1;
+    --sand-400:#A8A29E; --sand-500:#78716C; --sand-600:#57534E; --sand-700:#44403C;
+    --sand-800:#292524; --sand-900:#1C1917; --sand-950:#0C0A09;
+
+    --page:#FAFAF9; --card:#FFFFFF; --border:#E7E5E4;
+    --text:#44403C; --strong:#292524; --muted:#78716C;
+
+    --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:20px; --s6:24px; --s8:32px;
+    --s10:40px; --s12:48px; --s16:64px;
+
+    --r-sm:10px; --r-md:14px; --r-lg:20px; --r-xl:28px; --r-full:999px;
+
+    --e1:0 1px 2px rgb(28 25 23/.04), 0 1px 3px rgb(28 25 23/.05);
+    --e2:0 4px 8px -2px rgb(28 25 23/.06), 0 2px 4px -2px rgb(28 25 23/.04);
+    --e3:0 12px 20px -6px rgb(28 25 23/.10), 0 4px 8px -4px rgb(28 25 23/.06);
+
+    --fast:160ms cubic-bezier(.2,0,0,1);
+    --slow:320ms cubic-bezier(.16,1,.3,1);
+  }
+  .dark {
+    --page:#0C0A09; --card:#1C1917; --border:#292524;
+    --text:#E7E5E4; --strong:#FAFAF9; --muted:#A8A29E;
+    --iris-50:rgba(167 139 250/.10); --iris-100:rgba(167 139 250/.16);
+    --iris-200:rgba(167 139 250/.26); --iris-600:#A78BFA; --iris-700:#8B5CF6;
+    --gold-100:rgba(245 158 11/.14);
+    --ok-100:rgba(14 159 110/.16); --bad-100:rgba(220 38 38/.16); --warn-100:rgba(180 83 9/.16);
+    --e1:0 1px 2px rgb(0 0 0/.4); --e2:0 4px 8px -2px rgb(0 0 0/.45);
+    --e3:0 12px 20px -6px rgb(0 0 0/.5);
+  }
+
+  * { box-sizing:border-box; }
+  body {
+    margin:0; background:var(--page); color:var(--text);
+    font:400 16px/1.625 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .num { font-variant-numeric:tabular-nums; }
+  .wrap { max-width:960px; margin:0 auto; padding:0 var(--s5) var(--s16); }
+
+  /* ambient: decoration only, never information */
+  .ambient {
+    position:absolute; inset:-25%; z-index:0; pointer-events:none;
+    filter:blur(70px); opacity:.32;
+    background:
+      radial-gradient(38% 46% at 18% 12%, var(--iris-300) 0%, transparent 70%),
+      radial-gradient(34% 42% at 86% 22%, #F9A8D4 0%, transparent 70%),
+      radial-gradient(42% 50% at 58% 90%, var(--iris-400) 0%, transparent 70%);
+  }
+  .dark .ambient { opacity:.20; }
+  .hero { position:relative; isolation:isolate; overflow:hidden;
+    border:1px solid var(--border); border-radius:var(--r-xl);
+    background:var(--card); padding:var(--s10) var(--s6); margin-top:var(--s10); }
+  .hero > * { position:relative; z-index:1; }
+
+  /* header */
+  .bar { position:sticky; top:0; z-index:50;
+    background:color-mix(in srgb, var(--page) 88%, transparent);
+    backdrop-filter:saturate(180%) blur(16px); border-bottom:1px solid var(--border);
+    padding:var(--s3) var(--s5); }
+  .bar-in { max-width:960px; margin:0 auto; display:flex; align-items:center; gap:var(--s3); flex-wrap:wrap; }
+  .wordmark { display:flex; align-items:center; gap:var(--s2); }
+  .wordmark b { font:600 15px/1.1 system-ui,sans-serif; color:var(--strong); letter-spacing:-.01em; }
+  .pill { font:500 11px/1 system-ui,sans-serif; letter-spacing:.05em; text-transform:uppercase;
+    background:var(--iris-50); color:var(--iris-700); padding:5px 10px; border-radius:var(--r-full); }
+  .dark .pill { color:var(--iris-300); }
+  .bar nav { display:flex; gap:2px; flex-wrap:wrap; margin-left:auto; }
+  .bar nav a { color:var(--muted); text-decoration:none; font:500 14px/1 system-ui,sans-serif;
+    padding:9px var(--s3); border-radius:var(--r-full); transition:var(--fast); }
+  .bar nav a:hover { background:var(--iris-50); color:var(--iris-700); }
+  .dark .bar nav a:hover { color:var(--iris-300); }
+
+  /* sections */
+  section { margin-top:var(--s12); }
+  .sec-head { margin-bottom:var(--s5); max-width:64ch; }
+  .sec-head h2 { font:600 28px/1.2 system-ui,sans-serif; margin:0 0 var(--s2);
+    letter-spacing:-.025em; color:var(--strong); }
+  .sec-head p { margin:0; color:var(--muted); font-size:15px; line-height:1.6; }
+  .eyebrow { font:500 11px/1 system-ui,sans-serif; letter-spacing:.09em; text-transform:uppercase;
+    color:var(--iris-600); margin-bottom:var(--s2); display:block; }
+  .dark .eyebrow { color:var(--iris-400); }
+
+  .card { background:var(--card); border:1px solid var(--border); border-radius:var(--r-lg);
+    padding:var(--s6); box-shadow:var(--e1); }
+  .card h3 { font:600 17px/1.3 system-ui,sans-serif; margin:0 0 6px; letter-spacing:-.01em; color:var(--strong); }
+  .card > p { margin:0; color:var(--muted); font-size:14px; line-height:1.6; }
+  .demo { margin-top:var(--s5); padding-top:var(--s5); border-top:1px solid var(--border); }
+  .g2 { display:grid; gap:var(--s4); grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); }
+  .lb { font:500 11px/1 system-ui,sans-serif; letter-spacing:.07em; text-transform:uppercase;
+    color:var(--muted); margin-bottom:var(--s3); display:block; }
+  .row { display:flex; gap:var(--s2); flex-wrap:wrap; align-items:center; }
+  .row + .row { margin-top:var(--s3); }
+  code, .mono-c { font:400 12px/1 ui-monospace,SFMono-Regular,Menlo,monospace; color:var(--iris-700);
+    background:var(--iris-50); padding:2px 6px; border-radius:5px; }
+  .dark code, .dark .mono-c { color:var(--iris-300); }
+
+  /* colour swatches */
+  .ramp { display:grid; gap:var(--s1); }
+  .sw { display:flex; align-items:center; gap:var(--s3); }
+  .sw i { width:38px; height:38px; border-radius:10px; flex:none; display:grid;
+    place-items:center; font:600 10px/1 system-ui,sans-serif; }
+  .sw .nm { font:500 13px/1.2 system-ui,sans-serif; color:var(--strong); }
+  .sw .hx { font:400 12px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace; color:var(--muted); }
+  .sw .us { font-size:12.5px; color:var(--muted); margin-left:auto; text-align:right; }
+
+  /* typography specimens */
+  .type-row { display:flex; align-items:baseline; gap:var(--s5); padding:var(--s4) 0;
+    border-bottom:1px solid var(--border); }
+  .type-row:last-child { border:0; padding-bottom:0; }
+  .type-row .k { width:96px; flex:none; }
+  .type-row .k b { display:block; font:500 12px/1.3 system-ui,sans-serif; color:var(--strong); }
+  .type-row .k span { font:400 11px/1.3 ui-monospace,SFMono-Regular,Menlo,monospace; color:var(--muted); }
+
+  /* buttons */
+  .btn {
+    display:inline-flex; align-items:center; justify-content:center; gap:var(--s2);
+    font:500 15px/1 system-ui,sans-serif; padding:13px var(--s5);
+    border-radius:var(--r-full); border:1px solid transparent; cursor:pointer;
+    transition:var(--fast); min-height:46px; text-decoration:none; white-space:nowrap;
+  }
+  .btn:focus-visible { outline:none; box-shadow:0 0 0 2px var(--card), 0 0 0 4px var(--iris-600); }
+  .btn svg { width:17px; height:17px; flex:none; }
+  .btn-p { background:var(--iris-600); color:#fff; }
+  .btn-p:hover:not(:disabled) { background:var(--iris-700); }
+  .dark .btn-p { color:#1C1030; }
+  .btn-s { background:var(--card); color:var(--strong); border-color:var(--border); }
+  .btn-s:hover:not(:disabled) { background:var(--sand-50); }
+  .dark .btn-s:hover:not(:disabled) { background:#262220; }
+  .btn-g { background:transparent; color:var(--iris-700); padding-left:var(--s3); padding-right:var(--s3); }
+  .btn-g:hover:not(:disabled) { background:var(--iris-50); }
+  .dark .btn-g { color:var(--iris-300); }
+  .btn-d { background:transparent; color:var(--bad-500); }
+  .btn-d:hover:not(:disabled) { background:var(--bad-100); }
+  .btn-x { background:var(--gold-500); color:var(--iris-950); }
+  .btn:disabled { opacity:.4; cursor:not-allowed; }
+  .btn-sm { padding:9px var(--s4); min-height:38px; font-size:14px; }
+  .btn-lg { padding:16px var(--s6); min-height:54px; font-size:16px; }
+  .btn-block { width:100%; }
+
+  /* form controls */
+  .field { display:block; }
+  .field + .field { margin-top:var(--s5); }
+  .field > label { display:block; font:500 13px/1.4 system-ui,sans-serif;
+    color:var(--strong); margin-bottom:7px; }
+  .help { font-size:13px; color:var(--muted); margin:7px 0 0; }
+  .err { font-size:13px; color:var(--bad-500); margin:7px 0 0; display:flex; gap:5px; align-items:center; }
+
+  .inp, .ta, .sel {
+    width:100%; font:400 15px/1.5 system-ui,sans-serif; padding:13px var(--s4);
+    border:1px solid var(--border); border-radius:var(--r-full);
+    background:var(--card); color:var(--text); min-height:46px;
+    transition:var(--fast); appearance:none;
+  }
+  .ta { border-radius:var(--r-md); min-height:120px; resize:vertical; line-height:1.6; }
+  .inp::placeholder, .ta::placeholder { color:var(--sand-400); }
+  .inp:hover, .ta:hover, .sel:hover { border-color:var(--sand-300); }
+  .inp:focus, .ta:focus, .sel:focus {
+    outline:none; border-color:var(--iris-400);
+    box-shadow:0 0 0 4px color-mix(in srgb, var(--iris-400) 22%, transparent);
+  }
+  .inp:disabled, .ta:disabled, .sel:disabled { background:var(--sand-100); color:var(--muted); cursor:not-allowed; }
+  .dark .inp:disabled, .dark .ta:disabled, .dark .sel:disabled { background:#262220; }
+  .inp.bad { border-color:var(--bad-500); }
+  .inp.bad:focus { box-shadow:0 0 0 4px color-mix(in srgb, #DC2626 18%, transparent); }
+
+  .wrap-ico { position:relative; }
+  .wrap-ico .inp { padding-left:44px; }
+  .wrap-ico .ico { position:absolute; left:16px; top:50%; transform:translateY(-50%);
+    width:17px; height:17px; color:var(--sand-400); pointer-events:none; }
+  .sel-wrap { position:relative; }
+  .sel-wrap .caret { position:absolute; right:16px; top:50%; transform:translateY(-50%);
+    width:16px; height:16px; color:var(--muted); pointer-events:none; }
+
+  .choice { display:flex; align-items:flex-start; gap:10px; padding:11px 0; cursor:pointer; }
+  .choice input { position:absolute; opacity:0; width:0; height:0; }
+  .box { width:20px; height:20px; flex:none; margin-top:1px; border:1.5px solid var(--sand-300);
+    background:var(--card); display:grid; place-items:center; transition:var(--fast); }
+  .box.r { border-radius:50%; }
+  .box.c { border-radius:6px; }
+  .choice input:checked + .box { background:var(--iris-600); border-color:var(--iris-600); }
+  .choice input:focus-visible + .box { box-shadow:0 0 0 2px var(--card), 0 0 0 4px var(--iris-600); }
+  .choice input:checked + .box.c::after { content:""; width:5px; height:9px; margin-bottom:2px;
+    border:solid #fff; border-width:0 1.5px 1.5px 0; transform:rotate(45deg); }
+  .choice input:checked + .box.r::after { content:""; width:6px; height:6px; border-radius:50%;
+    background:#fff; }
+  .choice span.tx { font-size:15px; line-height:1.45; }
+  .dark .choice input:checked + .box.c::after,
+  .dark .choice input:checked + .box.r::after { border-color:#1C1030; }
+
+  .switch { position:relative; display:inline-block; width:46px; height:28px; flex:none; }
+  .switch input { position:absolute; opacity:0; width:0; height:0; }
+  .switch .tr { position:absolute; inset:0; background:var(--sand-300); border-radius:var(--r-full);
+    transition:var(--fast); }
+  .switch .tr::after { content:""; position:absolute; left:3px; top:3px; width:22px; height:22px;
+    border-radius:50%; background:#fff; box-shadow:var(--e1); transition:var(--fast); }
+  .switch input:checked + .tr { background:var(--iris-600); }
+  .switch input:checked + .tr::after { transform:translateX(18px); }
+  .switch input:focus-visible + .tr { box-shadow:0 0 0 2px var(--card), 0 0 0 4px var(--iris-600); }
+  .switch-row { display:flex; align-items:center; gap:var(--s3); padding:11px 0; }
+
+  .seg { display:inline-flex; background:var(--sand-100); border-radius:var(--r-full);
+    padding:3px; gap:2px; }
+  .dark .seg { background:#262220; }
+  .seg button { font:500 14px/1 system-ui,sans-serif; padding:9px var(--s4); border:0;
+    background:transparent; color:var(--muted); border-radius:var(--r-full); cursor:pointer;
+    transition:var(--fast); min-height:36px; }
+  .seg button.on { background:var(--card); color:var(--strong); box-shadow:var(--e1); }
+  .dark .seg button.on { background:#3A3432; }
+
+  .range { -webkit-appearance:none; appearance:none; width:100%; height:6px;
+    background:var(--sand-200); border-radius:var(--r-full); outline:none; }
+  .dark .range { background:#292524; }
+  .range::-webkit-slider-thumb { -webkit-appearance:none; width:22px; height:22px;
+    border-radius:50%; background:var(--iris-600); border:3px solid var(--card);
+    box-shadow:var(--e2); cursor:pointer; }
+  .range::-moz-range-thumb { width:22px; height:22px; border-radius:50%;
+    background:var(--iris-600); border:3px solid var(--card); box-shadow:var(--e2); cursor:pointer; }
+
+  /* supporting */
+  .chip { display:inline-flex; align-items:center; gap:6px; font:500 13px/1 system-ui,sans-serif;
+    padding:9px var(--s4); border-radius:var(--r-full);
+    background:var(--sand-100); color:var(--sand-600); border:1px solid transparent; }
+  .dark .chip { background:#262220; color:var(--sand-300); }
+  .chip.on { background:var(--iris-600); color:#fff; }
+  .dark .chip.on { color:#1C1030; }
+  .chip.gold { background:var(--gold-100); color:var(--gold-600); }
+  .chip.iris { background:var(--iris-50); color:var(--iris-700); }
+  .dark .chip.iris { color:var(--iris-300); }
+  .chip.ok { background:var(--ok-100); color:var(--ok-500); }
+  .chip.bad { background:var(--bad-100); color:var(--bad-500); }
+  .chip.warn { background:var(--warn-100); color:var(--warn-500); }
+
+  .mono-t { width:40px; height:40px; flex:none; border-radius:var(--r-md); display:grid;
+    place-items:center; background:var(--sand-100); color:var(--sand-600);
+    font:600 14px/1 system-ui,sans-serif; }
+  .dark .mono-t { background:#262220; color:var(--sand-300); }
+  .mono-t.on { background:var(--iris-600); color:#fff; }
+  .dark .mono-t.on { color:#1C1030; }
+
+  .track { height:8px; background:var(--sand-100); border-radius:var(--r-full); overflow:hidden; }
+  .dark .track { background:#292524; }
+  .track > i { display:block; height:100%; background:var(--iris-600); border-radius:var(--r-full);
+    transition:width var(--slow); }
+  .track.xp > i { background:var(--gold-500); }
+  .ring { --p:68; width:74px; height:74px; position:relative; flex:none; }
+  .ring::before { content:""; position:absolute; inset:0; border-radius:50%;
+    background:conic-gradient(var(--iris-600) calc(var(--p)*1%), var(--sand-100) 0);
+    -webkit-mask:radial-gradient(farthest-side, transparent calc(100% - 8px), #000 calc(100% - 8px));
+    mask:radial-gradient(farthest-side, transparent calc(100% - 8px), #000 calc(100% - 8px)); }
+  .dark .ring::before { background:conic-gradient(#A78BFA calc(var(--p)*1%), #292524 0); }
+  .ring span { position:absolute; inset:0; display:grid; place-items:center;
+    font:600 16px/1 system-ui,sans-serif; color:var(--strong); }
+
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  th,td { text-align:left; padding:10px var(--s3); border-bottom:1px solid var(--border); }
+  th { color:var(--muted); font:500 11px/1.3 system-ui,sans-serif; letter-spacing:.05em;
+    text-transform:uppercase; }
+
+  .foot { margin-top:var(--s12); padding-top:var(--s6); border-top:1px solid var(--border);
+    color:var(--muted); font-size:14px; }
+
+  @media (prefers-reduced-motion: reduce) { * { transition:none !important; animation:none !important; } }
+  @media (max-width:560px) { .bar nav { margin-left:0; width:100%; } }
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <div class="bar-in">
+    <div class="wordmark">
+      <svg width="26" height="26" viewBox="0 0 512 512" aria-hidden="true">
+        <defs>
+          <linearGradient id="m1" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#A78BFA"/><stop offset=".5" stop-color="#7C3AED"/><stop offset="1" stop-color="#4C1D95"/>
+          </linearGradient>
+          <linearGradient id="m2" x1="0" y1="0" x2=".3" y2="1">
+            <stop offset="0" stop-color="#FDE68A"/><stop offset="1" stop-color="#F59E0B"/>
+          </linearGradient>
+        </defs>
+        <rect width="512" height="512" rx="116" fill="url(#m1)"/>
+        <g transform="translate(0 40)">
+          <path d="M256 82c9.6 38.4 9.6 38.4 48 48-38.4 9.6-38.4 9.6-48 48-9.6-38.4-9.6-38.4-48-48 38.4-9.6 38.4-9.6 48-48z" fill="url(#m2)"/>
+          <path d="M256 200c-40-28-96-36-144-28v158c48-8 104 0 144 26z" fill="#fff"/>
+          <path d="M256 200c40-28 96-36 144-28v158c-48-8-104 0-144 26z" fill="#fff"/>
+        </g>
+      </svg>
+      <b>Study Quest</b>
+    </div>
+    <span class="pill">Design system</span>
+    <nav>
+      <a href="#colour">Colour</a>
+      <a href="#type">Typography</a>
+      <a href="#buttons">Buttons</a>
+      <a href="#inputs">Inputs</a>
+      <a href="#supporting">More</a>
+    </nav>
+    <button class="btn btn-s btn-sm" id="tgl">Dark</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="hero">
+    <div class="ambient" aria-hidden="true"></div>
+    <div style="display:flex;gap:var(--s5);align-items:center;flex-wrap:wrap">
+      <svg width="64" height="64" viewBox="0 0 512 512" role="img" aria-label="Study Quest logo" style="flex:none">
+        <defs>
+          <linearGradient id="h1" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#A78BFA"/><stop offset=".5" stop-color="#7C3AED"/><stop offset="1" stop-color="#4C1D95"/>
+          </linearGradient>
+          <linearGradient id="h2" x1="0" y1="0" x2=".3" y2="1">
+            <stop offset="0" stop-color="#FDE68A"/><stop offset="1" stop-color="#F59E0B"/>
+          </linearGradient>
+        </defs>
+        <rect width="512" height="512" rx="116" fill="url(#h1)"/>
+        <g transform="translate(0 40)">
+          <path d="M256 82c9.6 38.4 9.6 38.4 48 48-38.4 9.6-38.4 9.6-48 48-9.6-38.4-9.6-38.4-48-48 38.4-9.6 38.4-9.6 48-48z" fill="url(#h2)"/>
+          <path d="M256 200c-40-28-96-36-144-28v158c48-8 104 0 144 26z" fill="#fff"/>
+          <path d="M256 200c40-28 96-36 144-28v158c-48-8-104 0-144 26z" fill="#fff"/>
+        </g>
+      </svg>
+      <div>
+        <h1 style="font:600 32px/1.15 system-ui,sans-serif;margin:0 0 6px;letter-spacing:-.03em;color:var(--strong)">
+          Study Quest</h1>
+        <p style="margin:0;color:var(--muted);font-size:15px;max-width:52ch">
+          One accent hue, warm neutrals, gold for rewards only. This page shows the colour,
+          type, button and input tokens the interface is built from.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================ COLOUR ============================ -->
+  <section id="colour">
+    <div class="sec-head">
+      <span class="eyebrow">§3 Colour</span>
+      <h2>Three ramps, and nothing else</h2>
+      <p>Colour is scarce on purpose, so when it appears it means something. The accent carries
+         action and progress, gold carries reward, and warm neutrals carry everything else.</p>
+    </div>
+
+    <div class="g2">
+      <div class="card">
+        <h3>Accent — <code>iris</code></h3>
+        <p>Buttons, active states, progress, focus. One hue, ten steps.</p>
+        <div class="demo ramp">
+          <div class="sw"><i style="background:#F7F5FF;box-shadow:inset 0 0 0 1px var(--border)"></i>
+            <div><div class="nm">iris-50</div><div class="hx">#F7F5FF</div></div>
+            <div class="us">tinted surface</div></div>
+          <div class="sw"><i style="background:#EEE9FE"></i>
+            <div><div class="nm">iris-100</div><div class="hx">#EEE9FE</div></div>
+            <div class="us">selected row</div></div>
+          <div class="sw"><i style="background:#DDD3FE"></i>
+            <div><div class="nm">iris-200</div><div class="hx">#DDD3FE</div></div>
+            <div class="us">tinted border</div></div>
+          <div class="sw"><i style="background:#C4B5FD"></i>
+            <div><div class="nm">iris-300</div><div class="hx">#C4B5FD</div></div>
+            <div class="us">ambient gradient</div></div>
+          <div class="sw"><i style="background:#A78BFA"></i>
+            <div><div class="nm">iris-400</div><div class="hx">#A78BFA</div></div>
+            <div class="us">focus, dark accent</div></div>
+          <div class="sw"><i style="background:#8B5CF6"></i>
+            <div><div class="nm">iris-500</div><div class="hx">#8B5CF6</div></div>
+            <div class="us">gradient midpoint</div></div>
+          <div class="sw"><i style="background:#7C3AED;color:#fff">6</i>
+            <div><div class="nm">iris-600</div><div class="hx">#7C3AED</div></div>
+            <div class="us"><b style="color:var(--strong)">primary action</b></div></div>
+          <div class="sw"><i style="background:#6D28D9;color:#fff">7</i>
+            <div><div class="nm">iris-700</div><div class="hx">#6D28D9</div></div>
+            <div class="us">hover / pressed</div></div>
+          <div class="sw"><i style="background:#5B21B6;color:#fff">8</i>
+            <div><div class="nm">iris-800</div><div class="hx">#5B21B6</div></div>
+            <div class="us">accent text</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Neutrals — <code>sand</code></h3>
+        <p>Warm greys. Roughly 95 % of every screen.</p>
+        <div class="demo ramp">
+          <div class="sw"><i style="background:#FAFAF9;box-shadow:inset 0 0 0 1px var(--border)"></i>
+            <div><div class="nm">sand-50</div><div class="hx">#FAFAF9</div></div>
+            <div class="us">page</div></div>
+          <div class="sw"><i style="background:#F5F5F4;box-shadow:inset 0 0 0 1px var(--border)"></i>
+            <div><div class="nm">sand-100</div><div class="hx">#F5F5F4</div></div>
+            <div class="us">track, subtle fill</div></div>
+          <div class="sw"><i style="background:#E7E5E4;box-shadow:inset 0 0 0 1px var(--border)"></i>
+            <div><div class="nm">sand-200</div><div class="hx">#E7E5E4</div></div>
+            <div class="us">border, divider</div></div>
+          <div class="sw"><i style="background:#D6D3D1"></i>
+            <div><div class="nm">sand-300</div><div class="hx">#D6D3D1</div></div>
+            <div class="us">disabled border</div></div>
+          <div class="sw"><i style="background:#A8A29E"></i>
+            <div><div class="nm">sand-400</div><div class="hx">#A8A29E</div></div>
+            <div class="us">placeholder</div></div>
+          <div class="sw"><i style="background:#78716C"></i>
+            <div><div class="nm">sand-500</div><div class="hx">#78716C</div></div>
+            <div class="us">secondary text · 4.6:1</div></div>
+          <div class="sw"><i style="background:#57534E"></i>
+            <div><div class="nm">sand-600</div><div class="hx">#57534E</div></div>
+            <div class="us">body</div></div>
+          <div class="sw"><i style="background:#292524"></i>
+            <div><div class="nm">sand-800</div><div class="hx">#292524</div></div>
+            <div class="us">heading</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="g2" style="margin-top:var(--s4)">
+      <div class="card">
+        <h3>Reward — <code>gold</code></h3>
+        <p>One element per screen. Never a button, a link or body text.</p>
+        <div class="demo">
+          <div class="row">
+            <span class="chip gold">LEVEL 7</span>
+            <span class="chip gold">+50 XP</span>
+            <span class="chip" style="background:var(--gold-500);color:var(--iris-950)">Scholar</span>
+          </div>
+          <div style="margin-top:var(--s5)">
+            <div class="row" style="justify-content:space-between;margin-bottom:7px">
+              <span style="font-size:14px">XP to Level 8</span>
+              <span class="num" style="font-size:13px;color:var(--muted)">760 / 1,000</span>
+            </div>
+            <div class="track xp"><i style="width:76%"></i></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Status — three, desaturated</h3>
+        <p>Full-strength red and green read as a generated dashboard, so these are muted.</p>
+        <div class="demo">
+          <div class="row">
+            <span class="chip ok">Correct</span>
+            <span class="chip warn">Due soon</span>
+            <span class="chip bad">Overdue</span>
+          </div>
+          <table style="margin-top:var(--s5)">
+            <tr><th>Token</th><th>Value</th><th>Use</th></tr>
+            <tr><td><code>ok-500</code></td><td><code>#0E9F6E</code></td><td>Correct, complete, improved</td></tr>
+            <tr><td><code>warn-500</code></td><td><code>#B45309</code></td><td>Due soon, low mastery</td></tr>
+            <tr><td><code>bad-500</code></td><td><code>#DC2626</code></td><td>Overdue, wrong, destructive</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:var(--s4)">
+      <h3>Subjects use monograms, not colour</h3>
+      <p>The eight-colour subject palette was removed. A subject is a quiet neutral tile with its
+         initials; the accent marks only the one that is active. Multi-series charts use tints of
+         the single accent — <code>iris-300</code> through <code>iris-700</code>.</p>
+      <div class="demo row" style="gap:var(--s3)">
+        <div class="mono-t on">Ph</div><div class="mono-t">Bi</div><div class="mono-t">Ma</div>
+        <div class="mono-t">Ch</div><div class="mono-t">En</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ TYPOGRAPHY ============================ -->
+  <section id="type">
+    <div class="sec-head">
+      <span class="eyebrow">§4 Typography</span>
+      <h2>Inter, with lighter weights</h2>
+      <p>Self-hosted, no CDN, so the app works offline. Tabular numerals on every statistic.
+         Uppercase is reserved for badges and section labels.</p>
+    </div>
+    <div class="card">
+      <div class="type-row">
+        <div class="k"><b>display</b><span>600 · 32/40</span></div>
+        <div style="font:600 32px/1.25 system-ui,sans-serif;letter-spacing:-.03em;color:var(--strong)">Good morning</div>
+      </div>
+      <div class="type-row">
+        <div class="k"><b>h1</b><span>600 · 28/34</span></div>
+        <div style="font:600 28px/1.2 system-ui,sans-serif;letter-spacing:-.025em;color:var(--strong)">Chemistry Exam Quest</div>
+      </div>
+      <div class="type-row">
+        <div class="k"><b>h2</b><span>600 · 22/30</span></div>
+        <div style="font:600 22px/1.3 system-ui,sans-serif;letter-spacing:-.02em;color:var(--strong)">Today's Quest</div>
+      </div>
+      <div class="type-row">
+        <div class="k"><b>h3</b><span>600 · 17/24</span></div>
+        <div style="font:600 17px/1.4 system-ui,sans-serif;color:var(--strong)">Photosynthesis</div>
+      </div>
+      <div class="type-row">
+        <div class="k"><b>body-lg</b><span>400 · 18/30</span></div>
+        <div style="font:400 18px/1.65 system-ui,sans-serif">Occurs mainly in plant leaves and uses light energy.</div>
+      </div>
+      <div class="type-row">
+        <div class="k"><b>body</b><span>400 · 16/26</span></div>
+        <div style="font:400 16px/1.6 system-ui,sans-serif">Review Atomic Structure — 25 min</div>
+      </div>
+      <div class="type-row">
+        <div class="k"><b>body-sm</b><span>400 · 14/22</span></div>
+        <div style="font:400 14px/1.5 system-ui,sans-serif;color:var(--muted)">Suggested by Study Quest · tap to edit</div>
+      </div>
+      <div class="type-row">
+        <div class="k"><b>caption</b><span>500 · 12/16 · uc</span></div>
+        <div><span class="chip">DUE TOMORROW</span></div>
+      </div>
+      <div class="type-row">
+        <div class="k"><b>stat</b><span>600 · 24/28 · tabular</span></div>
+        <div class="num" style="font:600 24px/1.2 system-ui,sans-serif;color:var(--strong);letter-spacing:-.02em">
+          1,240 <small style="font:400 14px system-ui,sans-serif;color:var(--muted)">XP</small></div>
+      </div>
+      <div class="type-row">
+        <div class="k"><b>science</b><span>400 · 17/30</span></div>
+        <div style="font:400 17px/1.75 system-ui,sans-serif">
+          H<sub style="font-size:.72em">2</sub>O + CO<sub style="font-size:.72em">2</sub>
+          &rarr; glucose + O<sub style="font-size:.72em">2</sub> &nbsp;·&nbsp;
+          v = dx/dt &nbsp;·&nbsp; E = mc<sup style="font-size:.72em">2</sup></div>
+      </div>
+    </div>
+    <p style="margin-top:var(--s4);font-size:14px;color:var(--muted);max-width:66ch">
+      Note body uses <code>body-lg</code> at 1.75 line-height, max 68–70 characters wide.
+      Headings are 600 rather than 800 — heavy weights were another thing reading as
+      machine-made.</p>
+  </section>
+
+  <!-- ============================ BUTTONS ============================ -->
+  <section id="buttons">
+    <div class="sec-head">
+      <span class="eyebrow">§9 Buttons</span>
+      <h2>Pill-shaped, 46 px, one primary per screen</h2>
+      <p>Fully rounded, Inter 500, with a two-layer focus ring that stays visible on every
+         surface. Hover deepens the fill; nothing shifts position.</p>
+    </div>
+
+    <div class="card">
+      <h3>Variants</h3>
+      <div class="demo">
+        <div class="row">
+          <button class="btn btn-p">Start studying</button>
+          <button class="btn btn-s">Add notes</button>
+          <button class="btn btn-g">Cancel</button>
+          <button class="btn btn-d">Delete note</button>
+          <button class="btn btn-x">+50 XP</button>
+        </div>
+        <table style="margin-top:var(--s6)">
+          <tr><th>Variant</th><th>Use for</th></tr>
+          <tr><td><b>primary</b> <code>iris-600</code></td><td>The one action the screen wants you to take. Once.</td></tr>
+          <tr><td><b>secondary</b> <code>card</code> + border</td><td>Everything else that matters on this screen.</td></tr>
+          <tr><td><b>ghost</b> transparent</td><td>Low-commitment actions, cancel, dismiss.</td></tr>
+          <tr><td><b>danger</b> transparent + <code>bad-500</code></td><td>Delete, discard, wipe. Never filled — filled red invites misclicks.</td></tr>
+          <tr><td><b>reward</b> <code>gold-500</code></td><td>Claiming an achievement. The only filled gold in the app.</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="g2" style="margin-top:var(--s4)">
+      <div class="card">
+        <h3>Sizes</h3>
+        <p>46 px default, 38 px in dense rows, 54 px for a single hero action.</p>
+        <div class="demo">
+          <div class="row" style="align-items:center">
+            <button class="btn btn-p btn-sm">Small · 38</button>
+            <button class="btn btn-p">Default · 46</button>
+            <button class="btn btn-p btn-lg">Large · 54</button>
+          </div>
+          <div class="demo" style="border-top:1px solid var(--border)">
+            <span class="lb">Full width · mobile primary</span>
+            <button class="btn btn-p btn-block">Start a 25-minute focus session</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>With icons</h3>
+        <p>17 px stroke icons at 1.6, optically centred against the label.</p>
+        <div class="demo">
+          <div class="row">
+            <button class="btn btn-p">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3.5v18l14-9z"/></svg>
+              Start studying
+            </button>
+            <button class="btn btn-s">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+              Add notes
+            </button>
+            <button class="btn btn-g">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
+              Back
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:var(--s4)">
+      <h3>States</h3>
+      <p>Every button ships all eight. Loading keeps the label width so nothing jumps.</p>
+      <div class="demo">
+        <div class="row" style="align-items:flex-end">
+          <div style="text-align:center">
+            <button class="btn btn-p">Default</button>
+            <div class="help" style="text-align:center">resting</div>
+          </div>
+          <div style="text-align:center">
+            <button class="btn btn-p" style="background:var(--iris-700)">Hover</button>
+            <div class="help" style="text-align:center">iris-700</div>
+          </div>
+          <div style="text-align:center">
+            <button class="btn btn-p">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                <circle cx="12" cy="12" r="9" opacity=".3"/><path d="M12 3a9 9 0 0 1 9 9"/>
+              </svg>
+              Generating
+            </button>
+            <div class="help" style="text-align:center">loading</div>
+          </div>
+          <div style="text-align:center">
+            <button class="btn btn-p" disabled>Disabled</button>
+            <div class="help" style="text-align:center">opacity .4</div>
+          </div>
+          <div style="text-align:center">
+            <button class="btn btn-s" disabled>Disabled</button>
+            <div class="help" style="text-align:center">secondary</div>
+          </div>
+          <div style="text-align:center">
+            <button class="btn btn-p btn-sm">Small</button>
+            <div class="help" style="text-align:center">dense rows</div>
+          </div>
+        </div>
+        <p class="help" style="margin-top:var(--s5)">
+          Focus ring: <code>0 0 0 2px surface, 0 0 0 4px iris-600</code> — two layers, so it
+          reads on both a white card and a tinted surface. Never removed without a replacement.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ INPUTS ============================ -->
+  <section id="inputs">
+    <div class="sec-head">
+      <span class="eyebrow">§9 Inputs</span>
+      <h2>46 px, pill-shaped, label always visible</h2>
+      <p>Every field has a real <code>&lt;label&gt;</code> above it — placeholder text is a
+         hint, never a label. Focus is <code>iris-400</code> with a 22 % ring; errors are
+         <code>bad-500</code> with a message underneath, not colour alone.</p>
+    </div>
+
+    <div class="g2">
+      <div class="card">
+        <h3>Text</h3>
+        <p>Default, filled, disabled, invalid.</p>
+        <div class="demo">
+          <div class="field">
+            <label for="a1">Title</label>
+            <input class="inp" id="a1" placeholder="e.g. Motion notes" />
+            <p class="help">Shown as the note heading and in search results.</p>
+          </div>
+          <div class="field">
+            <label for="a2">Subject</label>
+            <input class="inp" id="a2" value="Physics" />
+          </div>
+          <div class="field">
+            <label for="a3">Topic</label>
+            <input class="inp" id="a3" value="Move" disabled />
+            <p class="help">Locked — this note belongs to a different topic.</p>
+          </div>
+          <div class="field">
+            <label for="a4">Email</label>
+            <input class="inp bad" id="a4" value="praise@" aria-invalid="true" />
+            <p class="err">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5M12 16h.01"/></svg>
+              Enter an email address.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Search, select, textarea</h3>
+        <p>Icon-inset search, native select, and a note editor at 1.6 line-height.</p>
+        <div class="demo">
+          <div class="field">
+            <label for="b1">Search everything</label>
+            <div class="wrap-ico">
+              <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg>
+              <input class="inp" id="b1" placeholder="Newton, Motion, quiz…" />
+            </div>
+            <p class="help">Typo-tolerant — "Newt" finds "Newton".</p>
+          </div>
+          <div class="field">
+            <label for="b2">Difficulty</label>
+            <div class="sel-wrap">
+              <select class="sel" id="b2">
+                <option>Easy</option>
+                <option selected>Medium</option>
+                <option>Hard</option>
+                <option>Very challenging</option>
+              </select>
+              <svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            </div>
+          </div>
+          <div class="field">
+            <label for="b3">Notes</label>
+            <textarea class="ta" id="b3" placeholder="Type or paste your study material…"></textarea>
+            <p class="help">0 words · autosaves after 800 ms</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="g2" style="margin-top:var(--s4)">
+      <div class="card">
+        <h3>Choice</h3>
+        <p>Custom-drawn, so the 20 px target and the focus ring match the field styling.</p>
+        <div class="demo">
+          <label class="choice">
+            <input type="radio" name="t" checked />
+            <span class="box r"></span>
+            <span class="tx">Multiple choice</span>
+          </label>
+          <label class="choice">
+            <input type="radio" name="t" />
+            <span class="box r"></span>
+            <span class="tx">True / False</span>
+          </label>
+          <label class="choice">
+            <input type="radio" name="t" />
+            <span class="box r"></span>
+            <span class="tx">Short answer</span>
+          </label>
+          <div class="switch-row">
+            <span class="switch">
+              <input type="checkbox" checked />
+              <span class="tr"></span>
+            </span>
+            <span class="tx" style="font-size:15px">Remind me an hour before</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Segmented &amp; slider</h3>
+        <p>For a small set of mutually exclusive options shown inline.</p>
+        <div class="demo">
+          <span class="lb">Summary length</span>
+          <div class="seg">
+            <button>Quick</button>
+            <button class="on">Standard</button>
+            <button>Detailed</button>
+          </div>
+          <div class="field" style="margin-top:var(--s6)">
+            <label for="c1">Difficulty <span class="num" style="color:var(--muted);font-weight:400">Medium</span></label>
+            <input class="range" type="range" id="c1" min="0" max="4" value="2" />
+            <div class="row" style="justify-content:space-between;margin-top:8px">
+              <span style="font-size:12px;color:var(--muted)">Very easy</span>
+              <span style="font-size:12px;color:var(--muted)">Very challenging</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ SUPPORTING ============================ -->
+  <section id="supporting">
+    <div class="sec-head">
+      <span class="eyebrow">§9 Supporting</span>
+      <h2>The rest of the set</h2>
+      <p>Chips, monograms, progress and cards — the pieces the four above always appear
+         alongside.</p>
+    </div>
+    <div class="g2">
+      <div class="card">
+        <h3>Chips &amp; badges</h3>
+        <div class="demo row">
+          <span class="chip">All</span>
+          <span class="chip on">Today</span>
+          <span class="chip iris">Physics</span>
+          <span class="chip gold">LEVEL 7</span>
+          <span class="chip ok">Correct</span>
+          <span class="chip warn">Due soon</span>
+          <span class="chip bad">Overdue</span>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Progress</h3>
+        <p>Rings and tracks always carry a text label.</p>
+        <div class="demo" style="display:flex;gap:var(--s6);align-items:center;flex-wrap:wrap">
+          <div class="ring" style="--p:68" role="progressbar" aria-valuenow="68"
+               aria-label="Physics progress, 68 percent"><span class="num">68%</span></div>
+          <div style="flex:1;min-width:170px">
+            <div class="row" style="justify-content:space-between;margin-bottom:7px">
+              <span style="font-size:14px">Physics</span>
+              <span class="num" style="font-size:13px;color:var(--muted)">68%</span>
+            </div>
+            <div class="track"><i style="width:68%"></i></div>
+            <div class="row" style="justify-content:space-between;margin:18px 0 7px">
+              <span style="font-size:14px">Biology</span>
+              <span class="num" style="font-size:13px;color:var(--muted)">41%</span>
+            </div>
+            <div class="track"><i style="width:41%"></i></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Radius</h3>
+        <p>10 · 14 · 20 · 28 · full. Inputs and buttons are always full.</p>
+        <div class="demo row">
+          <div style="width:46px;height:46px;background:var(--iris-50);border:1px solid var(--iris-200);border-radius:10px"></div>
+          <div style="width:46px;height:46px;background:var(--iris-50);border:1px solid var(--iris-200);border-radius:14px"></div>
+          <div style="width:46px;height:46px;background:var(--iris-50);border:1px solid var(--iris-200);border-radius:20px"></div>
+          <div style="width:46px;height:46px;background:var(--iris-50);border:1px solid var(--iris-200);border-radius:28px"></div>
+          <div style="width:46px;height:46px;background:var(--iris-600);border-radius:999px"></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Spacing</h3>
+        <p>4 pt base. Screen padding 20, card padding 24, section gap 48.</p>
+        <div class="demo" style="display:flex;flex-direction:column;gap:6px">
+          <div style="height:8px;width:4px;background:var(--iris-300);border-radius:2px"></div>
+          <div style="height:8px;width:8px;background:var(--iris-400);border-radius:2px"></div>
+          <div style="height:8px;width:12px;background:var(--iris-500);border-radius:2px"></div>
+          <div style="height:8px;width:16px;background:var(--iris-600);border-radius:2px"></div>
+          <div style="height:8px;width:20px;background:var(--iris-700);border-radius:2px"></div>
+          <div style="height:8px;width:24px;background:var(--iris-800);border-radius:2px"></div>
+          <div style="height:8px;width:32px;background:var(--iris-900);border-radius:2px"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:var(--s4)">
+      <h3>Accessibility, as a definition of done</h3>
+      <table style="margin-top:var(--s2)">
+        <tr><th>#</th><th>Requirement</th></tr>
+        <tr><td class="num">1</td><td>Keyboard reachable and operable, visible focus ring everywhere</td></tr>
+        <tr><td class="num">2</td><td>Touch targets at least 44 × 44 px</td></tr>
+        <tr><td class="num">3</td><td>Progress exposes <code>role="progressbar"</code> and <code>aria-valuenow</code></td></tr>
+        <tr><td class="num">4</td><td>Quiz runner announces questions and results via a live region</td></tr>
+        <tr><td class="num">5</td><td>Colour is never the only signal — always paired with a label or icon</td></tr>
+        <tr><td class="num">6</td><td><code>prefers-reduced-motion</code> honoured</td></tr>
+        <tr><td class="num">7</td><td>AA contrast in both light and dark themes</td></tr>
+      </table>
+      <p class="help" style="margin-top:var(--s4)">
+        Try Tab through this page — every control here is a real focusable element with the
+        production focus ring, and every field has a real label.
+      </p>
+    </div>
+  </section>
+
+  <p class="foot">
+    Tokens from <code>docs/IMPLEMENTATION_PLAN.md</code> Part I &sect;3–&sect;4, &sect;9 ·
+    static reference, not the built app · toggle the theme to check both
+  </p>
+</div>
+
+<script>
+  const tgl = document.getElementById('tgl');
+  const apply = d => {
+    document.body.classList.toggle('dark', d);
+    tgl.textContent = d ? 'Light' : 'Dark';
+  };
+  apply(window.matchMedia('(prefers-color-scheme: dark)').matches);
+  tgl.addEventListener('click', () => apply(!document.body.classList.contains('dark')));
+</script>
+</body>
+</html>
