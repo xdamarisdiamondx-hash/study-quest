@@ -32,10 +32,10 @@ It should feel like a personal study companion and quest guide, not a normal tas
 
 ## Target Users
 
-| Primary | Secondary |
-| --- | --- |
-| Secondary school students | Independent learners |
-| University students | Exam candidates, self-taught learners |
+| Primary                   | Secondary                             |
+| ------------------------- | ------------------------------------- |
+| Secondary school students | Independent learners                  |
+| University students       | Exam candidates, self-taught learners |
 
 ## Core Experience
 
@@ -149,24 +149,24 @@ Study quest/
 
 The work is split into **23 sequential phases** across 6 milestones. **P0–P19 is the MVP.**
 
-| Milestone | Outcome | Phases | Days |
-| --- | --- | --- | --- |
-| **M0 Foundation** | App runs locally, looks like Study Quest, has an account | P0–P3 | 13 |
-| **M1 Learn** | Organise subjects, write notes, AI works | P4–P6 | 12 |
-| **M2 Understand & Practice** | The full Plan→Review loop works | P7–P10 | 18 |
-| **M3 Organise** | Study Quest guides the day | P11–P14 | 15 |
-| **M4 Motivate** | Progress visible, "what's next?" always answered | P15–P19 | 15 |
-| **M5 Ship** | Installable, accessible, backed up, running daily | P20–P22 | 11 |
+| Milestone                    | Outcome                                                  | Phases  | Days |
+| ---------------------------- | -------------------------------------------------------- | ------- | ---- |
+| **M0 Foundation**            | App runs locally, looks like Study Quest, has an account | P0–P3   | 13   |
+| **M1 Learn**                 | Organise subjects, write notes, AI works                 | P4–P6   | 12   |
+| **M2 Understand & Practice** | The full Plan→Review loop works                          | P7–P10  | 18   |
+| **M3 Organise**              | Study Quest guides the day                               | P11–P14 | 15   |
+| **M4 Motivate**              | Progress visible, "what's next?" always answered         | P15–P19 | 15   |
+| **M5 Ship**                  | Installable, accessible, backed up, running daily        | P20–P22 | 11   |
 
 Full checklists and exit criteria: [docs/PHASES.md](docs/PHASES.md).
 
 ## Brand
 
-| File | Status | Use |
-| --- | --- | --- |
-| [`brand/logo-mark.svg`](brand/logo-mark.svg) | **The logo** | Everywhere in the product |
-| `brand/favicon.svg` | Derivative | ≤ 32 px — the same mark, spine detail removed |
-| `brand/logo-mono.svg` | Derivative | Single colour, for print and watermarks |
+| File                                         | Status       | Use                                           |
+| -------------------------------------------- | ------------ | --------------------------------------------- |
+| [`brand/logo-mark.svg`](brand/logo-mark.svg) | **The logo** | Everywhere in the product                     |
+| `brand/favicon.svg`                          | Derivative   | ≤ 32 px — the same mark, spine detail removed |
+| `brand/logo-mono.svg`                        | Derivative   | Single colour, for print and watermarks       |
 
 The mark is an open book beneath a gold quest star. The interface uses one accent hue
 (`iris`) and warm neutrals (`sand`); gold appears only on rewards. Subjects are identified by
@@ -176,41 +176,41 @@ and what changed from the first preview in
 
 **See it rendered:**
 
-| File | Shows |
-| --- | --- |
-| [`design.html`](design.html) | Colour ramps, type scale, buttons, inputs — the reference sheet |
-| [`design-preview.html`](design-preview.html) | The above plus Home, an empty state, and a dark theme |
+| File                                         | Shows                                                           |
+| -------------------------------------------- | --------------------------------------------------------------- |
+| [`design.html`](design.html)                 | Colour ramps, type scale, buttons, inputs — the reference sheet |
+| [`design-preview.html`](design-preview.html) | The above plus Home, an empty state, and a dark theme           |
 
 ## Documentation
 
-| Document | What it covers |
-| --- | --- |
-| [docs/PHASES.md](docs/PHASES.md) | **Start here** — the 23 phases in order, one line each, with links |
-| [docs/PRD.md](docs/PRD.md) | The product requirements, plus Appendix A — notes on the technology decisions, their rationale and trade-offs |
-| [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) | Everything needed to build the product, in one document |
+| Document                                                   | What it covers                                                                                                |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| [docs/PHASES.md](docs/PHASES.md)                           | **Start here** — the 23 phases in order, one line each, with links                                            |
+| [docs/PRD.md](docs/PRD.md)                                 | The product requirements, plus Appendix A — notes on the technology decisions, their rationale and trade-offs |
+| [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) | Everything needed to build the product, in one document                                                       |
 
 The implementation plan has three parts:
 
-| Part | Sections | What it covers |
-| --- | --- | --- |
-| **I — Design system** | §1–§13 | Brand and logo usage, colour, typography, spacing, motion, layout, component inventory, theming, voice, accessibility |
-| **II — Architecture** | §14–§22 | Stack, system shape, repository layout, 26 architecture decisions, data model, API surface, AI layer, non-functional targets, technical risks |
-| **III — Delivery plan** | §23–§30 | 23 phases in 6 milestones, with checklists, exit criteria, effort, traceability, risks and backlog |
+| Part                    | Sections | What it covers                                                                                                                                |
+| ----------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| **I — Design system**   | §1–§13   | Brand and logo usage, colour, typography, spacing, motion, layout, component inventory, theming, voice, accessibility                         |
+| **II — Architecture**   | §14–§22  | Stack, system shape, repository layout, 26 architecture decisions, data model, API surface, AI layer, non-functional targets, technical risks |
+| **III — Delivery plan** | §23–§30  | 23 phases in 6 milestones, with checklists, exit criteria, effort, traceability, risks and backlog                                            |
 
 ## Technical direction
 
 The app and the database run locally, at no cost:
 
-| Concern | Choice | Runs |
-| --- | --- | --- |
-| App framework | React 19 + TypeScript + Vite, installable as a PWA | Local |
-| Database | PostgreSQL 17 + Drizzle ORM, in Docker | Local container |
-| Authentication | Better Auth (email + password, local sessions) | Local |
-| File storage | Cloudflare R2 (10 GB free, no egress fees) | Cloud — the only exception |
-| Server | Hono on Node.js 22, serving the app and API from one process | Local |
-| AI | Provider-agnostic: Ollama locally (free, offline) or any cloud key | Local or cloud |
-| Search | PostgreSQL full-text + `pg_trgm` | Local container |
-| Also | Tailwind CSS v4, Zod, TanStack Query, Storybook, Vitest, Playwright | Local |
+| Concern        | Choice                                                              | Runs                       |
+| -------------- | ------------------------------------------------------------------- | -------------------------- |
+| App framework  | React 19 + TypeScript + Vite, installable as a PWA                  | Local                      |
+| Database       | PostgreSQL 17 + Drizzle ORM, in Docker                              | Local container            |
+| Authentication | Better Auth (email + password, local sessions)                      | Local                      |
+| File storage   | Cloudflare R2 (10 GB free, no egress fees)                          | Cloud — the only exception |
+| Server         | Hono on Node.js 22, serving the app and API from one process        | Local                      |
+| AI             | Provider-agnostic: Ollama locally (free, offline) or any cloud key  | Local or cloud             |
+| Search         | PostgreSQL full-text + `pg_trgm`                                    | Local container            |
+| Also           | Tailwind CSS v4, Zod, TanStack Query, Storybook, Vitest, Playwright | Local                      |
 
 The reasoning behind each choice, the alternatives considered, and the trade-offs are recorded
 in [docs/PRD.md](docs/PRD.md#appendix-a--notes-technical-approach-and-decisions) Appendix A.

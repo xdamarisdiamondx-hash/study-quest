@@ -2,6 +2,28 @@
    Study Quest design tokens
    Source: docs/IMPLEMENTATION_PLAN.md Part I (sections 3, 4, 5, 7)
 
+   Typography: Fraunces (variable serif, optical size axis) for
+   display and headings; Inter (variable sans) for UI and body.
+   Both self-hosted — the app must work offline, so no CDN.
+   ============================================================ */
+
+@font-face {
+  font-family: "Fraunces";
+  src: url("./fonts/fraunces-latin.woff2") format("woff2-variations");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("./fonts/inter-latin.woff2") format("woff2-variations");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ============================================================
    One accent hue (iris). Warm neutrals (sand). Gold only for
    rewards. Status colours are desaturated. Components must use
    these variables and never a raw hex value.
@@ -9,64 +31,71 @@
 
 :root {
   /* --- accent: iris ------------------------------------------------ */
-  --iris-50:  #F7F5FF;
-  --iris-100: #EEE9FE;
-  --iris-200: #DDD3FE;
-  --iris-300: #C4B5FD;
-  --iris-400: #A78BFA;
-  --iris-500: #8B5CF6;
-  --iris-600: #7C3AED;
-  --iris-700: #6D28D9;
-  --iris-800: #5B21B6;
-  --iris-900: #4C1D95;
-  --iris-950: #2E1065;
+  --iris-50: #f7f5ff;
+  --iris-100: #eee9fe;
+  --iris-200: #ddd3fe;
+  --iris-300: #c4b5fd;
+  --iris-400: #a78bfa;
+  --iris-500: #8b5cf6;
+  --iris-600: #7c3aed;
+  --iris-700: #6d28d9;
+  --iris-800: #5b21b6;
+  --iris-900: #4c1d95;
+  --iris-950: #2e1065;
 
   /* --- reward: gold (rewards only) --------------------------------- */
-  --gold-100: #FEF3C7;
-  --gold-200: #FDE68A;
-  --gold-300: #FCD34D;
-  --gold-400: #FBBF24;
-  --gold-500: #F59E0B;
-  --gold-600: #D97706;
+  --gold-100: #fef3c7;
+  --gold-200: #fde68a;
+  --gold-300: #fcd34d;
+  --gold-400: #fbbf24;
+  --gold-500: #f59e0b;
+  --gold-600: #d97706;
 
   /* --- status ------------------------------------------------------ */
-  --ok-500:   #0E9F6E;
-  --ok-100:   #D1FAE5;
-  --warn-500: #B45309;
-  --warn-100: #FEF3C7;
-  --bad-500:  #DC2626;
-  --bad-100:  #FEE2E2;
+  --ok-500: #0e9f6e;
+  --ok-100: #d1fae5;
+  --warn-500: #b45309;
+  --warn-100: #fef3c7;
+  --bad-500: #dc2626;
+  --bad-100: #fee2e2;
 
   /* --- neutrals: sand (warm greys) --------------------------------- */
-  --sand-50:  #FAFAF9;
-  --sand-100: #F5F5F4;
-  --sand-200: #E7E5E4;
-  --sand-300: #D6D3D1;
-  --sand-400: #A8A29E;
-  --sand-500: #78716C;
-  --sand-600: #57534E;
-  --sand-700: #44403C;
+  --sand-50: #fafaf9;
+  --sand-100: #f5f5f4;
+  --sand-200: #e7e5e4;
+  --sand-300: #d6d3d1;
+  --sand-400: #a8a29e;
+  --sand-500: #78716c;
+  --sand-600: #57534e;
+  --sand-700: #44403c;
   --sand-800: #292524;
-  --sand-900: #1C1917;
-  --sand-950: #0C0A09;
+  --sand-900: #1c1917;
+  --sand-950: #0c0a09;
 
   /* --- theme surfaces ---------------------------------------------- */
-  --page:   var(--sand-50);
-  --card:   #FFFFFF;
-  --raised: #FFFFFF;
+  --page: var(--sand-50);
+  --card: #ffffff;
+  --raised: #ffffff;
   --border: var(--sand-200);
-  --text:   var(--sand-700);
+  --text: var(--sand-700);
   --strong: var(--sand-800);
-  --muted:  var(--sand-500);
+  --muted: var(--sand-500);
   --accent: var(--iris-600);
   --accent-hover: var(--iris-700);
-  --on-accent: #FFFFFF;
+  --on-accent: #ffffff;
   --track: var(--sand-100);
 
   /* --- spacing: 4pt base ------------------------------------------- */
-  --s1: 4px;   --s2: 8px;   --s3: 12px;  --s4: 16px;
-  --s5: 20px;  --s6: 24px;  --s8: 32px;  --s10: 40px;
-  --s12: 48px; --s16: 64px;
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 20px;
+  --s6: 24px;
+  --s8: 32px;
+  --s10: 40px;
+  --s12: 48px;
+  --s16: 64px;
 
   /* --- radius ------------------------------------------------------- */
   --r-sm: 10px;
@@ -76,66 +105,79 @@
   --r-full: 999px;
 
   /* --- elevation ---------------------------------------------------- */
-  --e1: 0 1px 2px rgb(28 25 23 / .04), 0 1px 3px rgb(28 25 23 / .05);
-  --e2: 0 4px 8px -2px rgb(28 25 23 / .06), 0 2px 4px -2px rgb(28 25 23 / .04);
-  --e3: 0 12px 20px -6px rgb(28 25 23 / .10), 0 4px 8px -4px rgb(28 25 23 / .06);
-  --e4: 0 24px 40px -12px rgb(28 25 23 / .14), 0 8px 16px -8px rgb(28 25 23 / .08);
+  --e1: 0 1px 2px rgb(28 25 23 / 0.04), 0 1px 3px rgb(28 25 23 / 0.05);
+  --e2: 0 4px 8px -2px rgb(28 25 23 / 0.06), 0 2px 4px -2px rgb(28 25 23 / 0.04);
+  --e3: 0 12px 20px -6px rgb(28 25 23 / 0.1), 0 4px 8px -4px rgb(28 25 23 / 0.06);
+  --e4: 0 24px 40px -12px rgb(28 25 23 / 0.14), 0 8px 16px -8px rgb(28 25 23 / 0.08);
 
   /* --- typography --------------------------------------------------- */
-  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
-  --t-display: 600 32px/1.15 var(--font-sans);
-  --t-h1:      600 28px/1.2  var(--font-sans);
-  --t-h2:      600 22px/1.3  var(--font-sans);
-  --t-h3:      600 17px/1.4  var(--font-sans);
-  --t-body-lg: 400 18px/1.65 var(--font-sans);
-  --t-body:    400 16px/1.6  var(--font-sans);
-  --t-body-sm: 400 14px/1.5  var(--font-sans);
-  --t-caption: 500 11px/1.3  var(--font-sans);
-  --t-stat:    600 24px/1.2  var(--font-sans);
+  /* Display and headings are a serif. It carries the editorial, considered
+     character the product needs, and it reads as a study/reading tool rather than
+     a generic dashboard. The sans stays for UI: numbers, labels, buttons and
+     body text, where legibility at 11-14px matters more than personality. */
+  --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+
+  /* Serif is optically smaller than a sans at the same size, so display sizes
+     sit a step larger, and weights sit lighter — a 600 serif looks heavier than
+     a 600 sans. Tracking tightens as size grows. */
+  --t-display: 500 40px/1.1 var(--font-display);
+  --t-h1: 500 32px/1.2 var(--font-display);
+  --t-h2: 500 25px/1.3 var(--font-display);
+  --t-h3: 600 19px/1.35 var(--font-display);
+  --t-body-lg: 400 18px/1.7 var(--font-sans);
+  --t-body: 400 16px/1.6 var(--font-sans);
+  --t-body-sm: 400 14px/1.5 var(--font-sans);
+  --t-caption: 500 11px/1.3 var(--font-sans);
+  --t-stat: 600 24px/1.2 var(--font-sans);
 
   /* --- motion (section 7) ------------------------------------------- */
   --instant: 100ms;
-  --fast:    160ms cubic-bezier(.2, 0, 0, 1);
-  --base:    220ms cubic-bezier(.2, 0, 0, 1);
-  --slow:    320ms cubic-bezier(.16, 1, .3, 1);
-  --deliberate: 520ms cubic-bezier(.34, 1.56, .64, 1);
+  --fast: 160ms cubic-bezier(0.2, 0, 0, 1);
+  --base: 220ms cubic-bezier(0.2, 0, 0, 1);
+  --slow: 320ms cubic-bezier(0.16, 1, 0.3, 1);
+  --deliberate: 520ms cubic-bezier(0.34, 1.56, 0.64, 1);
 
   /* --- ambient gradient (section 3.6, decoration only) --------------- */
-  --ambient-opacity: .32;
+  --ambient-opacity: 0.32;
 }
 
 /* --- dark theme ---------------------------------------------------- */
 [data-theme="dark"] {
-  --page:   var(--sand-950);
-  --card:   var(--sand-900);
+  --page: var(--sand-950);
+  --card: var(--sand-900);
   --raised: #262220;
   --border: #292524;
-  --text:   var(--sand-100);
+  --text: var(--sand-100);
   --strong: var(--sand-950);
-  --muted:  var(--sand-400);
-  --accent: #A78BFA;
-  --accent-hover: #8B5CF6;
-  --on-accent: #1C1030;
+  --muted: var(--sand-400);
+  --accent: #a78bfa;
+  --accent-hover: #8b5cf6;
+  --on-accent: #1c1030;
   --track: #292524;
 
-  --iris-50:  rgb(167 139 250 / .10);
-  --iris-100: rgb(167 139 250 / .16);
-  --iris-200: rgb(167 139 250 / .26);
-  --gold-100: rgb(245 158 11 / .14);
-  --ok-100:   rgb(14 159 110 / .16);
-  --warn-100: rgb(180 83 9 / .16);
-  --bad-100:  rgb(220 38 38 / .16);
+  --iris-50: rgb(167 139 250 / 0.1);
+  --iris-100: rgb(167 139 250 / 0.16);
+  --iris-200: rgb(167 139 250 / 0.26);
+  --gold-100: rgb(245 158 11 / 0.14);
+  --ok-100: rgb(14 159 110 / 0.16);
+  --warn-100: rgb(180 83 9 / 0.16);
+  --bad-100: rgb(220 38 38 / 0.16);
 
-  --e1: 0 1px 2px rgb(0 0 0 / .4);
-  --e2: 0 4px 8px -2px rgb(0 0 0 / .45);
-  --e3: 0 12px 20px -6px rgb(0 0 0 / .5);
-  --e4: 0 24px 40px -12px rgb(0 0 0 / .6);
+  --e1: 0 1px 2px rgb(0 0 0 / 0.4);
+  --e2: 0 4px 8px -2px rgb(0 0 0 / 0.45);
+  --e3: 0 12px 20px -6px rgb(0 0 0 / 0.5);
+  --e4: 0 24px 40px -12px rgb(0 0 0 / 0.6);
 
-  --ambient-opacity: .20;
+  --ambient-opacity: 0.2;
 }
 
 @media (prefers-reduced-motion: reduce) {
   :root {
-    --fast: 0ms; --base: 0ms; --slow: 0ms; --deliberate: 0ms; --instant: 0ms;
+    --fast: 0ms;
+    --base: 0ms;
+    --slow: 0ms;
+    --deliberate: 0ms;
+    --instant: 0ms;
   }
 }

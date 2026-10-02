@@ -19,15 +19,17 @@ export function Logo({ size = 32, title }: { size?: number; title?: string }) {
       aria-label={title}
       aria-hidden={title ? undefined : true}
     >
+      {/* Gradient stops use design tokens, so the mark follows the theme.
+          See design system section 3.1. */}
       <defs>
         <linearGradient id="sq-logo" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#A78BFA" />
-          <stop offset="0.5" stopColor="#7C3AED" />
-          <stop offset="1" stopColor="#4C1D95" />
+          <stop offset="0" stopColor="var(--iris-400)" />
+          <stop offset="0.5" stopColor="var(--iris-600)" />
+          <stop offset="1" stopColor="var(--iris-900)" />
         </linearGradient>
         <linearGradient id="sq-star" x1="0" y1="0" x2="0.3" y2="1">
-          <stop offset="0" stopColor="#FDE68A" />
-          <stop offset="1" stopColor="#F59E0B" />
+          <stop offset="0" stopColor="var(--gold-200)" />
+          <stop offset="1" stopColor="var(--gold-500)" />
         </linearGradient>
       </defs>
       <rect width="512" height="512" rx="116" fill="url(#sq-logo)" />
@@ -91,7 +93,10 @@ export function EmptyState({
 }) {
   return (
     <div className="sq-empty">
-      <div className={`sq-mono sq-mono-lg ${monogram ? "" : "sq-mono-active"}`} style={{ margin: "0 auto" }}>
+      <div
+        className={`sq-mono sq-mono-lg ${monogram ? "" : "sq-mono-active"}`}
+        style={{ margin: "0 auto" }}
+      >
         {monogram ?? "+"}
       </div>
       <b>{title}</b>
@@ -181,7 +186,9 @@ export function Monogram({
   active?: boolean;
   large?: boolean;
 }) {
-  const cls = ["sq-mono", large ? "sq-mono-lg" : "", active ? "sq-mono-active" : ""].filter(Boolean).join(" ");
+  const cls = ["sq-mono", large ? "sq-mono-lg" : "", active ? "sq-mono-active" : ""]
+    .filter(Boolean)
+    .join(" ");
   return <span className={cls}>{text}</span>;
 }
 
@@ -190,7 +197,9 @@ export function LevelBadge({ level }: { level: number }) {
     <span className="sq-lvl">
       <span className="sq-lvl-badge">{level}</span>
       <span>
-        <span className="sq-lvl-name">{LEVEL_TITLES[Math.min(level, LEVEL_TITLES.length) - 1]}</span>
+        <span className="sq-lvl-name">
+          {LEVEL_TITLES[Math.min(level, LEVEL_TITLES.length) - 1]}
+        </span>
         <br />
         <span className="sq-lvl-sub">Level {level}</span>
       </span>
@@ -237,7 +246,11 @@ export function CheckItem({
 
 export type StepState = "done" | "current" | "todo" | "locked";
 
-export function QuestStepper({ steps }: { steps: { id: string; title: string; state: StepState }[] }) {
+export function QuestStepper({
+  steps,
+}: {
+  steps: { id: string; title: string; state: StepState }[];
+}) {
   return (
     <ol className="sq-steps" style={{ listStyle: "none", margin: 0, padding: 0 }}>
       {steps.map((s, i) => (

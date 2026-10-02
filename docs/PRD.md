@@ -1,12 +1,12 @@
 # Study Quest — Product Requirements Document
 
-| | |
-| --- | --- |
-| **Product** | Study Quest |
-| **Version** | 1.0 |
-| **Author** | Praise |
-| **Source** | `Study Quest PRD.docx` |
-| **Notes** | [Appendix A](#appendix-a--notes-technical-approach-and-decisions) — technology choices, rationale and trade-offs (added after v1.0) |
+|             |                                                                                                                                     |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| **Product** | Study Quest                                                                                                                         |
+| **Version** | 1.0                                                                                                                                 |
+| **Author**  | Praise                                                                                                                              |
+| **Source**  | `Study Quest PRD.docx`                                                                                                              |
+| **Notes**   | [Appendix A](#appendix-a--notes-technical-approach-and-decisions) — technology choices, rationale and trade-offs (added after v1.0) |
 
 > Sections 1–34 are the original requirements, unchanged. Appendix A is an engineering note
 > recording the decisions taken to build it.
@@ -509,18 +509,18 @@ Search should help them find:
 
 A typical Study Quest experience should look like this:
 
-| Step | Stage | What happens |
-| --- | --- | --- |
-| 1 | **Plan** | The student adds their assignments, deadlines, tests, and study goals. |
-| 2 | **Organize** | They create subjects and topics. |
-| 3 | **Add Notes** | They type or paste their study material. |
-| 4 | **Understand** | Study Quest creates summaries and explanations. |
-| 5 | **Study** | The student reads, listens, or follows a guided study session. |
-| 6 | **Practice** | Study Quest creates flashcards and quizzes. |
-| 7 | **Review** | The app identifies weak areas. |
-| 8 | **Retry** | The student takes a focused retry quiz. |
-| 9 | **Complete** | The student finishes their task or quest. |
-| 10 | **Progress** | They earn XP, unlock achievements, maintain their streak, and see their progress. |
+| Step | Stage          | What happens                                                                      |
+| ---- | -------------- | --------------------------------------------------------------------------------- |
+| 1    | **Plan**       | The student adds their assignments, deadlines, tests, and study goals.            |
+| 2    | **Organize**   | They create subjects and topics.                                                  |
+| 3    | **Add Notes**  | They type or paste their study material.                                          |
+| 4    | **Understand** | Study Quest creates summaries and explanations.                                   |
+| 5    | **Study**      | The student reads, listens, or follows a guided study session.                    |
+| 6    | **Practice**   | Study Quest creates flashcards and quizzes.                                       |
+| 7    | **Review**     | The app identifies weak areas.                                                    |
+| 8    | **Retry**      | The student takes a focused retry quiz.                                           |
+| 9    | **Complete**   | The student finishes their task or quest.                                         |
+| 10   | **Progress**   | They earn XP, unlock achievements, maintain their streak, and see their progress. |
 
 ## 31. Main Sections of the App
 
@@ -621,11 +621,11 @@ each decision costs, and what changed as the design was reviewed.
 It is expected to change as the build goes on — that is the point of writing it down. Treat §1–34
 as the requirements and this appendix as the reasoning behind them.
 
-| Section | Covers |
-| --- | --- |
+| Section   | Covers                                                                |
+| --------- | --------------------------------------------------------------------- |
 | A.1 – A.6 | Technology decisions: stack, what changed and why, alternatives, cost |
-| A.7 | Design changes made to the first preview, and why |
-| A.8 | Where the full detail lives |
+| A.7       | Design changes made to the first preview, and why                     |
+| A.8       | Where the full detail lives                                           |
 
 **Decided so far:** React 19 + Vite · PostgreSQL 17 in Docker · Better Auth · Cloudflare R2 for
 files · provider-agnostic AI with Ollama first. The app and database run locally. The interface
@@ -633,17 +633,17 @@ uses one accent hue (`iris`), warm neutrals (`sand`), and one logo.
 
 ## A.1 Decision summary
 
-| Concern | Decision | Runs |
-| --- | --- | --- |
-| App framework | React 19 + TypeScript + Vite (PWA) | Local |
-| Database | PostgreSQL 17 + Drizzle ORM, in Docker | Local container |
-| Authentication | Better Auth — email + password, session cookies | Local |
-| File storage | Cloudflare R2 (S3-compatible) | Cloud (the only exception) |
-| Server | Hono on Node.js 22 | Local |
-| Styling | Tailwind CSS v4 + design tokens | — |
-| AI | Provider-agnostic adapters; Ollama first | Local or cloud |
-| Search | PostgreSQL full-text + `pg_trgm` | Local container |
-| Cost | Everything on a free tier or free software | $0 |
+| Concern        | Decision                                        | Runs                       |
+| -------------- | ----------------------------------------------- | -------------------------- |
+| App framework  | React 19 + TypeScript + Vite (PWA)              | Local                      |
+| Database       | PostgreSQL 17 + Drizzle ORM, in Docker          | Local container            |
+| Authentication | Better Auth — email + password, session cookies | Local                      |
+| File storage   | Cloudflare R2 (S3-compatible)                   | Cloud (the only exception) |
+| Server         | Hono on Node.js 22                              | Local                      |
+| Styling        | Tailwind CSS v4 + design tokens                 | —                          |
+| AI             | Provider-agnostic adapters; Ollama first        | Local or cloud             |
+| Search         | PostgreSQL full-text + `pg_trgm`                | Local container            |
+| Cost           | Everything on a free tier or free software      | $0                         |
 
 **The app and the database run locally** on one Windows machine. `pnpm dev` starts the database
 container and the app server; access is from that machine, or from a phone on the same Wi-Fi.
@@ -658,6 +658,7 @@ Four decisions changed after the first draft of the technical plan.
 **Was:** a single SQLite file with no server to run.
 **Now:** PostgreSQL 17 in a Docker container.
 **Why:**
+
 - The data is deeply relational — subjects → topics → notes → quizzes → attempts → answers,
   plus XP events, streaks and quest steps. Postgres enforces that with real constraints and
   foreign keys; SQLite would leave integrity to application code.
@@ -685,14 +686,15 @@ that waits for the database before the app boots.
 **Was:** custom email + password with scrypt hashing and session cookies written by hand.
 **Now:** Better Auth, self-hosted inside the app server.
 **Why:**
+
 - Password hashing, session rotation, and expiry are easy to get subtly wrong. Better Auth is
   a mature, MIT-licensed library that does them correctly, and it keeps all credential data in
   the local database — nothing is sent to a third party.
 - It is free, runs on our own machine, and supports exactly the model we need (email +
   password, database-backed sessions, httpOnly cookies).
 - Less bespoke security code to maintain in a project this size.
-**Cost:** a real dependency whose schema and API we must track, and we still own LAN-access
-PINs and route rate-limiting.
+  **Cost:** a real dependency whose schema and API we must track, and we still own LAN-access
+  PINs and route rate-limiting.
 
 ### File storage: local disk → Cloudflare R2
 
@@ -700,6 +702,7 @@ PINs and route rate-limiting.
 **Now:** a private Cloudflare R2 bucket, via its S3-compatible API, with local disk as the
 fallback.
 **Why:**
+
 - R2's free tier is genuinely usable: **10 GB-month storage, 1M writes/month, 10M reads/month,
   and no egress fees**. Beyond that it is $0.015/GB-month — so the failure mode is a small
   bill, never a large one.
@@ -707,12 +710,12 @@ fallback.
   fast, and a phone on the LAN can load a large file without streaming it through the PC.
 - The S3-compatible API means this is not a dead end: any other S3 provider, or a local disk
   folder, can be swapped in behind the same interface.
-**Cost — and this is the important trade-off:** R2 is a cloud service, so it is the one place
-student content leaves the machine. It needs a free Cloudflare account, it does not work
-offline, and a leaked token could read or delete a bucket. Therefore: uploads are strictly
-opt-in, nothing is ever uploaded without an explicit user action, the token is stored
-server-side in a git-ignored config file and is write-only in the UI, the app is fully usable
-with no R2 configured, and Settings states plainly which files are stored off-device.
+  **Cost — and this is the important trade-off:** R2 is a cloud service, so it is the one place
+  student content leaves the machine. It needs a free Cloudflare account, it does not work
+  offline, and a leaked token could read or delete a bucket. Therefore: uploads are strictly
+  opt-in, nothing is ever uploaded without an explicit user action, the token is stored
+  server-side in a git-ignored config file and is write-only in the UI, the app is fully usable
+  with no R2 configured, and Settings states plainly which files are stored off-device.
 
 ### AI: unchanged, but confirmed local-first
 
@@ -722,18 +725,18 @@ guidance rather than broken buttons.
 
 ## A.3 Alternatives considered and rejected
 
-| Choice | Alternative | Why not |
-| --- | --- | --- |
-| PostgreSQL | SQLite | Needs aggregates, constraints and full-text search; harder to host later |
-| PostgreSQL in Docker | Native Windows service | Version drift, registry entries, a service that runs forever |
-| Better Auth | Hand-rolled sessions | Security-critical code is easy to get wrong |
-| Better Auth | Hosted auth (Clerk, Auth0) | Sends credentials off-machine, breaks the local-only rule |
-| Cloudflare R2 | Local folder | Large files bloat local backups; no phone-friendly streaming |
-| Cloudflare R2 | S3 / Backblaze | S3 has egress fees; R2 is free and S3-compatible |
-| React + Vite | Next.js | The app is private and behind a login; SSR adds a second rendering model for no benefit |
-| React + Vite | SvelteKit, Nuxt | Less ecosystem for the interactive study flows this product needs |
-| Node + Hono | Next.js API, Firebase | Keeps the stack one language, one process, zero cost |
-| Ollama first | Cloud AI only | Local models are free, private, and work offline |
+| Choice               | Alternative                | Why not                                                                                 |
+| -------------------- | -------------------------- | --------------------------------------------------------------------------------------- |
+| PostgreSQL           | SQLite                     | Needs aggregates, constraints and full-text search; harder to host later                |
+| PostgreSQL in Docker | Native Windows service     | Version drift, registry entries, a service that runs forever                            |
+| Better Auth          | Hand-rolled sessions       | Security-critical code is easy to get wrong                                             |
+| Better Auth          | Hosted auth (Clerk, Auth0) | Sends credentials off-machine, breaks the local-only rule                               |
+| Cloudflare R2        | Local folder               | Large files bloat local backups; no phone-friendly streaming                            |
+| Cloudflare R2        | S3 / Backblaze             | S3 has egress fees; R2 is free and S3-compatible                                        |
+| React + Vite         | Next.js                    | The app is private and behind a login; SSR adds a second rendering model for no benefit |
+| React + Vite         | SvelteKit, Nuxt            | Less ecosystem for the interactive study flows this product needs                       |
+| Node + Hono          | Next.js API, Firebase      | Keeps the stack one language, one process, zero cost                                    |
+| Ollama first         | Cloud AI only              | Local models are free, private, and work offline                                        |
 
 ## A.4 What this does not change
 
@@ -744,22 +747,22 @@ bring them into the MVP.
 
 ## A.5 Prerequisites this now requires
 
-| Requirement | Why | Notes |
-| --- | --- | --- |
-| Node.js 22 LTS | Runs the app server and the web build | Free |
-| pnpm | Workspace management | Free |
-| Docker Desktop | Runs PostgreSQL | Free; needs WSL 2 |
-| A Cloudflare account | R2 file storage | Optional — the app works without it |
-| An AI provider | Summaries, quizzes, flashcards | Optional — Ollama is free and local |
+| Requirement          | Why                                   | Notes                               |
+| -------------------- | ------------------------------------- | ----------------------------------- |
+| Node.js 22 LTS       | Runs the app server and the web build | Free                                |
+| pnpm                 | Workspace management                  | Free                                |
+| Docker Desktop       | Runs PostgreSQL                       | Free; needs WSL 2                   |
+| A Cloudflare account | R2 file storage                       | Optional — the app works without it |
+| An AI provider       | Summaries, quizzes, flashcards        | Optional — Ollama is free and local |
 
 ## A.6 Cost position
 
 Everything is free. The two services that could ever cost money are capped:
 
-| Service | Free allowance | Cost beyond that |
-| --- | --- | --- |
-| Cloudflare R2 | 10 GB storage, 1M writes, 10M reads, free egress | ~$0.015/GB-month |
-| AI provider | Free tiers, or a local Ollama model | Varies; the app tracks usage and enforces a daily cap |
+| Service       | Free allowance                                   | Cost beyond that                                      |
+| ------------- | ------------------------------------------------ | ----------------------------------------------------- |
+| Cloudflare R2 | 10 GB storage, 1M writes, 10M reads, free egress | ~$0.015/GB-month                                      |
+| AI provider   | Free tiers, or a local Ollama model              | Varies; the app tracks usage and enforces a daily cap |
 
 ## A.7 Design changes made to the first preview
 
@@ -775,7 +778,8 @@ subject palette. A subject list was a row of competing hues where no colour carr
 **Now:** a single accent, `iris`, in ten steps. Warm neutrals (`sand`) carry everything else.
 
 **Why:**
-- Colour has to *mean* something to be worth using. With eight subject hues, none of them
+
+- Colour has to _mean_ something to be worth using. With eight subject hues, none of them
   indicated importance — you could not tell "this needs attention" from "this is just a subject".
 - Two brand hues (indigo and violet) plus semantic colours plus gold put eleven hues in play on
   a subject-heavy screen. That is a palette, not a system.
@@ -820,7 +824,7 @@ opacity-limited, plus a lint-level rule so it never creeps onto a data screen.
 
 **Was:** `logo-mark`, `logo-lockup`, `logo-mono`, `favicon` presented as four usable options.
 
-**Now:** `logo-mark.svg` is *the* logo and the only one used in the product. `favicon.svg` and
+**Now:** `logo-mark.svg` is _the_ logo and the only one used in the product. `favicon.svg` and
 `logo-mono.svg` remain, but are documented as **derivatives** — the favicon is the same drawing
 with the spine removed, because the spine is invisible below 32 px. `logo-lockup.svg` was
 **deleted**; the app uses the mark beside an already-typeset product name, so a baked-in wordmark
@@ -849,14 +853,14 @@ was competing with the accent; gold now appears on roughly one element per scree
 
 ### Net effect
 
-| | First preview | Now |
-| --- | --- | --- |
-| Hues in play | 11 (indigo, violet, gold, 4 semantic, 8 subjects) | 1 accent + gold + 3 status + neutrals |
-| Subject identification | Colour picker | Monogram, accent when active |
-| Logo variants in the product | 4 | 1, plus 2 documented derivatives |
-| Heading weight | 700–800 | 600 |
-| Primary control shape | 12 px radius | Fully rounded |
-| Decorative gradients | Logo only | Ambient layer, data screens forbidden |
+|                              | First preview                                     | Now                                   |
+| ---------------------------- | ------------------------------------------------- | ------------------------------------- |
+| Hues in play                 | 11 (indigo, violet, gold, 4 semantic, 8 subjects) | 1 accent + gold + 3 status + neutrals |
+| Subject identification       | Colour picker                                     | Monogram, accent when active          |
+| Logo variants in the product | 4                                                 | 1, plus 2 documented derivatives      |
+| Heading weight               | 700–800                                           | 600                                   |
+| Primary control shape        | 12 px radius                                      | Fully rounded                         |
+| Decorative gradients         | Logo only                                         | Ambient layer, data screens forbidden |
 
 The token rename is a one-pass migration: `indigo-*` → `iris-*`, `slate-*` → `sand-*`,
 `success/warning/danger/info` → `ok-*/warn-*/bad-*`, and `violet-*` folded into the accent.
@@ -864,11 +868,11 @@ Nothing changes for the user; only the token names in code.
 
 ## A.8 Where the detail lives
 
-| Topic | Location |
-| --- | --- |
-| Phase-by-phase build plan | [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) — Part III |
-| Full architecture decisions (ADRs) | [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) — Part II, §17 |
-| Data model | [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) — §18 |
-| Design system | [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) — Part I |
-| Rendered colour, type, buttons and inputs | [`design.html`](../design.html) |
-| Full preview with screens and dark mode | [`design-preview.html`](../design-preview.html) |
+| Topic                                     | Location                                                        |
+| ----------------------------------------- | --------------------------------------------------------------- |
+| Phase-by-phase build plan                 | [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) — Part III     |
+| Full architecture decisions (ADRs)        | [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) — Part II, §17 |
+| Data model                                | [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) — §18          |
+| Design system                             | [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) — Part I       |
+| Rendered colour, type, buttons and inputs | [`design.html`](../design.html)                                 |
+| Full preview with screens and dark mode   | [`design-preview.html`](../design-preview.html)                 |

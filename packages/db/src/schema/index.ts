@@ -44,7 +44,9 @@ export const subjects = pgTable(
   "subjects",
   {
     id: id(),
-    userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
     monogram: text("monogram").notNull(),
     icon: text("icon"),
@@ -59,7 +61,9 @@ export const topics = pgTable(
   "topics",
   {
     id: id(),
-    subjectId: uuid("subject_id").notNull().references(() => subjects.id, { onDelete: "cascade" }),
+    subjectId: uuid("subject_id")
+      .notNull()
+      .references(() => subjects.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
     description: text("description"),
     orderIndex: integer("order_index").notNull().default(0),
@@ -75,7 +79,9 @@ export const attachments = pgTable(
   "attachments",
   {
     id: id(),
-    userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
     noteId: uuid("note_id"),
     topicId: uuid("topic_id"),
     filename: text("filename").notNull(),
@@ -94,7 +100,9 @@ export const notes = pgTable(
   "notes",
   {
     id: id(),
-    userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
     topicId: uuid("topic_id").references(() => topics.id, { onDelete: "set null" }),
     title: text("title").notNull().default(""),
     bodyMd: text("body_md").notNull().default(""),
@@ -110,7 +118,9 @@ export const aiArtifacts = pgTable(
   "ai_artifacts",
   {
     id: id(),
-    userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
     kind: text("kind").notNull(),
     sourceType: text("source_type").notNull(),
     sourceId: uuid("source_id").notNull(),
@@ -143,7 +153,9 @@ export const quizzes = pgTable(
   "quizzes",
   {
     id: id(),
-    userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
     topicId: uuid("topic_id").references(() => topics.id, { onDelete: "set null" }),
     sourceNoteId: uuid("source_note_id").references(() => notes.id, { onDelete: "set null" }),
     title: text("title").notNull().default(""),
@@ -159,7 +171,9 @@ export const quizQuestions = pgTable(
   "quiz_questions",
   {
     id: id(),
-    quizId: uuid("quiz_id").notNull().references(() => quizzes.id, { onDelete: "cascade" }),
+    quizId: uuid("quiz_id")
+      .notNull()
+      .references(() => quizzes.id, { onDelete: "cascade" }),
     orderIndex: integer("order_index").notNull().default(0),
     type: text("type").notNull().default("mcq"),
     prompt: text("prompt").notNull(),
@@ -177,8 +191,12 @@ export const quizAttempts = pgTable(
   "quiz_attempts",
   {
     id: id(),
-    quizId: uuid("quiz_id").notNull().references(() => quizzes.id, { onDelete: "cascade" }),
-    userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    quizId: uuid("quiz_id")
+      .notNull()
+      .references(() => quizzes.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
     mode: text("mode").notNull().default("original"),
     startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
     completedAt: timestamp("completed_at", { withTimezone: true }),
@@ -192,7 +210,9 @@ export const quizAttempts = pgTable(
 export const questionMastery = pgTable(
   "question_mastery",
   {
-    userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
     topicId: uuid("topic_id").references(() => topics.id, { onDelete: "cascade" }),
     conceptTag: text("concept_tag").notNull().default(""),
     attempts: integer("attempts").notNull().default(0),
@@ -205,7 +225,9 @@ export const questionMastery = pgTable(
 
 export const flashcardDecks = pgTable("flashcard_decks", {
   id: id(),
-  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
   topicId: uuid("topic_id").references(() => topics.id, { onDelete: "set null" }),
   sourceNoteId: uuid("source_note_id").references(() => notes.id, { onDelete: "set null" }),
   title: text("title").notNull().default(""),
@@ -216,7 +238,9 @@ export const flashcards = pgTable(
   "flashcards",
   {
     id: id(),
-    deckId: uuid("deck_id").notNull().references(() => flashcardDecks.id, { onDelete: "cascade" }),
+    deckId: uuid("deck_id")
+      .notNull()
+      .references(() => flashcardDecks.id, { onDelete: "cascade" }),
     topicId: uuid("topic_id").references(() => topics.id, { onDelete: "set null" }),
     front: text("front").notNull(),
     back: text("back").notNull(),
@@ -232,7 +256,9 @@ export const flashcards = pgTable(
 
 export const flashcardReviews = pgTable("flashcard_reviews", {
   id: id(),
-  flashcardId: uuid("flashcard_id").notNull().references(() => flashcards.id, { onDelete: "cascade" }),
+  flashcardId: uuid("flashcard_id")
+    .notNull()
+    .references(() => flashcards.id, { onDelete: "cascade" }),
   rating: text("rating").notNull(),
   reviewedAt: timestamp("reviewed_at", { withTimezone: true }).notNull().defaultNow(),
   durationMs: integer("duration_ms").notNull().default(0),
@@ -243,7 +269,9 @@ export const tasks = pgTable(
   "tasks",
   {
     id: id(),
-    userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
     title: text("title").notNull(),
     subjectId: uuid("subject_id").references(() => subjects.id, { onDelete: "set null" }),
     topicId: uuid("topic_id").references(() => topics.id, { onDelete: "set null" }),
@@ -261,7 +289,9 @@ export const tasks = pgTable(
 
 export const taskRecurrences = pgTable("task_recurrences", {
   id: id(),
-  taskId: uuid("task_id").notNull().references(() => tasks.id, { onDelete: "cascade" }),
+  taskId: uuid("task_id")
+    .notNull()
+    .references(() => tasks.id, { onDelete: "cascade" }),
   freq: text("freq").notNull().default("weekly"),
   interval: integer("interval").notNull().default(1),
   byWeekday: text("by_weekday").notNull().default(""),
@@ -273,7 +303,9 @@ export const studySessions = pgTable(
   "study_sessions",
   {
     id: id(),
-    userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
     subjectId: uuid("subject_id").references(() => subjects.id, { onDelete: "set null" }),
     topicId: uuid("topic_id").references(() => topics.id, { onDelete: "set null" }),
     taskId: uuid("task_id").references(() => tasks.id, { onDelete: "set null" }),
@@ -289,7 +321,9 @@ export const studySessions = pgTable(
 
 export const sessionSteps = pgTable("session_steps", {
   id: id(),
-  sessionId: uuid("session_id").notNull().references(() => studySessions.id, { onDelete: "cascade" }),
+  sessionId: uuid("session_id")
+    .notNull()
+    .references(() => studySessions.id, { onDelete: "cascade" }),
   orderIndex: integer("order_index").notNull().default(0),
   kind: text("kind").notNull(),
   refType: text("ref_type"),
@@ -301,7 +335,9 @@ export const sessionSteps = pgTable("session_steps", {
 /* --- planning and quests -------------------------------------------------- */
 export const plans = pgTable("plans", {
   id: id(),
-  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
   date: text("date").notNull(),
   mode: text("mode").notNull().default("suggested"),
   status: text("status").notNull().default("draft"),
@@ -310,7 +346,9 @@ export const plans = pgTable("plans", {
 
 export const planBlocks = pgTable("plan_blocks", {
   id: id(),
-  planId: uuid("plan_id").notNull().references(() => plans.id, { onDelete: "cascade" }),
+  planId: uuid("plan_id")
+    .notNull()
+    .references(() => plans.id, { onDelete: "cascade" }),
   orderIndex: integer("order_index").notNull().default(0),
   kind: text("kind").notNull(),
   refId: uuid("ref_id"),
@@ -323,7 +361,9 @@ export const quests = pgTable(
   "quests",
   {
     id: id(),
-    userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
     title: text("title").notNull(),
     kind: text("kind").notNull().default("topic"),
     scopeType: text("scope_type"),
@@ -339,7 +379,9 @@ export const quests = pgTable(
 
 export const questSteps = pgTable("quest_steps", {
   id: id(),
-  questId: uuid("quest_id").notNull().references(() => quests.id, { onDelete: "cascade" }),
+  questId: uuid("quest_id")
+    .notNull()
+    .references(() => quests.id, { onDelete: "cascade" }),
   orderIndex: integer("order_index").notNull().default(0),
   title: text("title").notNull(),
   kind: text("kind").notNull(),
@@ -355,7 +397,9 @@ export const xpLedger = pgTable(
   "xp_ledger",
   {
     id: id(),
-    userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
     delta: integer("delta").notNull(),
     reason: text("reason").notNull(),
     sourceType: text("source_type").notNull(),
@@ -383,14 +427,20 @@ export const achievements = pgTable("achievements", {
 });
 
 export const userAchievements = pgTable("user_achievements", {
-  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  achievementCode: text("achievement_code").notNull().references(() => achievements.code, { onDelete: "cascade" }),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  achievementCode: text("achievement_code")
+    .notNull()
+    .references(() => achievements.code, { onDelete: "cascade" }),
   progress: integer("progress").notNull().default(0),
   unlockedAt: timestamp("unlocked_at", { withTimezone: true }),
 });
 
 export const streaks = pgTable("streaks", {
-  userId: uuid("user_id").primaryKey().references(() => users.id, { onDelete: "cascade" }),
+  userId: uuid("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
   current: integer("current").notNull().default(0),
   longest: integer("longest").notNull().default(0),
   lastActiveDate: text("last_active_date"),
@@ -400,7 +450,9 @@ export const streaks = pgTable("streaks", {
 /* --- platform -------------------------------------------------------------- */
 export const reminders = pgTable("reminders", {
   id: id(),
-  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
   type: text("type").notNull(),
   refType: text("ref_type"),
   refId: uuid("ref_id"),
@@ -412,7 +464,9 @@ export const reminders = pgTable("reminders", {
 
 export const activityLog = pgTable("activity_log", {
   id: id(),
-  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
   kind: text("kind").notNull(),
   refType: text("ref_type"),
   refId: uuid("ref_id"),

@@ -1,827 +1,1875 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Study Quest — Design Preview</title>
-<style>
-  /* ============================================================
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Study Quest — Design Preview</title>
+    <style>
+      /* ============================================================
      Study Quest design tokens
      One accent hue (iris). Warm neutrals (sand). Gold only for
      rewards. Ambient gradients are atmosphere, never information.
      Source: docs/IMPLEMENTATION_PLAN.md Part I
      ============================================================ */
-  :root {
-    --iris-50:#F7F5FF;  --iris-100:#EEE9FE; --iris-200:#DDD3FE; --iris-300:#C4B5FD;
-    --iris-400:#A78BFA; --iris-500:#8B5CF6; --iris-600:#7C3AED; --iris-700:#6D28D9;
-    --iris-800:#5B21B6; --iris-900:#4C1D95; --iris-950:#2E1065;
+      :root {
+        --iris-50: #f7f5ff;
+        --iris-100: #eee9fe;
+        --iris-200: #ddd3fe;
+        --iris-300: #c4b5fd;
+        --iris-400: #a78bfa;
+        --iris-500: #8b5cf6;
+        --iris-600: #7c3aed;
+        --iris-700: #6d28d9;
+        --iris-800: #5b21b6;
+        --iris-900: #4c1d95;
+        --iris-950: #2e1065;
 
-    --gold-100:#FEF3C7; --gold-200:#FDE68A; --gold-400:#FBBF24; --gold-500:#F59E0B; --gold-600:#D97706;
+        --gold-100: #fef3c7;
+        --gold-200: #fde68a;
+        --gold-400: #fbbf24;
+        --gold-500: #f59e0b;
+        --gold-600: #d97706;
 
-    --ok-500:#0E9F6E;   --ok-100:#D1FAE5;
-    --warn-500:#B45309; --warn-100:#FEF3C7;
-    --bad-500:#DC2626;  --bad-100:#FEE2E2;
+        --ok-500: #0e9f6e;
+        --ok-100: #d1fae5;
+        --warn-500: #b45309;
+        --warn-100: #fef3c7;
+        --bad-500: #dc2626;
+        --bad-100: #fee2e2;
 
-    --sand-50:#FAFAF9;  --sand-100:#F5F5F4; --sand-200:#E7E5E4; --sand-300:#D6D3D1;
-    --sand-400:#A8A29E; --sand-500:#78716C; --sand-600:#57534E; --sand-700:#44403C;
-    --sand-800:#292524; --sand-900:#1C1917; --sand-950:#0C0A09;
+        --sand-50: #fafaf9;
+        --sand-100: #f5f5f4;
+        --sand-200: #e7e5e4;
+        --sand-300: #d6d3d1;
+        --sand-400: #a8a29e;
+        --sand-500: #78716c;
+        --sand-600: #57534e;
+        --sand-700: #44403c;
+        --sand-800: #292524;
+        --sand-900: #1c1917;
+        --sand-950: #0c0a09;
 
-    --page:#FAFAF9; --card:#FFFFFF; --border:#E7E5E4;
-    --text:#44403C; --strong:#292524; --muted:#78716C;
+        --page: #fafaf9;
+        --card: #ffffff;
+        --border: #e7e5e4;
+        --text: #44403c;
+        --strong: #292524;
+        --muted: #78716c;
 
-    --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:20px; --s6:24px; --s8:32px; --s10:40px; --s12:48px; --s16:64px;
-    --r-sm:10px; --r-md:14px; --r-lg:20px; --r-xl:28px; --r-2xl:36px; --r-full:999px;
+        --s1: 4px;
+        --s2: 8px;
+        --s3: 12px;
+        --s4: 16px;
+        --s5: 20px;
+        --s6: 24px;
+        --s8: 32px;
+        --s10: 40px;
+        --s12: 48px;
+        --s16: 64px;
+        --r-sm: 10px;
+        --r-md: 14px;
+        --r-lg: 20px;
+        --r-xl: 28px;
+        --r-2xl: 36px;
+        --r-full: 999px;
 
-    --e0:none;
-    --e1:0 1px 2px rgb(28 25 23/.04), 0 1px 3px rgb(28 25 23/.05);
-    --e2:0 4px 8px -2px rgb(28 25 23/.06), 0 2px 4px -2px rgb(28 25 23/.04);
-    --e3:0 12px 20px -6px rgb(28 25 23/.10), 0 4px 8px -4px rgb(28 25 23/.06);
-    --e4:0 24px 40px -12px rgb(28 25 23/.14), 0 8px 16px -8px rgb(28 25 23/.08);
+        --e0: none;
+        --e1: 0 1px 2px rgb(28 25 23/0.04), 0 1px 3px rgb(28 25 23/0.05);
+        --e2: 0 4px 8px -2px rgb(28 25 23/0.06), 0 2px 4px -2px rgb(28 25 23/0.04);
+        --e3: 0 12px 20px -6px rgb(28 25 23/0.1), 0 4px 8px -4px rgb(28 25 23/0.06);
+        --e4: 0 24px 40px -12px rgb(28 25 23/0.14), 0 8px 16px -8px rgb(28 25 23/0.08);
 
-    --fast:160ms cubic-bezier(.2,0,0,1);
-    --base:220ms cubic-bezier(.2,0,0,1);
-    --slow:320ms cubic-bezier(.16,1,.3,1);
-    --delib:520ms cubic-bezier(.34,1.56,.64,1);
-  }
-  .dark {
-    --page:#0C0A09; --card:#1C1917; --border:#292524;
-    --text:#E7E5E4; --strong:#FAFAF9; --muted:#A8A29E;
-    --iris-50:rgba(167 139 250/.10); --iris-100:rgba(167 139 250/.16); --iris-200:rgba(167 139 250/.26);
-    --gold-100:rgba(245 158 11/.14);
-    --ok-100:rgba(14 159 110/.16); --bad-100:rgba(220 38 38/.16);
-    --e1:0 1px 2px rgb(0 0 0/.4);
-    --e2:0 4px 8px -2px rgb(0 0 0/.45);
-    --e3:0 12px 20px -6px rgb(0 0 0/.5);
-    --e4:0 24px 40px -12px rgb(0 0 0/.6);
-  }
+        --fast: 160ms cubic-bezier(0.2, 0, 0, 1);
+        --base: 220ms cubic-bezier(0.2, 0, 0, 1);
+        --slow: 320ms cubic-bezier(0.16, 1, 0.3, 1);
+        --delib: 520ms cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+      .dark {
+        --page: #0c0a09;
+        --card: #1c1917;
+        --border: #292524;
+        --text: #e7e5e4;
+        --strong: #fafaf9;
+        --muted: #a8a29e;
+        --iris-50: rgba(167 139 250/0.1);
+        --iris-100: rgba(167 139 250/0.16);
+        --iris-200: rgba(167 139 250/0.26);
+        --gold-100: rgba(245 158 11/0.14);
+        --ok-100: rgba(14 159 110/0.16);
+        --bad-100: rgba(220 38 38/0.16);
+        --e1: 0 1px 2px rgb(0 0 0/0.4);
+        --e2: 0 4px 8px -2px rgb(0 0 0/0.45);
+        --e3: 0 12px 20px -6px rgb(0 0 0/0.5);
+        --e4: 0 24px 40px -12px rgb(0 0 0/0.6);
+      }
 
-  * { box-sizing:border-box; }
-  body {
-    margin:0; background:var(--page); color:var(--text);
-    font:400 16px/1.625 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
-  }
-  .num { font-variant-numeric:tabular-nums; }
-  .wrap { max-width:1120px; margin:0 auto; padding:0 var(--s4) var(--s16); }
+      @font-face {
+        font-family: "Fraunces";
+        src: url("packages/ui/src/styles/fonts/fraunces-latin.woff2") format("woff2-variations");
+        font-weight: 400 700;
+        font-style: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "Inter";
+        src: url("packages/ui/src/styles/fonts/inter-latin.woff2") format("woff2-variations");
+        font-weight: 400 700;
+        font-style: normal;
+        font-display: swap;
+      }
 
-  /* ---------- ambient: decoration only, never information ---------- */
-  .ambient {
-    position:absolute; inset:-20%; z-index:0; pointer-events:none;
-    filter:blur(70px); opacity:.35;
-    background:
-      radial-gradient(38% 46% at 18% 12%, var(--iris-300) 0%, transparent 70%),
-      radial-gradient(34% 42% at 86% 20%, #F9A8D4 0%, transparent 70%),
-      radial-gradient(42% 50% at 58% 92%, var(--iris-400) 0%, transparent 70%);
-  }
-  .dark .ambient { opacity:.22; }
-  .amb-hero { position:relative; isolation:isolate; }
+      * {
+        box-sizing: border-box;
+      }
+      :root {
+        --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+        --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      }
+      body {
+        margin: 0;
+        background: var(--page);
+        color: var(--text);
+        font: 400 16px/1.625 var(--font-sans);
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+      }
+      .num {
+        font-variant-numeric: tabular-nums;
+      }
+      .wrap {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 0 var(--s4) var(--s16);
+      }
 
-  /* ---------- chrome ---------- */
-  .bar {
-    position:sticky; top:0; z-index:50; background:color-mix(in srgb, var(--page) 88%, transparent);
-    backdrop-filter:saturate(180%) blur(16px); border-bottom:1px solid var(--border);
-    padding:var(--s3) var(--s4);
-  }
-  .bar-in { max-width:1120px; margin:0 auto; display:flex; align-items:center; gap:var(--s3); flex-wrap:wrap; }
-  .bar nav { display:flex; gap:2px; flex-wrap:wrap; margin-left:auto; }
-  .bar nav a {
-    color:var(--muted); text-decoration:none; font:500 14px/1 system-ui,sans-serif;
-    padding:9px var(--s3); border-radius:var(--r-full); transition:var(--fast);
-  }
-  .bar nav a:hover { background:var(--iris-50); color:var(--iris-700); }
-  .dark .bar nav a:hover { color:var(--iris-300); }
-  .wordmark { display:flex; align-items:center; gap:var(--s2); }
-  .wordmark b { font:700 15px/1.1 system-ui,sans-serif; color:var(--strong); letter-spacing:-.01em; }
-  .pill {
-    font:500 11px/1 system-ui,sans-serif; letter-spacing:.05em; text-transform:uppercase;
-    background:var(--iris-50); color:var(--iris-700); padding:5px 10px; border-radius:var(--r-full);
-  }
-  .dark .pill { color:var(--iris-300); }
+      /* ---------- ambient: decoration only, never information ---------- */
+      .ambient {
+        position: absolute;
+        inset: -20%;
+        z-index: 0;
+        pointer-events: none;
+        filter: blur(70px);
+        opacity: 0.35;
+        background:
+          radial-gradient(38% 46% at 18% 12%, var(--iris-300) 0%, transparent 70%),
+          radial-gradient(34% 42% at 86% 20%, #f9a8d4 0%, transparent 70%),
+          radial-gradient(42% 50% at 58% 92%, var(--iris-400) 0%, transparent 70%);
+      }
+      .dark .ambient {
+        opacity: 0.22;
+      }
+      .amb-hero {
+        position: relative;
+        isolation: isolate;
+      }
 
-  section { margin-top:var(--s12); position:relative; }
-  .sec-head { margin-bottom:var(--s5); max-width:62ch; }
-  .sec-head h2 {
-    font:700 28px/1.2 system-ui,sans-serif; margin:0 0 var(--s2);
-    letter-spacing:-.022em; color:var(--strong);
-  }
-  .sec-head p { margin:0; color:var(--muted); font-size:15px; line-height:1.6; }
-  .sec-head .eyebrow {
-    font:500 11px/1 system-ui,sans-serif; letter-spacing:.09em; text-transform:uppercase;
-    color:var(--iris-600); margin-bottom:var(--s2); display:block;
-  }
-  .dark .sec-head .eyebrow { color:var(--iris-400); }
+      /* ---------- chrome ---------- */
+      .bar {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        background: color-mix(in srgb, var(--page) 88%, transparent);
+        backdrop-filter: saturate(180%) blur(16px);
+        border-bottom: 1px solid var(--border);
+        padding: var(--s3) var(--s4);
+      }
+      .bar-in {
+        max-width: 1120px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        gap: var(--s3);
+        flex-wrap: wrap;
+      }
+      .bar nav {
+        display: flex;
+        gap: 2px;
+        flex-wrap: wrap;
+        margin-left: auto;
+      }
+      .bar nav a {
+        color: var(--muted);
+        text-decoration: none;
+        font:
+          500 14px/1 system-ui,
+          sans-serif;
+        padding: 9px var(--s3);
+        border-radius: var(--r-full);
+        transition: var(--fast);
+      }
+      .bar nav a:hover {
+        background: var(--iris-50);
+        color: var(--iris-700);
+      }
+      .dark .bar nav a:hover {
+        color: var(--iris-300);
+      }
+      .wordmark {
+        display: flex;
+        align-items: center;
+        gap: var(--s2);
+      }
+      .wordmark b {
+        font: 600 15px/1.1 var(--font-sans);
+        color: var(--strong);
+        letter-spacing: -0.01em;
+      }
+      .pill {
+        font:
+          500 11px/1 system-ui,
+          sans-serif;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        background: var(--iris-50);
+        color: var(--iris-700);
+        padding: 5px 10px;
+        border-radius: var(--r-full);
+      }
+      .dark .pill {
+        color: var(--iris-300);
+      }
 
-  .card {
-    background:var(--card); border:1px solid var(--border); border-radius:var(--r-lg);
-    padding:var(--s6); box-shadow:var(--e1);
-  }
-  .card h3 { font:600 17px/1.3 system-ui,sans-serif; margin:0 0 6px; letter-spacing:-.01em; color:var(--strong); }
-  .card > p { margin:0; color:var(--muted); font-size:14px; line-height:1.6; }
-  .demo { margin-top:var(--s5); padding-top:var(--s5); border-top:1px solid var(--border); }
-  .g2 { display:grid; gap:var(--s4); grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); }
-  .g3 { display:grid; gap:var(--s4); grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); }
+      section {
+        margin-top: var(--s12);
+        position: relative;
+      }
+      .sec-head {
+        margin-bottom: var(--s5);
+        max-width: 62ch;
+      }
+      .sec-head h2 {
+        font:
+          700 28px/1.2 system-ui,
+          sans-serif;
+        margin: 0 0 var(--s2);
+        letter-spacing: -0.022em;
+        color: var(--strong);
+      }
+      .sec-head p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 15px;
+        line-height: 1.6;
+      }
+      .sec-head .eyebrow {
+        font:
+          500 11px/1 system-ui,
+          sans-serif;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+        color: var(--iris-600);
+        margin-bottom: var(--s2);
+        display: block;
+      }
+      .dark .sec-head .eyebrow {
+        color: var(--iris-400);
+      }
 
-  /* ---------- swatches ---------- */
-  .ramp { display:flex; flex-direction:column; gap:var(--s1); }
-  .ramp .row2 { display:flex; align-items:center; gap:var(--s3); }
-  .ramp i {
-    width:34px; height:34px; border-radius:9px; flex:none; display:grid; place-items:center;
-    font:600 10px/1 system-ui,sans-serif;
-  }
-  .ramp code { font:400 12px/1 ui-monospace,SFMono-Regular,Menlo,monospace; color:var(--muted); }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--r-lg);
+        padding: var(--s6);
+        box-shadow: var(--e1);
+      }
+      .card h3 {
+        font: 600 19px/1.35 var(--font-display);
+        margin: 0 0 6px;
+        color: var(--strong);
+      }
+      .card > p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.6;
+      }
+      .demo {
+        margin-top: var(--s5);
+        padding-top: var(--s5);
+        border-top: 1px solid var(--border);
+      }
+      .g2 {
+        display: grid;
+        gap: var(--s4);
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      }
+      .g3 {
+        display: grid;
+        gap: var(--s4);
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      }
 
-  /* ---------- components ---------- */
-  .btn {
-    display:inline-flex; align-items:center; justify-content:center; gap:var(--s2);
-    font:500 15px/1 system-ui,sans-serif; padding:13px var(--s5);
-    border-radius:var(--r-full); border:1px solid transparent; cursor:pointer;
-    transition:var(--fast); min-height:46px; text-decoration:none; white-space:nowrap;
-  }
-  .btn-p { background:var(--iris-600); color:#fff; }
-  .btn-p:hover { background:var(--iris-700); }
-  .btn-s { background:var(--card); color:var(--strong); border-color:var(--border); }
-  .btn-s:hover { background:var(--sand-50); }
-  .dark .btn-s:hover { background:#262220; }
-  .btn-g { background:transparent; color:var(--iris-700); padding-left:var(--s3); padding-right:var(--s3); }
-  .btn-g:hover { background:var(--iris-50); }
-  .dark .btn-g { color:var(--iris-400); }
-  .btn-d { background:transparent; color:var(--bad-500); }
-  .btn-d:hover { background:var(--bad-100); }
-  .btn-x { background:var(--gold-500); color:var(--iris-950); }
-  .btn:disabled { opacity:.4; cursor:not-allowed; }
-  .row { display:flex; gap:var(--s2); flex-wrap:wrap; align-items:center; }
+      /* ---------- swatches ---------- */
+      .ramp {
+        display: flex;
+        flex-direction: column;
+        gap: var(--s1);
+      }
+      .ramp .row2 {
+        display: flex;
+        align-items: center;
+        gap: var(--s3);
+      }
+      .ramp i {
+        width: 34px;
+        height: 34px;
+        border-radius: 9px;
+        flex: none;
+        display: grid;
+        place-items: center;
+        font:
+          600 10px/1 system-ui,
+          sans-serif;
+      }
+      .ramp code {
+        font:
+          400 12px/1 ui-monospace,
+          SFMono-Regular,
+          Menlo,
+          monospace;
+        color: var(--muted);
+      }
 
-  .inp {
-    width:100%; font:400 15px/1.4 system-ui,sans-serif; padding:13px var(--s4);
-    border:1px solid var(--border); border-radius:var(--r-full); background:var(--card);
-    color:var(--text); min-height:46px;
-  }
-  .inp::placeholder { color:var(--sand-400); }
-  .inp:focus { outline:none; border-color:var(--iris-400); box-shadow:0 0 0 4px color-mix(in srgb, var(--iris-400) 22%, transparent); }
-  label.lb { display:block; font:500 13px/1 system-ui,sans-serif; color:var(--muted); margin-bottom:6px; }
+      /* ---------- components ---------- */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--s2);
+        font:
+          500 15px/1 system-ui,
+          sans-serif;
+        padding: 13px var(--s5);
+        border-radius: var(--r-full);
+        border: 1px solid transparent;
+        cursor: pointer;
+        transition: var(--fast);
+        min-height: 46px;
+        text-decoration: none;
+        white-space: nowrap;
+      }
+      .btn-p {
+        background: var(--iris-600);
+        color: #fff;
+      }
+      .btn-p:hover {
+        background: var(--iris-700);
+      }
+      .btn-s {
+        background: var(--card);
+        color: var(--strong);
+        border-color: var(--border);
+      }
+      .btn-s:hover {
+        background: var(--sand-50);
+      }
+      .dark .btn-s:hover {
+        background: #262220;
+      }
+      .btn-g {
+        background: transparent;
+        color: var(--iris-700);
+        padding-left: var(--s3);
+        padding-right: var(--s3);
+      }
+      .btn-g:hover {
+        background: var(--iris-50);
+      }
+      .dark .btn-g {
+        color: var(--iris-400);
+      }
+      .btn-d {
+        background: transparent;
+        color: var(--bad-500);
+      }
+      .btn-d:hover {
+        background: var(--bad-100);
+      }
+      .btn-x {
+        background: var(--gold-500);
+        color: var(--iris-950);
+      }
+      .btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      .row {
+        display: flex;
+        gap: var(--s2);
+        flex-wrap: wrap;
+        align-items: center;
+      }
 
-  .chip {
-    display:inline-flex; align-items:center; gap:6px; font:500 13px/1 system-ui,sans-serif;
-    padding:9px var(--s4); border-radius:var(--r-full);
-    background:var(--sand-100); color:var(--sand-600); border:1px solid transparent;
-  }
-  .dark .chip { background:#262220; color:var(--sand-300); }
-  .chip.on { background:var(--iris-600); color:#fff; }
-  .chip.gold { background:var(--gold-100); color:var(--gold-600); }
-  .chip.iris { background:var(--iris-50); color:var(--iris-700); }
-  .dark .chip.iris { color:var(--iris-300); }
+      .inp {
+        width: 100%;
+        font:
+          400 15px/1.4 system-ui,
+          sans-serif;
+        padding: 13px var(--s4);
+        border: 1px solid var(--border);
+        border-radius: var(--r-full);
+        background: var(--card);
+        color: var(--text);
+        min-height: 46px;
+      }
+      .inp::placeholder {
+        color: var(--sand-400);
+      }
+      .inp:focus {
+        outline: none;
+        border-color: var(--iris-400);
+        box-shadow: 0 0 0 4px color-mix(in srgb, var(--iris-400) 22%, transparent);
+      }
+      label.lb {
+        display: block;
+        font:
+          500 13px/1 system-ui,
+          sans-serif;
+        color: var(--muted);
+        margin-bottom: 6px;
+      }
 
-  .track { height:8px; background:var(--sand-100); border-radius:var(--r-full); overflow:hidden; }
-  .dark .track { background:#292524; }
-  .track > i { display:block; height:100%; background:var(--iris-600); border-radius:var(--r-full);
-    transition:width var(--slow); }
-  .track.xp > i { background:var(--gold-500); }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font:
+          500 13px/1 system-ui,
+          sans-serif;
+        padding: 9px var(--s4);
+        border-radius: var(--r-full);
+        background: var(--sand-100);
+        color: var(--sand-600);
+        border: 1px solid transparent;
+      }
+      .dark .chip {
+        background: #262220;
+        color: var(--sand-300);
+      }
+      .chip.on {
+        background: var(--iris-600);
+        color: #fff;
+      }
+      .chip.gold {
+        background: var(--gold-100);
+        color: var(--gold-600);
+      }
+      .chip.iris {
+        background: var(--iris-50);
+        color: var(--iris-700);
+      }
+      .dark .chip.iris {
+        color: var(--iris-300);
+      }
 
-  .ring { --p:68; width:74px; height:74px; position:relative; flex:none; }
-  .ring::before {
-    content:""; position:absolute; inset:0; border-radius:50%;
-    background:conic-gradient(var(--iris-600) calc(var(--p)*1%), var(--sand-100) 0);
-    -webkit-mask:radial-gradient(farthest-side, transparent calc(100% - 8px), #000 calc(100% - 8px));
-    mask:radial-gradient(farthest-side, transparent calc(100% - 8px), #000 calc(100% - 8px));
-  }
-  .dark .ring::before { background:conic-gradient(var(--iris-500) calc(var(--p)*1%), #292524 0); }
-  .ring span { position:absolute; inset:0; display:grid; place-items:center;
-    font:700 16px/1 system-ui,sans-serif; color:var(--strong); letter-spacing:-.02em; }
+      .track {
+        height: 8px;
+        background: var(--sand-100);
+        border-radius: var(--r-full);
+        overflow: hidden;
+      }
+      .dark .track {
+        background: #292524;
+      }
+      .track > i {
+        display: block;
+        height: 100%;
+        background: var(--iris-600);
+        border-radius: var(--r-full);
+        transition: width var(--slow);
+      }
+      .track.xp > i {
+        background: var(--gold-500);
+      }
 
-  /* level: gold, used once */
-  .lvl { display:flex; align-items:center; gap:var(--s3); }
-  .lvl-badge {
-    width:44px; height:44px; flex:none; border-radius:var(--r-md); display:grid; place-items:center;
-    background:var(--gold-500); color:var(--iris-950); font:700 18px/1 system-ui,sans-serif;
-  }
-  .flame { display:inline-flex; align-items:center; gap:5px; color:var(--gold-600); font:500 14px/1 system-ui,sans-serif; }
+      .ring {
+        --p: 68;
+        width: 74px;
+        height: 74px;
+        position: relative;
+        flex: none;
+      }
+      .ring::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        background: conic-gradient(var(--iris-600) calc(var(--p) * 1%), var(--sand-100) 0);
+        -webkit-mask: radial-gradient(
+          farthest-side,
+          transparent calc(100% - 8px),
+          #000 calc(100% - 8px)
+        );
+        mask: radial-gradient(farthest-side, transparent calc(100% - 8px), #000 calc(100% - 8px));
+      }
+      .dark .ring::before {
+        background: conic-gradient(var(--iris-500) calc(var(--p) * 1%), #292524 0);
+      }
+      .ring span {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        font:
+          700 16px/1 system-ui,
+          sans-serif;
+        color: var(--strong);
+        letter-spacing: -0.02em;
+      }
 
-  /* monogram replaces coloured avatars */
-  .mono {
-    width:40px; height:40px; flex:none; border-radius:var(--r-md); display:grid; place-items:center;
-    background:var(--sand-100); color:var(--sand-600); font:600 14px/1 system-ui,sans-serif;
-    letter-spacing:.01em;
-  }
-  .dark .mono { background:#262220; color:var(--sand-300); }
-  .mono.on { background:var(--iris-600); color:#fff; }
+      /* level: gold, used once */
+      .lvl {
+        display: flex;
+        align-items: center;
+        gap: var(--s3);
+      }
+      .lvl-badge {
+        width: 44px;
+        height: 44px;
+        flex: none;
+        border-radius: var(--r-md);
+        display: grid;
+        place-items: center;
+        background: var(--gold-500);
+        color: var(--iris-950);
+        font:
+          700 18px/1 system-ui,
+          sans-serif;
+      }
+      .flame {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        color: var(--gold-600);
+        font:
+          500 14px/1 system-ui,
+          sans-serif;
+      }
 
-  .steps { display:flex; flex-direction:column; gap:var(--s2); }
-  .step { display:flex; align-items:center; gap:var(--s3); padding:var(--s3) var(--s4);
-    background:var(--card); border:1px solid var(--border); border-radius:var(--r-md); }
-  .step .bx { width:24px; height:24px; flex:none; border-radius:50%; display:grid; place-items:center;
-    font:600 12px/1 system-ui,sans-serif; background:var(--sand-100); color:var(--sand-400); }
-  .step.done .bx { background:var(--ok-500); color:#fff; }
-  .step.done .t { color:var(--muted); }
-  .step.cur { border-color:var(--iris-300); background:var(--iris-50); }
-  .step.cur .bx { background:var(--iris-600); color:#fff; }
-  .step.lock { opacity:.55; }
-  .step .t { font:400 15px/1.3 system-ui,sans-serif; }
+      /* monogram replaces coloured avatars */
+      .mono {
+        width: 40px;
+        height: 40px;
+        flex: none;
+        border-radius: var(--r-md);
+        display: grid;
+        place-items: center;
+        background: var(--sand-100);
+        color: var(--sand-600);
+        font:
+          600 14px/1 system-ui,
+          sans-serif;
+        letter-spacing: 0.01em;
+      }
+      .dark .mono {
+        background: #262220;
+        color: var(--sand-300);
+      }
+      .mono.on {
+        background: var(--iris-600);
+        color: #fff;
+      }
 
-  .li { display:flex; align-items:center; gap:var(--s3); padding:11px 0; font:400 15px/1.3 system-ui,sans-serif; }
-  .li + .li { border-top:1px solid var(--border); }
-  .li .cb { width:19px; height:19px; flex:none; border:1.5px solid var(--sand-300); border-radius:50%; }
-  .li.done .cb { background:var(--ok-500); border-color:var(--ok-500); position:relative; }
-  .li.done .cb::after { content:""; position:absolute; left:6px; top:2.5px; width:4px; height:8px;
-    border:solid #fff; border-width:0 1.5px 1.5px 0; transform:rotate(45deg); }
-  .li.done .tx { text-decoration:line-through; color:var(--muted); }
+      .steps {
+        display: flex;
+        flex-direction: column;
+        gap: var(--s2);
+      }
+      .step {
+        display: flex;
+        align-items: center;
+        gap: var(--s3);
+        padding: var(--s3) var(--s4);
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--r-md);
+      }
+      .step .bx {
+        width: 24px;
+        height: 24px;
+        flex: none;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        font:
+          600 12px/1 system-ui,
+          sans-serif;
+        background: var(--sand-100);
+        color: var(--sand-400);
+      }
+      .step.done .bx {
+        background: var(--ok-500);
+        color: #fff;
+      }
+      .step.done .t {
+        color: var(--muted);
+      }
+      .step.cur {
+        border-color: var(--iris-300);
+        background: var(--iris-50);
+      }
+      .step.cur .bx {
+        background: var(--iris-600);
+        color: #fff;
+      }
+      .step.lock {
+        opacity: 0.55;
+      }
+      .step .t {
+        font:
+          400 15px/1.3 system-ui,
+          sans-serif;
+      }
 
-  .note { font:400 17px/1.75 system-ui,sans-serif; max-width:68ch;
-    background:var(--card); border:1px solid var(--border); border-radius:var(--r-md); padding:var(--s5); }
-  .note p { margin:0 0 var(--s3); } .note p:last-child { margin:0; }
-  .hl { background:var(--iris-100); border-radius:4px; padding:1px 3px; box-shadow:inset 0 -1px 0 var(--iris-300); }
-  .aside {
-    margin-top:var(--s3); padding:var(--s4); background:var(--sand-50);
-    border-radius:var(--r-md); font:400 14px/1.65 system-ui,sans-serif; color:var(--text);
-    border:1px solid var(--border);
-  }
-  .dark .aside { background:#231F1D; }
-  .aside b { display:block; font:500 12px/1 system-ui,sans-serif; letter-spacing:.05em;
-    text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
+      .li {
+        display: flex;
+        align-items: center;
+        gap: var(--s3);
+        padding: 11px 0;
+        font:
+          400 15px/1.3 system-ui,
+          sans-serif;
+      }
+      .li + .li {
+        border-top: 1px solid var(--border);
+      }
+      .li .cb {
+        width: 19px;
+        height: 19px;
+        flex: none;
+        border: 1.5px solid var(--sand-300);
+        border-radius: 50%;
+      }
+      .li.done .cb {
+        background: var(--ok-500);
+        border-color: var(--ok-500);
+        position: relative;
+      }
+      .li.done .cb::after {
+        content: "";
+        position: absolute;
+        left: 6px;
+        top: 2.5px;
+        width: 4px;
+        height: 8px;
+        border: solid #fff;
+        border-width: 0 1.5px 1.5px 0;
+        transform: rotate(45deg);
+      }
+      .li.done .tx {
+        text-decoration: line-through;
+        color: var(--muted);
+      }
 
-  .toast { display:flex; align-items:center; gap:var(--s3); padding:var(--s3) var(--s4);
-    background:var(--card); border:1px solid var(--border); border-radius:var(--r-full);
-    box-shadow:var(--e3); }
+      .note {
+        font:
+          400 17px/1.75 system-ui,
+          sans-serif;
+        max-width: 68ch;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--r-md);
+        padding: var(--s5);
+      }
+      .note p {
+        margin: 0 0 var(--s3);
+      }
+      .note p:last-child {
+        margin: 0;
+      }
+      .hl {
+        background: var(--iris-100);
+        border-radius: 4px;
+        padding: 1px 3px;
+        box-shadow: inset 0 -1px 0 var(--iris-300);
+      }
+      .aside {
+        margin-top: var(--s3);
+        padding: var(--s4);
+        background: var(--sand-50);
+        border-radius: var(--r-md);
+        font:
+          400 14px/1.65 system-ui,
+          sans-serif;
+        color: var(--text);
+        border: 1px solid var(--border);
+      }
+      .dark .aside {
+        background: #231f1d;
+      }
+      .aside b {
+        display: block;
+        font:
+          500 12px/1 system-ui,
+          sans-serif;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 6px;
+      }
 
-  .empty { text-align:center; padding:var(--s10) var(--s4); position:relative; overflow:hidden;
-    border:1px solid var(--border); border-radius:var(--r-lg); background:var(--card); }
-  .empty b { display:block; font:600 17px/1.3 system-ui,sans-serif; margin:var(--s3) 0 6px; color:var(--strong); }
-  .empty small { color:var(--muted); font-size:14px; }
+      .toast {
+        display: flex;
+        align-items: center;
+        gap: var(--s3);
+        padding: var(--s3) var(--s4);
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--r-full);
+        box-shadow: var(--e3);
+      }
 
-  table { width:100%; border-collapse:collapse; font-size:14px; }
-  th,td { text-align:left; padding:10px var(--s3); border-bottom:1px solid var(--border); vertical-align:top; }
-  th { color:var(--muted); font:500 11px/1.3 system-ui,sans-serif; letter-spacing:.05em; text-transform:uppercase; }
-  td code, .mono-c { font:400 12px/1 ui-monospace,SFMono-Regular,Menlo,monospace; color:var(--iris-700);
-    background:var(--iris-50); padding:2px 6px; border-radius:5px; }
-  .dark td code, .dark .mono-c { color:var(--iris-300); }
+      .empty {
+        text-align: center;
+        padding: var(--s10) var(--s4);
+        position: relative;
+        overflow: hidden;
+        border: 1px solid var(--border);
+        border-radius: var(--r-lg);
+        background: var(--card);
+      }
+      .empty b {
+        display: block;
+        font: 600 19px/1.35 var(--font-display);
+        margin: var(--s3) 0 6px;
+        color: var(--strong);
+      }
+      .empty small {
+        color: var(--muted);
+        font-size: 14px;
+      }
 
-  .type-row { display:flex; align-items:baseline; gap:var(--s5); padding:var(--s3) 0; border-bottom:1px solid var(--border); }
-  .type-row:last-child { border:0; }
-  .type-row .k { width:90px; flex:none; color:var(--muted); font:500 11px/1 system-ui,sans-serif; letter-spacing:.05em; }
-  .type-row .v { font-family:system-ui,sans-serif; }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 10px var(--s3);
+        border-bottom: 1px solid var(--border);
+        vertical-align: top;
+      }
+      th {
+        color: var(--muted);
+        font:
+          500 11px/1.3 system-ui,
+          sans-serif;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+      td code,
+      .mono-c {
+        font:
+          400 12px/1 ui-monospace,
+          SFMono-Regular,
+          Menlo,
+          monospace;
+        color: var(--iris-700);
+        background: var(--iris-50);
+        padding: 2px 6px;
+        border-radius: 5px;
+      }
+      .dark td code,
+      .dark .mono-c {
+        color: var(--iris-300);
+      }
 
-  /* ---------- phone ---------- */
-  .phone { width:390px; flex:none; border-radius:44px; background:var(--sand-950); padding:10px;
-    box-shadow:var(--e4), inset 0 0 0 1px rgb(255 255 255/.07); }
-  .screen { background:var(--page); border-radius:35px; overflow:hidden; height:680px;
-    display:flex; flex-direction:column; position:relative; }
-  .status { display:flex; justify-content:space-between; padding:11px var(--s6) 2px;
-    font:600 12px/1 system-ui,sans-serif; color:var(--sand-500); position:relative; z-index:2; }
-  .dark .status { color:var(--sand-400); }
-  .app-hd { padding:var(--s4) var(--s5) var(--s3); display:flex; align-items:center; gap:var(--s3);
-    position:relative; z-index:2; }
-  .app-hd h3 { font:600 22px/1.2 system-ui,sans-serif; margin:0; letter-spacing:-.02em; color:var(--strong); }
-  .app-bd { flex:1; overflow:hidden; padding:0 var(--s5) var(--s3); display:flex; flex-direction:column;
-    gap:var(--s3); position:relative; z-index:2; }
-  .panel { background:var(--card); border:1px solid var(--border); border-radius:var(--r-lg);
-    padding:var(--s4); box-shadow:var(--e1); }
-  .pt { font:500 11px/1 system-ui,sans-serif; letter-spacing:.07em; text-transform:uppercase;
-    color:var(--muted); margin-bottom:var(--s3); }
-  .tabs { display:flex; background:var(--card); border-top:1px solid var(--border);
-    padding:var(--s2) var(--s2) var(--s3); position:relative; z-index:2; }
-  .tab { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;
-    font:500 10px/1 system-ui,sans-serif; color:var(--sand-400); }
-  .tab.on { color:var(--iris-600); }
-  .dark .tab.on { color:var(--iris-400); }
-  .tab svg { width:21px; height:21px; }
+      .type-row {
+        display: flex;
+        align-items: baseline;
+        gap: var(--s5);
+        padding: var(--s3) 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .type-row:last-child {
+        border: 0;
+      }
+      .type-row .k {
+        width: 90px;
+        flex: none;
+        color: var(--muted);
+        font:
+          500 11px/1 system-ui,
+          sans-serif;
+        letter-spacing: 0.05em;
+      }
+      .type-row .v {
+        font-family: system-ui, sans-serif;
+      }
 
-  @media (prefers-reduced-motion: reduce) { * { transition:none !important; animation:none !important; } }
-  @media (max-width:640px) { .phone { width:100%; max-width:390px; } .bar nav { margin-left:0; width:100%; } }
-</style>
-</head>
-<body>
+      /* ---------- phone ---------- */
+      .phone {
+        width: 390px;
+        flex: none;
+        border-radius: 44px;
+        background: var(--sand-950);
+        padding: 10px;
+        box-shadow:
+          var(--e4),
+          inset 0 0 0 1px rgb(255 255 255/0.07);
+      }
+      .screen {
+        background: var(--page);
+        border-radius: 35px;
+        overflow: hidden;
+        height: 680px;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+      }
+      .status {
+        display: flex;
+        justify-content: space-between;
+        padding: 11px var(--s6) 2px;
+        font:
+          600 12px/1 system-ui,
+          sans-serif;
+        color: var(--sand-500);
+        position: relative;
+        z-index: 2;
+      }
+      .dark .status {
+        color: var(--sand-400);
+      }
+      .app-hd {
+        padding: var(--s4) var(--s5) var(--s3);
+        display: flex;
+        align-items: center;
+        gap: var(--s3);
+        position: relative;
+        z-index: 2;
+      }
+      .app-hd h3 {
+        font: 500 25px/1.3 var(--font-display);
+        margin: 0;
+        letter-spacing: -0.02em;
+        color: var(--strong);
+      }
+      .app-bd {
+        flex: 1;
+        overflow: hidden;
+        padding: 0 var(--s5) var(--s3);
+        display: flex;
+        flex-direction: column;
+        gap: var(--s3);
+        position: relative;
+        z-index: 2;
+      }
+      .panel {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--r-lg);
+        padding: var(--s4);
+        box-shadow: var(--e1);
+      }
+      .pt {
+        font:
+          500 11px/1 system-ui,
+          sans-serif;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: var(--s3);
+      }
+      .tabs {
+        display: flex;
+        background: var(--card);
+        border-top: 1px solid var(--border);
+        padding: var(--s2) var(--s2) var(--s3);
+        position: relative;
+        z-index: 2;
+      }
+      .tab {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        font:
+          500 10px/1 system-ui,
+          sans-serif;
+        color: var(--sand-400);
+      }
+      .tab.on {
+        color: var(--iris-600);
+      }
+      .dark .tab.on {
+        color: var(--iris-400);
+      }
+      .tab svg {
+        width: 21px;
+        height: 21px;
+      }
 
-<div class="bar">
-  <div class="bar-in">
-    <div class="wordmark">
-      <svg width="26" height="26" viewBox="0 0 512 512" aria-hidden="true">
-        <defs>
-          <linearGradient id="m1" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stop-color="#A78BFA"/><stop offset=".5" stop-color="#7C3AED"/><stop offset="1" stop-color="#4C1D95"/>
-          </linearGradient>
-          <linearGradient id="m2" x1="0" y1="0" x2=".3" y2="1">
-            <stop offset="0" stop-color="#FDE68A"/><stop offset="1" stop-color="#F59E0B"/>
-          </linearGradient>
-        </defs>
-        <rect width="512" height="512" rx="116" fill="url(#m1)"/>
-        <g transform="translate(0 40)">
-          <path d="M256 82c9.6 38.4 9.6 38.4 48 48-38.4 9.6-38.4 9.6-48 48-9.6-38.4-9.6-38.4-48-48 38.4-9.6 38.4-9.6 48-48z" fill="url(#m2)"/>
-          <path d="M256 200c-40-28-96-36-144-28v158c48-8 104 0 144 26z" fill="#fff"/>
-          <path d="M256 200c40-28 96-36 144-28v158c-48-8-104 0-144 26z" fill="#fff"/>
-        </g>
-      </svg>
-      <b>Study Quest</b>
-    </div>
-    <span class="pill">Design preview</span>
-    <nav>
-      <a href="#principle">Principle</a>
-      <a href="#brand">Brand</a>
-      <a href="#colour">Colour</a>
-      <a href="#type">Type</a>
-      <a href="#components">Components</a>
-      <a href="#domain">Domain</a>
-      <a href="#screens">Screens</a>
-      <a href="#states">States</a>
-    </nav>
-    <button class="btn btn-s" style="min-height:34px;padding:7px 15px;font-size:13px"
-      onclick="document.body.classList.toggle('dark');this.textContent=document.body.classList.contains('dark')?'Light':'Dark'">Dark</button>
-  </div>
-</div>
-
-<div class="wrap">
-
-  <section id="principle" style="margin-top:var(--s10)">
-    <div class="sec-head">
-      <span class="eyebrow">The one rule</span>
-      <h2>One accent hue. Everything else is a tint of it or a warm neutral.</h2>
-      <p>Colour is scarce on purpose, so when it appears it means something. Gradients are
-         atmosphere — they sit behind hero areas and empty states, never on a button, a progress
-         bar or anything you must read.</p>
-    </div>
-    <div class="card amb-hero">
-      <div class="ambient" aria-hidden="true"></div>
-      <div style="position:relative">
-        <div class="g3">
-          <div>
-            <div class="pt">Accent</div>
-            <p style="margin:0;font-size:14px;color:var(--muted)">One violet. Buttons, active
-              states, progress, focus. That is all of it.</p>
-          </div>
-          <div>
-            <div class="pt">Reward</div>
-            <p style="margin:0;font-size:14px;color:var(--muted)">Gold, one element per screen.
-              XP, levels, streaks. Never a button.</p>
-          </div>
-          <div>
-            <div class="pt">Status</div>
-            <p style="margin:0;font-size:14px;color:var(--muted)">Three, desaturated. Only on
-              error, overdue, completion.</p>
-          </div>
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          transition: none !important;
+          animation: none !important;
+        }
+      }
+      @media (max-width: 640px) {
+        .phone {
+          width: 100%;
+          max-width: 390px;
+        }
+        .bar nav {
+          margin-left: 0;
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="bar">
+      <div class="bar-in">
+        <div class="wordmark">
+          <svg width="26" height="26" viewBox="0 0 512 512" aria-hidden="true">
+            <defs>
+              <linearGradient id="m1" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#A78BFA" />
+                <stop offset=".5" stop-color="#7C3AED" />
+                <stop offset="1" stop-color="#4C1D95" />
+              </linearGradient>
+              <linearGradient id="m2" x1="0" y1="0" x2=".3" y2="1">
+                <stop offset="0" stop-color="#FDE68A" />
+                <stop offset="1" stop-color="#F59E0B" />
+              </linearGradient>
+            </defs>
+            <rect width="512" height="512" rx="116" fill="url(#m1)" />
+            <g transform="translate(0 40)">
+              <path
+                d="M256 82c9.6 38.4 9.6 38.4 48 48-38.4 9.6-38.4 9.6-48 48-9.6-38.4-9.6-38.4-48-48 38.4-9.6 38.4-9.6 48-48z"
+                fill="url(#m2)"
+              />
+              <path d="M256 200c-40-28-96-36-144-28v158c48-8 104 0 144 26z" fill="#fff" />
+              <path d="M256 200c40-28 96-36 144-28v158c-48-8-104 0-144 26z" fill="#fff" />
+            </g>
+          </svg>
+          <b>Study Quest</b>
         </div>
-        <p style="margin:var(--s5) 0 0;font-size:14px;color:var(--muted);max-width:60ch">
-          Subjects are no longer colour-coded. A subject is a quiet neutral tile with its
-          monogram; the accent appears only on the one that is active. Multi-series charts use
-          tints of the single accent, not a rainbow.</p>
+        <span class="pill">Design preview</span>
+        <nav>
+          <a href="#principle">Principle</a>
+          <a href="#brand">Brand</a>
+          <a href="#colour">Colour</a>
+          <a href="#type">Type</a>
+          <a href="#components">Components</a>
+          <a href="#domain">Domain</a>
+          <a href="#screens">Screens</a>
+          <a href="#states">States</a>
+        </nav>
+        <button
+          class="btn btn-s"
+          style="min-height: 34px; padding: 7px 15px; font-size: 13px"
+          onclick="
+            document.body.classList.toggle('dark');
+            this.textContent = document.body.classList.contains('dark') ? 'Light' : 'Dark';
+          "
+        >
+          Dark
+        </button>
       </div>
     </div>
-  </section>
 
-  <section id="brand">
-    <div class="sec-head">
-      <span class="eyebrow">§2 Brand</span>
-      <h2>One mark, used everywhere</h2>
-      <p>An open book beneath a gold quest star, on a violet gradient. The favicon and
-         monochrome files are technical derivatives of this one mark, not alternative designs.
-         The wordmark lockup is for the README only — the app uses the mark beside an
-         already-typeset product name.</p>
-    </div>
-    <div class="card amb-hero">
-      <div class="ambient" aria-hidden="true"></div>
-      <div style="position:relative;display:flex;gap:var(--s10);align-items:center;flex-wrap:wrap">
-        <svg width="112" height="112" viewBox="0 0 512 512" role="img" aria-label="Study Quest logo">
-          <defs>
-            <linearGradient id="b1" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stop-color="#A78BFA"/><stop offset=".5" stop-color="#7C3AED"/><stop offset="1" stop-color="#4C1D95"/>
-            </linearGradient>
-            <linearGradient id="b2" x1="0" y1="0" x2=".3" y2="1">
-              <stop offset="0" stop-color="#FDE68A"/><stop offset="1" stop-color="#F59E0B"/>
-            </linearGradient>
-          </defs>
-          <rect width="512" height="512" rx="116" fill="url(#b1)"/>
-          <g transform="translate(0 40)">
-            <path d="M256 82c9.6 38.4 9.6 38.4 48 48-38.4 9.6-38.4 9.6-48 48-9.6-38.4-9.6-38.4-48-48 38.4-9.6 38.4-9.6 48-48z" fill="url(#b2)"/>
-            <path d="M256 200c-40-28-96-36-144-28v158c48-8 104 0 144 26z" fill="#fff"/>
-            <path d="M256 200c40-28 96-36 144-28v158c-48-8-104 0-144 26z" fill="#fff"/>
-          </g>
-        </svg>
-        <div style="display:flex;gap:var(--s6);align-items:center;flex-wrap:wrap">
-          <div class="wordmark" style="gap:var(--s2)">
-            <svg width="20" height="20" viewBox="0 0 512 512" aria-hidden="true">
-              <defs>
-                <linearGradient id="s1" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0" stop-color="#A78BFA"/><stop offset="1" stop-color="#4C1D95"/>
-                </linearGradient>
-                <linearGradient id="s2" x1="0" y1="0" x2=".3" y2="1">
-                  <stop offset="0" stop-color="#FDE68A"/><stop offset="1" stop-color="#F59E0B"/>
-                </linearGradient>
-              </defs>
-              <rect width="512" height="512" rx="116" fill="url(#s1)"/>
-              <g transform="translate(0 40)">
-                <path d="M256 82c9.6 38.4 9.6 38.4 48 48-38.4 9.6-38.4 9.6-48 48-9.6-38.4-9.6-38.4-48-48 38.4-9.6 38.4-9.6 48-48z" fill="url(#s2)"/>
-                <path d="M256 200c-40-28-96-36-144-28v158c48-8 104 0 144 26z" fill="#fff"/>
-                <path d="M256 200c40-28 96-36 144-28v158c-48-8-104 0-144 26z" fill="#fff"/>
-              </g>
-            </svg>
-            <b style="font-size:17px">20 px · in a header</b>
-          </div>
-          <div class="wordmark" style="gap:var(--s2)">
-            <svg width="32" height="32" viewBox="0 0 512 512" aria-hidden="true">
-              <defs>
-                <linearGradient id="s3" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0" stop-color="#A78BFA"/><stop offset="1" stop-color="#4C1D95"/>
-                </linearGradient>
-                <linearGradient id="s4" x1="0" y1="0" x2=".3" y2="1">
-                  <stop offset="0" stop-color="#FDE68A"/><stop offset="1" stop-color="#F59E0B"/>
-                </linearGradient>
-              </defs>
-              <rect width="512" height="512" rx="116" fill="url(#s3)"/>
-              <g transform="translate(0 40)">
-                <path d="M256 82c9.6 38.4 9.6 38.4 48 48-38.4 9.6-38.4 9.6-48 48-9.6-38.4-9.6-38.4-48-48 38.4-9.6 38.4-9.6 48-48z" fill="url(#s4)"/>
-                <path d="M256 200c-40-28-96-36-144-28v158c48-8 104 0 144 26z" fill="#fff"/>
-                <path d="M256 200c40-28 96-36 144-28v158c-48-8-104 0-144 26z" fill="#fff"/>
-              </g>
-            </svg>
-            <b style="font-size:17px">32 px · top bar</b>
-          </div>
+    <div class="wrap">
+      <section id="principle" style="margin-top: var(--s10)">
+        <div class="sec-head">
+          <span class="eyebrow">The one rule</span>
+          <h2>One accent hue. Everything else is a tint of it or a warm neutral.</h2>
+          <p>
+            Colour is scarce on purpose, so when it appears it means something. Gradients are
+            atmosphere — they sit behind hero areas and empty states, never on a button, a progress
+            bar or anything you must read.
+          </p>
         </div>
-      </div>
-    </div>
-  </section>
-
-  <section id="colour">
-    <div class="sec-head">
-      <span class="eyebrow">§3 Colour</span>
-      <h2>Three ramps, and nothing else</h2>
-      <p>Accent, reward, neutrals. Status colours exist but are desaturated so a success state
-         does not shout.</p>
-    </div>
-    <div class="g2">
-      <div class="card">
-        <h3>Accent — iris</h3>
-        <p>Actions, active states, progress, focus.</p>
-        <div class="demo ramp">
-          <div class="row2"><i style="background:#F7F5FF"></i><code>iris-50</code></div>
-          <div class="row2"><i style="background:#EEE9FE"></i><code>iris-100</code></div>
-          <div class="row2"><i style="background:#DDD3FE"></i><code>iris-200</code></div>
-          <div class="row2"><i style="background:#C4B5FD"></i><code>iris-300</code></div>
-          <div class="row2"><i style="background:#A78BFA"></i><code>iris-400</code></div>
-          <div class="row2"><i style="background:#8B5CF6"></i><code>iris-500</code></div>
-          <div class="row2"><i style="background:#7C3AED;color:#fff">6</i><code>iris-600 · primary</code></div>
-          <div class="row2"><i style="background:#6D28D9;color:#fff">7</i><code>iris-700 · hover</code></div>
-          <div class="row2"><i style="background:#5B21B6;color:#fff">8</i><code>iris-800 · accent text</code></div>
-        </div>
-      </div>
-      <div class="card">
-        <h3>Neutrals — sand</h3>
-        <p>Warm greys. ~95 % of every screen.</p>
-        <div class="demo ramp">
-          <div class="row2"><i style="background:#FAFAF9"></i><code>sand-50 · page</code></div>
-          <div class="row2"><i style="background:#F5F5F4"></i><code>sand-100 · track</code></div>
-          <div class="row2"><i style="background:#E7E5E4"></i><code>sand-200 · border</code></div>
-          <div class="row2"><i style="background:#A8A29E"></i><code>sand-400 · muted icon</code></div>
-          <div class="row2"><i style="background:#78716C"></i><code>sand-500 · secondary text</code></div>
-          <div class="row2"><i style="background:#57534E"></i><code>sand-600 · body</code></div>
-          <div class="row2"><i style="background:#292524"></i><code>sand-800 · heading</code></div>
-        </div>
-        <div class="demo" style="border-top:1px solid var(--border)">
-          <div class="pt" style="margin-bottom:var(--s3)">Reward + status</div>
-          <div class="row">
-            <span class="chip gold">+50 XP</span>
-            <span class="chip" style="background:var(--ok-100);color:var(--ok-500)">Correct</span>
-            <span class="chip" style="background:var(--warn-100);color:var(--warn-500)">Due soon</span>
-            <span class="chip" style="background:var(--bad-100);color:var(--bad-500)">Overdue</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section id="type">
-    <div class="sec-head">
-      <span class="eyebrow">§4 Typography</span>
-      <h2>Inter, with lighter weights</h2>
-      <p>Weights dropped a step from the first draft — 600 for headings rather than 800. Heavy
-         type was another thing reading as machine-made.</p>
-    </div>
-    <div class="card">
-      <div class="type-row"><span class="k">display</span><span class="v" style="font:600 32px/1.25 system-ui;letter-spacing:-.03em;color:var(--strong)">Level 7 — Scholar</span></div>
-      <div class="type-row"><span class="k">h1</span><span class="v" style="font:600 28px/1.2 system-ui;letter-spacing:-.025em;color:var(--strong)">Chemistry Exam Quest</span></div>
-      <div class="type-row"><span class="k">h2</span><span class="v" style="font:600 22px/1.3 system-ui;letter-spacing:-.02em;color:var(--strong)">Today's Quest</span></div>
-      <div class="type-row"><span class="k">h3</span><span class="v" style="font:600 17px/1.4 system-ui;color:var(--strong)">Photosynthesis</span></div>
-      <div class="type-row"><span class="k">body-lg</span><span class="v" style="font:400 18px/1.65 system-ui">Occurs mainly in plant leaves and uses light energy.</span></div>
-      <div class="type-row"><span class="k">body</span><span class="v" style="font:400 16px/1.6 system-ui">Review Atomic Structure — 25 min</span></div>
-      <div class="type-row"><span class="k">body-sm</span><span class="v" style="font:400 14px/1.5 system-ui;color:var(--muted)">Suggested by Study Quest · tap to edit</span></div>
-      <div class="type-row"><span class="k">caption</span><span class="v"><span class="chip">DUE TOMORROW</span></span></div>
-      <div class="type-row"><span class="k">stat</span><span class="v num" style="font:600 24px/1.2 system-ui;color:var(--strong);letter-spacing:-.02em">1,240 <small style="font:400 14px system-ui;color:var(--muted)">XP</small></span></div>
-    </div>
-  </section>
-
-  <section id="components">
-    <div class="sec-head">
-      <span class="eyebrow">§9 Components</span>
-      <h2>Pills, rings, monograms</h2>
-      <p>Buttons and chips are fully rounded. Subjects are neutral monogram tiles, not coloured
-         circles — that one change removes most of the visual noise from a subject list.</p>
-    </div>
-    <div class="g2">
-      <div class="card">
-        <h3>Buttons</h3>
-        <p>One primary per screen. 46 px tall, fully rounded.</p>
-        <div class="demo row">
-          <button class="btn btn-p">Start studying</button>
-          <button class="btn btn-s">Add notes</button>
-          <button class="btn btn-g">Cancel</button>
-          <button class="btn btn-d">Delete</button>
-          <button class="btn btn-x">+50 XP</button>
-          <button class="btn btn-p" disabled>Disabled</button>
-        </div>
-      </div>
-      <div class="card">
-        <h3>Inputs</h3>
-        <p>Rounded, 46 px, iris focus ring at 22 %.</p>
-        <div class="demo" style="display:grid;gap:var(--s4)">
-          <div><label class="lb" for="i1">Title</label><input class="inp" id="i1" placeholder="e.g. Motion notes" /></div>
-          <div><label class="lb" for="i2">Search everything</label><input class="inp" id="i2" value="Newton" /></div>
-        </div>
-      </div>
-      <div class="card">
-        <h3>Monogram tiles</h3>
-        <p>No subject colour. The accent marks the one that is active.</p>
-        <div class="demo" style="display:flex;gap:var(--s3);align-items:center;flex-wrap:wrap">
-          <div class="mono on">Ph</div><div class="mono">Bi</div><div class="mono">Ma</div>
-          <div class="mono">Ch</div><div class="mono">En</div>
-        </div>
-      </div>
-      <div class="card">
-        <h3>Chips</h3>
-        <p>Filters and badges. Gold is a reward, never an action.</p>
-        <div class="demo row">
-          <span class="chip on">All</span>
-          <span class="chip">Today</span>
-          <span class="chip">Upcoming</span>
-          <span class="chip iris">Physics</span>
-          <span class="chip gold">LEVEL 7</span>
-        </div>
-      </div>
-      <div class="card">
-        <h3>Progress</h3>
-        <p>Rings and tracks in the accent. XP in gold. Every one carries a label — colour is
-           never the only signal.</p>
-        <div class="demo" style="display:flex;gap:var(--s6);align-items:center;flex-wrap:wrap">
-          <div class="ring" style="--p:68" role="progressbar" aria-valuenow="68" aria-label="Physics progress, 68 percent"><span class="num">68%</span></div>
-          <div style="flex:1;min-width:190px">
-            <div class="row" style="justify-content:space-between;margin-bottom:7px">
-              <span style="font:400 14px system-ui">Physics</span>
-              <span class="num" style="font:400 13px system-ui;color:var(--muted)">68%</span>
-            </div>
-            <div class="track"><i style="width:68%"></i></div>
-            <div class="row" style="justify-content:space-between;margin:18px 0 7px">
-              <span style="font:400 14px system-ui">XP to Level 8</span>
-              <span class="num" style="font:400 13px system-ui;color:var(--muted)">760 / 1,000</span>
-            </div>
-            <div class="track xp"><i style="width:76%"></i></div>
-          </div>
-        </div>
-      </div>
-      <div class="card">
-        <h3>Level, streak, reward</h3>
-        <p>The only place gold appears in a typical screen.</p>
-        <div class="demo" style="display:flex;gap:var(--s5);align-items:center;flex-wrap:wrap">
-          <div class="lvl">
-            <div class="lvl-badge num">7</div>
-            <div>
-              <b style="font:600 15px/1.3 system-ui;color:var(--strong)">Scholar</b><br />
-              <small style="color:var(--muted);font-size:13px">1,240 XP total</small>
-            </div>
-          </div>
-          <span class="flame">🔥 <span class="num">7</span> day streak</span>
-        </div>
-        <div class="demo" style="border-top:1px solid var(--border)">
-          <div class="toast">
-            <div class="lvl-badge" style="width:34px;height:34px;font-size:13px;border-radius:10px">▲</div>
-            <div>
-              <b style="font:600 15px/1.3 system-ui;color:var(--strong)">+50 XP</b><br />
-              <small style="color:var(--muted);font-size:13px">Completed Chemistry quiz</small>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section id="domain">
-    <div class="sec-head">
-      <span class="eyebrow">§9 Domain</span>
-      <h2>The parts that make it Study Quest</h2>
-      <p>Quest stepper, subject progress, reading with inline explanation, and a quiz result
-         that leads straight to a retry.</p>
-    </div>
-    <div class="g2">
-      <div class="card">
-        <h3>Quest stepper</h3>
-        <p>A quest is a study goal with steps, not a renamed task.</p>
-        <div class="demo steps">
-          <div class="step done"><div class="bx">✓</div><div class="t">Read notes</div></div>
-          <div class="step done"><div class="bx">✓</div><div class="t">Review summary</div></div>
-          <div class="step done"><div class="bx">✓</div><div class="t">Study flashcards</div></div>
-          <div class="step cur"><div class="bx">4</div><div class="t">Complete quiz</div></div>
-          <div class="step lock"><div class="bx">·</div><div class="t">Pass final challenge</div></div>
-        </div>
-      </div>
-      <div class="card">
-        <h3>Subject progress</h3>
-        <p>Quiet monogram tiles. The eye goes to the active subject, not to a rainbow.</p>
-        <div class="demo">
-          <div style="display:flex;align-items:center;gap:var(--s3);padding:11px 0;border-bottom:1px solid var(--border)">
-            <div class="mono on">Ph</div>
-            <div style="flex:1">
-              <div class="row" style="justify-content:space-between;margin-bottom:7px">
-                <span style="font:500 15px system-ui;color:var(--strong)">Physics</span>
-                <span class="num" style="font:400 13px system-ui;color:var(--muted)">68%</span>
-              </div>
-              <div class="track"><i style="width:68%"></i></div>
-            </div>
-          </div>
-          <div style="display:flex;align-items:center;gap:var(--s3);padding:11px 0;border-bottom:1px solid var(--border)">
-            <div class="mono">Bi</div>
-            <div style="flex:1">
-              <div class="row" style="justify-content:space-between;margin-bottom:7px">
-                <span style="font:500 15px system-ui;color:var(--strong)">Biology</span>
-                <span class="num" style="font:400 13px system-ui;color:var(--muted)">41%</span>
-              </div>
-              <div class="track"><i style="width:41%"></i></div>
-            </div>
-          </div>
-          <div style="display:flex;align-items:center;gap:var(--s3);padding:11px 0">
-            <div class="mono">Ma</div>
-            <div style="flex:1">
-              <div class="row" style="justify-content:space-between;margin-bottom:7px">
-                <span style="font:500 15px system-ui;color:var(--strong)">Mathematics</span>
-                <span class="num" style="font:400 13px system-ui;color:var(--muted)">12%</span>
-              </div>
-              <div class="track"><i style="width:12%"></i></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="card">
-        <h3>Read My Notes</h3>
-        <p>Sentence highlight while reading aloud, explanation inline.</p>
-        <div class="demo">
-          <div class="note">
-            <p>Photosynthesis <span class="hl">occurs mainly in plant leaves</span> and uses light
-            energy to convert carbon dioxide and water into glucose.</p>
-            <div class="aside">
-              <b>Explain this</b>
-              Leaves are where chlorophyll captures sunlight — think of them as the plant's
-              solar panels. The rest of the plant supplies the raw materials.
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="card">
-        <h3>Quiz result</h3>
-        <p>Weak topics first; the next action is a retry.</p>
-        <div class="demo" style="display:flex;gap:var(--s5);align-items:center;flex-wrap:wrap">
-          <div class="ring" style="--p:70" role="progressbar" aria-valuenow="70" aria-label="Quiz score, 7 of 10"><span class="num">7/10</span></div>
-          <div style="flex:1;min-width:180px">
-            <div class="pt" style="margin-bottom:var(--s2)">Needs review</div>
-            <div class="li" style="padding-top:0">
-              <span style="width:7px;height:7px;border-radius:50%;background:var(--bad-500);flex:none"></span>
-              Newton's Second Law
-            </div>
-            <div class="li">
-              <span style="width:7px;height:7px;border-radius:50%;background:var(--bad-500);flex:none"></span>
-              Momentum
-            </div>
-            <button class="btn btn-p" style="margin-top:var(--s4);width:100%">Retry these topics</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section id="screens">
-    <div class="sec-head">
-      <span class="eyebrow">§8 Screens</span>
-      <h2>Home, and an empty state</h2>
-      <p>Progress first, then today's quest, then what to do next. The ambient wash lives behind
-         the greeting only — never behind the list.</p>
-    </div>
-    <div class="card" style="display:flex;gap:var(--s8);align-items:flex-start;justify-content:center;flex-wrap:wrap">
-      <div class="phone">
-        <div class="screen">
-          <div class="ambient" aria-hidden="true" style="inset:-30% -20% auto;height:300px"></div>
-          <div class="status"><span>9:41</span><span>▲ ▲ ▮</span></div>
-          <div class="app-hd">
-            <div style="flex:1">
-              <h3>Good morning</h3>
-              <small style="color:var(--muted);font-size:13px">Tuesday, 28 September</small>
-            </div>
-            <div class="ring" style="--p:50;width:44px;height:44px"><span style="font-size:11px">2/4</span></div>
-          </div>
-          <div class="app-bd">
-            <div class="panel">
-              <div class="row" style="gap:var(--s3)">
-                <div class="lvl-badge" style="width:38px;height:38px;font-size:16px">7</div>
-                <div style="flex:1">
-                  <div class="row" style="justify-content:space-between;margin-bottom:6px">
-                    <span style="font:500 13px system-ui;color:var(--strong)">Scholar</span>
-                    <span class="num" style="font:400 12px system-ui;color:var(--muted)">760/1,000</span>
-                  </div>
-                  <div class="track xp"><i style="width:76%"></i></div>
-                </div>
-                <span class="flame" style="font-size:13px">🔥<span class="num">7</span></span>
-              </div>
-            </div>
-
-            <div class="panel">
-              <div class="row" style="justify-content:space-between;margin-bottom:var(--s2)">
-                <span class="pt" style="margin:0">Today's Quest</span>
-                <span class="num" style="font:400 12px system-ui;color:var(--iris-600)">2/4</span>
-              </div>
-              <div class="li done"><span class="cb"></span><span class="tx">Review Atomic Structure</span></div>
-              <div class="li done"><span class="cb"></span><span class="tx">Chemistry quiz</span></div>
-              <div class="li"><span class="cb"></span><span>Complete assignment</span></div>
-              <div class="li"><span class="cb"></span><span>Review Motion</span></div>
-            </div>
-
-            <div class="panel">
-              <div class="row" style="gap:var(--s3)">
-                <div class="mono on">Bi</div>
-                <div style="flex:1">
-                  <span style="font:500 14px system-ui;color:var(--strong)">Photosynthesis</span><br />
-                  <small style="color:var(--muted);font-size:12px">Biology · 12 min ago</small>
-                </div>
-                <button class="btn btn-p" style="min-height:34px;padding:8px 14px;font-size:13px">Resume</button>
-              </div>
-            </div>
-
-            <div class="panel" style="background:var(--iris-50);border-color:var(--iris-200)">
-              <div class="pt" style="margin-bottom:6px">What's next</div>
-              <div style="font:400 14px/1.5 system-ui">You scored <b class="num">5/10</b> on Motion.
-                Try a quick review?</div>
-            </div>
-          </div>
-          <div class="tabs">
-            <div class="tab on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20h14V9.5"/></svg>Home</div>
-            <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Tasks</div>
-            <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5z"/><path d="M20 5.5A1.5 1.5 0 0 0 18.5 4H13v16h5.5a1.5 1.5 0 0 0 1.5-1.5z"/></svg>Study</div>
-            <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4"/><path d="M5 5h11l-2 3 2 3H5"/></svg>Quests</div>
-            <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Progress</div>
-          </div>
-        </div>
-      </div>
-
-      <div style="flex:1;min-width:300px;display:grid;gap:var(--s4);align-content:start">
         <div class="card amb-hero">
           <div class="ambient" aria-hidden="true"></div>
-          <div style="position:relative">
-            <div class="empty" style="border:0;background:transparent;padding:var(--s6) 0">
-              <div class="mono" style="margin:0 auto;width:52px;height:52px;border-radius:var(--r-lg);font-size:17px">+</div>
-              <b>Add your first subject</b>
-              <small style="display:block;max-width:32ch;margin:0 auto">Subjects hold your topics,
-                notes, quizzes and flashcards.</small>
-              <button class="btn btn-p" style="margin-top:var(--s5)">Add subject</button>
+          <div style="position: relative">
+            <div class="g3">
+              <div>
+                <div class="pt">Accent</div>
+                <p style="margin: 0; font-size: 14px; color: var(--muted)">
+                  One violet. Buttons, active states, progress, focus. That is all of it.
+                </p>
+              </div>
+              <div>
+                <div class="pt">Reward</div>
+                <p style="margin: 0; font-size: 14px; color: var(--muted)">
+                  Gold, one element per screen. XP, levels, streaks. Never a button.
+                </p>
+              </div>
+              <div>
+                <div class="pt">Status</div>
+                <p style="margin: 0; font-size: 14px; color: var(--muted)">
+                  Three, desaturated. Only on error, overdue, completion.
+                </p>
+              </div>
+            </div>
+            <p style="margin: var(--s5) 0 0; font-size: 14px; color: var(--muted); max-width: 60ch">
+              Subjects are no longer colour-coded. A subject is a quiet neutral tile with its
+              monogram; the accent appears only on the one that is active. Multi-series charts use
+              tints of the single accent, not a rainbow.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="brand">
+        <div class="sec-head">
+          <span class="eyebrow">§2 Brand</span>
+          <h2>One mark, used everywhere</h2>
+          <p>
+            An open book beneath a gold quest star, on a violet gradient. The favicon and monochrome
+            files are technical derivatives of this one mark, not alternative designs. The wordmark
+            lockup is for the README only — the app uses the mark beside an already-typeset product
+            name.
+          </p>
+        </div>
+        <div class="card amb-hero">
+          <div class="ambient" aria-hidden="true"></div>
+          <div
+            style="
+              position: relative;
+              display: flex;
+              gap: var(--s10);
+              align-items: center;
+              flex-wrap: wrap;
+            "
+          >
+            <svg
+              width="112"
+              height="112"
+              viewBox="0 0 512 512"
+              role="img"
+              aria-label="Study Quest logo"
+            >
+              <defs>
+                <linearGradient id="b1" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stop-color="#A78BFA" />
+                  <stop offset=".5" stop-color="#7C3AED" />
+                  <stop offset="1" stop-color="#4C1D95" />
+                </linearGradient>
+                <linearGradient id="b2" x1="0" y1="0" x2=".3" y2="1">
+                  <stop offset="0" stop-color="#FDE68A" />
+                  <stop offset="1" stop-color="#F59E0B" />
+                </linearGradient>
+              </defs>
+              <rect width="512" height="512" rx="116" fill="url(#b1)" />
+              <g transform="translate(0 40)">
+                <path
+                  d="M256 82c9.6 38.4 9.6 38.4 48 48-38.4 9.6-38.4 9.6-48 48-9.6-38.4-9.6-38.4-48-48 38.4-9.6 38.4-9.6 48-48z"
+                  fill="url(#b2)"
+                />
+                <path d="M256 200c-40-28-96-36-144-28v158c48-8 104 0 144 26z" fill="#fff" />
+                <path d="M256 200c40-28 96-36 144-28v158c-48-8-104 0-144 26z" fill="#fff" />
+              </g>
+            </svg>
+            <div style="display: flex; gap: var(--s6); align-items: center; flex-wrap: wrap">
+              <div class="wordmark" style="gap: var(--s2)">
+                <svg width="20" height="20" viewBox="0 0 512 512" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="s1" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0" stop-color="#A78BFA" />
+                      <stop offset="1" stop-color="#4C1D95" />
+                    </linearGradient>
+                    <linearGradient id="s2" x1="0" y1="0" x2=".3" y2="1">
+                      <stop offset="0" stop-color="#FDE68A" />
+                      <stop offset="1" stop-color="#F59E0B" />
+                    </linearGradient>
+                  </defs>
+                  <rect width="512" height="512" rx="116" fill="url(#s1)" />
+                  <g transform="translate(0 40)">
+                    <path
+                      d="M256 82c9.6 38.4 9.6 38.4 48 48-38.4 9.6-38.4 9.6-48 48-9.6-38.4-9.6-38.4-48-48 38.4-9.6 38.4-9.6 48-48z"
+                      fill="url(#s2)"
+                    />
+                    <path d="M256 200c-40-28-96-36-144-28v158c48-8 104 0 144 26z" fill="#fff" />
+                    <path d="M256 200c40-28 96-36 144-28v158c-48-8-104 0-144 26z" fill="#fff" />
+                  </g>
+                </svg>
+                <b style="font-size: 17px">20 px · in a header</b>
+              </div>
+              <div class="wordmark" style="gap: var(--s2)">
+                <svg width="32" height="32" viewBox="0 0 512 512" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="s3" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0" stop-color="#A78BFA" />
+                      <stop offset="1" stop-color="#4C1D95" />
+                    </linearGradient>
+                    <linearGradient id="s4" x1="0" y1="0" x2=".3" y2="1">
+                      <stop offset="0" stop-color="#FDE68A" />
+                      <stop offset="1" stop-color="#F59E0B" />
+                    </linearGradient>
+                  </defs>
+                  <rect width="512" height="512" rx="116" fill="url(#s3)" />
+                  <g transform="translate(0 40)">
+                    <path
+                      d="M256 82c9.6 38.4 9.6 38.4 48 48-38.4 9.6-38.4 9.6-48 48-9.6-38.4-9.6-38.4-48-48 38.4-9.6 38.4-9.6 48-48z"
+                      fill="url(#s4)"
+                    />
+                    <path d="M256 200c-40-28-96-36-144-28v158c48-8 104 0 144 26z" fill="#fff" />
+                    <path d="M256 200c40-28 96-36 144-28v158c-48-8-104 0-144 26z" fill="#fff" />
+                  </g>
+                </svg>
+                <b style="font-size: 17px">32 px · top bar</b>
+              </div>
             </div>
           </div>
         </div>
+      </section>
+
+      <section id="colour">
+        <div class="sec-head">
+          <span class="eyebrow">§3 Colour</span>
+          <h2>Three ramps, and nothing else</h2>
+          <p>
+            Accent, reward, neutrals. Status colours exist but are desaturated so a success state
+            does not shout.
+          </p>
+        </div>
+        <div class="g2">
+          <div class="card">
+            <h3>Accent — iris</h3>
+            <p>Actions, active states, progress, focus.</p>
+            <div class="demo ramp">
+              <div class="row2"><i style="background: #f7f5ff"></i><code>iris-50</code></div>
+              <div class="row2"><i style="background: #eee9fe"></i><code>iris-100</code></div>
+              <div class="row2"><i style="background: #ddd3fe"></i><code>iris-200</code></div>
+              <div class="row2"><i style="background: #c4b5fd"></i><code>iris-300</code></div>
+              <div class="row2"><i style="background: #a78bfa"></i><code>iris-400</code></div>
+              <div class="row2"><i style="background: #8b5cf6"></i><code>iris-500</code></div>
+              <div class="row2">
+                <i style="background: #7c3aed; color: #fff">6</i><code>iris-600 · primary</code>
+              </div>
+              <div class="row2">
+                <i style="background: #6d28d9; color: #fff">7</i><code>iris-700 · hover</code>
+              </div>
+              <div class="row2">
+                <i style="background: #5b21b6; color: #fff">8</i><code>iris-800 · accent text</code>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <h3>Neutrals — sand</h3>
+            <p>Warm greys. ~95 % of every screen.</p>
+            <div class="demo ramp">
+              <div class="row2"><i style="background: #fafaf9"></i><code>sand-50 · page</code></div>
+              <div class="row2">
+                <i style="background: #f5f5f4"></i><code>sand-100 · track</code>
+              </div>
+              <div class="row2">
+                <i style="background: #e7e5e4"></i><code>sand-200 · border</code>
+              </div>
+              <div class="row2">
+                <i style="background: #a8a29e"></i><code>sand-400 · muted icon</code>
+              </div>
+              <div class="row2">
+                <i style="background: #78716c"></i><code>sand-500 · secondary text</code>
+              </div>
+              <div class="row2">
+                <i style="background: #57534e"></i><code>sand-600 · body</code>
+              </div>
+              <div class="row2">
+                <i style="background: #292524"></i><code>sand-800 · heading</code>
+              </div>
+            </div>
+            <div class="demo" style="border-top: 1px solid var(--border)">
+              <div class="pt" style="margin-bottom: var(--s3)">Reward + status</div>
+              <div class="row">
+                <span class="chip gold">+50 XP</span>
+                <span class="chip" style="background: var(--ok-100); color: var(--ok-500)"
+                  >Correct</span
+                >
+                <span class="chip" style="background: var(--warn-100); color: var(--warn-500)"
+                  >Due soon</span
+                >
+                <span class="chip" style="background: var(--bad-100); color: var(--bad-500)"
+                  >Overdue</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="type">
+        <div class="sec-head">
+          <span class="eyebrow">§4 Typography</span>
+          <h2>A serif for reading, a sans for using</h2>
+          <p>
+            Weights dropped a step from the first draft — 600 for headings rather than 800. Heavy
+            type was another thing reading as machine-made.
+          </p>
+        </div>
         <div class="card">
-          <h3>What you're looking at</h3>
-          <table style="margin-top:var(--s2)">
-            <tr><th>Block</th><th>Answers</th></tr>
-            <tr><td>Progress strip</td><td>Level, XP to next, streak, today's ring</td></tr>
-            <tr><td>Today's Quest</td><td>The personalised daily list (PRD §19)</td></tr>
-            <tr><td>Continue Learning</td><td>Where you left off</td></tr>
-            <tr><td>What's next</td><td>One recommendation, always (§27)</td></tr>
+          <div class="type-row">
+            <span class="k">display</span
+            ><span
+              class="v"
+              style="
+                font: 500 40px/1.1 var(--font-display);
+                letter-spacing: -0.03em;
+                color: var(--strong);
+              "
+              >Level 7 — Scholar</span
+            >
+          </div>
+          <div class="type-row">
+            <span class="k">h1</span
+            ><span
+              class="v"
+              style="
+                font: 500 32px/1.2 var(--font-display);
+                letter-spacing: -0.025em;
+                color: var(--strong);
+              "
+              >Chemistry Exam Quest</span
+            >
+          </div>
+          <div class="type-row">
+            <span class="k">h2</span
+            ><span
+              class="v"
+              style="
+                font: 500 25px/1.3 var(--font-display);
+                letter-spacing: -0.02em;
+                color: var(--strong);
+              "
+              >Today's Quest</span
+            >
+          </div>
+          <div class="type-row">
+            <span class="k">h3</span
+            ><span class="v" style="font: 600 19px/1.35 var(--font-display); color: var(--strong)"
+              >Photosynthesis</span
+            >
+          </div>
+          <div class="type-row">
+            <span class="k">body-lg</span
+            ><span class="v" style="font: 400 18px/1.65 system-ui"
+              >Occurs mainly in plant leaves and uses light energy.</span
+            >
+          </div>
+          <div class="type-row">
+            <span class="k">body</span
+            ><span class="v" style="font: 400 16px/1.6 system-ui"
+              >Review Atomic Structure — 25 min</span
+            >
+          </div>
+          <div class="type-row">
+            <span class="k">body-sm</span
+            ><span class="v" style="font: 400 14px/1.5 system-ui; color: var(--muted)"
+              >Suggested by Study Quest · tap to edit</span
+            >
+          </div>
+          <div class="type-row">
+            <span class="k">caption</span
+            ><span class="v"><span class="chip">DUE TOMORROW</span></span>
+          </div>
+          <div class="type-row">
+            <span class="k">stat</span
+            ><span
+              class="v num"
+              style="font: 600 24px/1.2 system-ui; color: var(--strong); letter-spacing: -0.02em"
+              >1,240 <small style="font: 400 14px system-ui; color: var(--muted)">XP</small></span
+            >
+          </div>
+        </div>
+      </section>
+
+      <section id="components">
+        <div class="sec-head">
+          <span class="eyebrow">§9 Components</span>
+          <h2>Pills, rings, monograms</h2>
+          <p>
+            Buttons and chips are fully rounded. Subjects are neutral monogram tiles, not coloured
+            circles — that one change removes most of the visual noise from a subject list.
+          </p>
+        </div>
+        <div class="g2">
+          <div class="card">
+            <h3>Buttons</h3>
+            <p>One primary per screen. 46 px tall, fully rounded.</p>
+            <div class="demo row">
+              <button class="btn btn-p">Start studying</button>
+              <button class="btn btn-s">Add notes</button>
+              <button class="btn btn-g">Cancel</button>
+              <button class="btn btn-d">Delete</button>
+              <button class="btn btn-x">+50 XP</button>
+              <button class="btn btn-p" disabled>Disabled</button>
+            </div>
+          </div>
+          <div class="card">
+            <h3>Inputs</h3>
+            <p>Rounded, 46 px, iris focus ring at 22 %.</p>
+            <div class="demo" style="display: grid; gap: var(--s4)">
+              <div>
+                <label class="lb" for="i1">Title</label
+                ><input class="inp" id="i1" placeholder="e.g. Motion notes" />
+              </div>
+              <div>
+                <label class="lb" for="i2">Search everything</label
+                ><input class="inp" id="i2" value="Newton" />
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <h3>Monogram tiles</h3>
+            <p>No subject colour. The accent marks the one that is active.</p>
+            <div
+              class="demo"
+              style="display: flex; gap: var(--s3); align-items: center; flex-wrap: wrap"
+            >
+              <div class="mono on">Ph</div>
+              <div class="mono">Bi</div>
+              <div class="mono">Ma</div>
+              <div class="mono">Ch</div>
+              <div class="mono">En</div>
+            </div>
+          </div>
+          <div class="card">
+            <h3>Chips</h3>
+            <p>Filters and badges. Gold is a reward, never an action.</p>
+            <div class="demo row">
+              <span class="chip on">All</span>
+              <span class="chip">Today</span>
+              <span class="chip">Upcoming</span>
+              <span class="chip iris">Physics</span>
+              <span class="chip gold">LEVEL 7</span>
+            </div>
+          </div>
+          <div class="card">
+            <h3>Progress</h3>
+            <p>
+              Rings and tracks in the accent. XP in gold. Every one carries a label — colour is
+              never the only signal.
+            </p>
+            <div
+              class="demo"
+              style="display: flex; gap: var(--s6); align-items: center; flex-wrap: wrap"
+            >
+              <div
+                class="ring"
+                style="--p: 68"
+                role="progressbar"
+                aria-valuenow="68"
+                aria-label="Physics progress, 68 percent"
+              >
+                <span class="num">68%</span>
+              </div>
+              <div style="flex: 1; min-width: 190px">
+                <div class="row" style="justify-content: space-between; margin-bottom: 7px">
+                  <span style="font: 400 14px system-ui">Physics</span>
+                  <span class="num" style="font: 400 13px system-ui; color: var(--muted)">68%</span>
+                </div>
+                <div class="track"><i style="width: 68%"></i></div>
+                <div class="row" style="justify-content: space-between; margin: 18px 0 7px">
+                  <span style="font: 400 14px system-ui">XP to Level 8</span>
+                  <span class="num" style="font: 400 13px system-ui; color: var(--muted)"
+                    >760 / 1,000</span
+                  >
+                </div>
+                <div class="track xp"><i style="width: 76%"></i></div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <h3>Level, streak, reward</h3>
+            <p>The only place gold appears in a typical screen.</p>
+            <div
+              class="demo"
+              style="display: flex; gap: var(--s5); align-items: center; flex-wrap: wrap"
+            >
+              <div class="lvl">
+                <div class="lvl-badge num">7</div>
+                <div>
+                  <b style="font: 600 15px/1.3 system-ui; color: var(--strong)">Scholar</b><br />
+                  <small style="color: var(--muted); font-size: 13px">1,240 XP total</small>
+                </div>
+              </div>
+              <span class="flame">🔥 <span class="num">7</span> day streak</span>
+            </div>
+            <div class="demo" style="border-top: 1px solid var(--border)">
+              <div class="toast">
+                <div
+                  class="lvl-badge"
+                  style="width: 34px; height: 34px; font-size: 13px; border-radius: 10px"
+                >
+                  ▲
+                </div>
+                <div>
+                  <b style="font: 600 15px/1.3 system-ui; color: var(--strong)">+50 XP</b><br />
+                  <small style="color: var(--muted); font-size: 13px"
+                    >Completed Chemistry quiz</small
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="domain">
+        <div class="sec-head">
+          <span class="eyebrow">§9 Domain</span>
+          <h2>The parts that make it Study Quest</h2>
+          <p>
+            Quest stepper, subject progress, reading with inline explanation, and a quiz result that
+            leads straight to a retry.
+          </p>
+        </div>
+        <div class="g2">
+          <div class="card">
+            <h3>Quest stepper</h3>
+            <p>A quest is a study goal with steps, not a renamed task.</p>
+            <div class="demo steps">
+              <div class="step done">
+                <div class="bx">✓</div>
+                <div class="t">Read notes</div>
+              </div>
+              <div class="step done">
+                <div class="bx">✓</div>
+                <div class="t">Review summary</div>
+              </div>
+              <div class="step done">
+                <div class="bx">✓</div>
+                <div class="t">Study flashcards</div>
+              </div>
+              <div class="step cur">
+                <div class="bx">4</div>
+                <div class="t">Complete quiz</div>
+              </div>
+              <div class="step lock">
+                <div class="bx">·</div>
+                <div class="t">Pass final challenge</div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <h3>Subject progress</h3>
+            <p>Quiet monogram tiles. The eye goes to the active subject, not to a rainbow.</p>
+            <div class="demo">
+              <div
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: var(--s3);
+                  padding: 11px 0;
+                  border-bottom: 1px solid var(--border);
+                "
+              >
+                <div class="mono on">Ph</div>
+                <div style="flex: 1">
+                  <div class="row" style="justify-content: space-between; margin-bottom: 7px">
+                    <span style="font: 500 15px system-ui; color: var(--strong)">Physics</span>
+                    <span class="num" style="font: 400 13px system-ui; color: var(--muted)"
+                      >68%</span
+                    >
+                  </div>
+                  <div class="track"><i style="width: 68%"></i></div>
+                </div>
+              </div>
+              <div
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: var(--s3);
+                  padding: 11px 0;
+                  border-bottom: 1px solid var(--border);
+                "
+              >
+                <div class="mono">Bi</div>
+                <div style="flex: 1">
+                  <div class="row" style="justify-content: space-between; margin-bottom: 7px">
+                    <span style="font: 500 15px system-ui; color: var(--strong)">Biology</span>
+                    <span class="num" style="font: 400 13px system-ui; color: var(--muted)"
+                      >41%</span
+                    >
+                  </div>
+                  <div class="track"><i style="width: 41%"></i></div>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; gap: var(--s3); padding: 11px 0">
+                <div class="mono">Ma</div>
+                <div style="flex: 1">
+                  <div class="row" style="justify-content: space-between; margin-bottom: 7px">
+                    <span style="font: 500 15px system-ui; color: var(--strong)">Mathematics</span>
+                    <span class="num" style="font: 400 13px system-ui; color: var(--muted)"
+                      >12%</span
+                    >
+                  </div>
+                  <div class="track"><i style="width: 12%"></i></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <h3>Read My Notes</h3>
+            <p>Sentence highlight while reading aloud, explanation inline.</p>
+            <div class="demo">
+              <div class="note">
+                <p>
+                  Photosynthesis <span class="hl">occurs mainly in plant leaves</span> and uses
+                  light energy to convert carbon dioxide and water into glucose.
+                </p>
+                <div class="aside">
+                  <b>Explain this</b>
+                  Leaves are where chlorophyll captures sunlight — think of them as the plant's
+                  solar panels. The rest of the plant supplies the raw materials.
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <h3>Quiz result</h3>
+            <p>Weak topics first; the next action is a retry.</p>
+            <div
+              class="demo"
+              style="display: flex; gap: var(--s5); align-items: center; flex-wrap: wrap"
+            >
+              <div
+                class="ring"
+                style="--p: 70"
+                role="progressbar"
+                aria-valuenow="70"
+                aria-label="Quiz score, 7 of 10"
+              >
+                <span class="num">7/10</span>
+              </div>
+              <div style="flex: 1; min-width: 180px">
+                <div class="pt" style="margin-bottom: var(--s2)">Needs review</div>
+                <div class="li" style="padding-top: 0">
+                  <span
+                    style="
+                      width: 7px;
+                      height: 7px;
+                      border-radius: 50%;
+                      background: var(--bad-500);
+                      flex: none;
+                    "
+                  ></span>
+                  Newton's Second Law
+                </div>
+                <div class="li">
+                  <span
+                    style="
+                      width: 7px;
+                      height: 7px;
+                      border-radius: 50%;
+                      background: var(--bad-500);
+                      flex: none;
+                    "
+                  ></span>
+                  Momentum
+                </div>
+                <button class="btn btn-p" style="margin-top: var(--s4); width: 100%">
+                  Retry these topics
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="screens">
+        <div class="sec-head">
+          <span class="eyebrow">§8 Screens</span>
+          <h2>Home, and an empty state</h2>
+          <p>
+            Progress first, then today's quest, then what to do next. The ambient wash lives behind
+            the greeting only — never behind the list.
+          </p>
+        </div>
+        <div
+          class="card"
+          style="
+            display: flex;
+            gap: var(--s8);
+            align-items: flex-start;
+            justify-content: center;
+            flex-wrap: wrap;
+          "
+        >
+          <div class="phone">
+            <div class="screen">
+              <div
+                class="ambient"
+                aria-hidden="true"
+                style="inset: -30% -20% auto; height: 300px"
+              ></div>
+              <div class="status"><span>9:41</span><span>▲ ▲ ▮</span></div>
+              <div class="app-hd">
+                <div style="flex: 1">
+                  <h3>Good morning</h3>
+                  <small style="color: var(--muted); font-size: 13px">Tuesday, 28 September</small>
+                </div>
+                <div class="ring" style="--p: 50; width: 44px; height: 44px">
+                  <span style="font-size: 11px">2/4</span>
+                </div>
+              </div>
+              <div class="app-bd">
+                <div class="panel">
+                  <div class="row" style="gap: var(--s3)">
+                    <div class="lvl-badge" style="width: 38px; height: 38px; font-size: 16px">
+                      7
+                    </div>
+                    <div style="flex: 1">
+                      <div class="row" style="justify-content: space-between; margin-bottom: 6px">
+                        <span style="font: 500 13px system-ui; color: var(--strong)">Scholar</span>
+                        <span class="num" style="font: 400 12px system-ui; color: var(--muted)"
+                          >760/1,000</span
+                        >
+                      </div>
+                      <div class="track xp"><i style="width: 76%"></i></div>
+                    </div>
+                    <span class="flame" style="font-size: 13px">🔥<span class="num">7</span></span>
+                  </div>
+                </div>
+
+                <div class="panel">
+                  <div class="row" style="justify-content: space-between; margin-bottom: var(--s2)">
+                    <span class="pt" style="margin: 0">Today's Quest</span>
+                    <span class="num" style="font: 400 12px system-ui; color: var(--iris-600)"
+                      >2/4</span
+                    >
+                  </div>
+                  <div class="li done">
+                    <span class="cb"></span><span class="tx">Review Atomic Structure</span>
+                  </div>
+                  <div class="li done">
+                    <span class="cb"></span><span class="tx">Chemistry quiz</span>
+                  </div>
+                  <div class="li"><span class="cb"></span><span>Complete assignment</span></div>
+                  <div class="li"><span class="cb"></span><span>Review Motion</span></div>
+                </div>
+
+                <div class="panel">
+                  <div class="row" style="gap: var(--s3)">
+                    <div class="mono on">Bi</div>
+                    <div style="flex: 1">
+                      <span style="font: 500 14px system-ui; color: var(--strong)"
+                        >Photosynthesis</span
+                      ><br />
+                      <small style="color: var(--muted); font-size: 12px"
+                        >Biology · 12 min ago</small
+                      >
+                    </div>
+                    <button
+                      class="btn btn-p"
+                      style="min-height: 34px; padding: 8px 14px; font-size: 13px"
+                    >
+                      Resume
+                    </button>
+                  </div>
+                </div>
+
+                <div
+                  class="panel"
+                  style="background: var(--iris-50); border-color: var(--iris-200)"
+                >
+                  <div class="pt" style="margin-bottom: 6px">What's next</div>
+                  <div style="font: 400 14px/1.5 system-ui">
+                    You scored <b class="num">5/10</b> on Motion. Try a quick review?
+                  </div>
+                </div>
+              </div>
+              <div class="tabs">
+                <div class="tab on">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M3 10.5 12 3l9 7.5" />
+                    <path d="M5 9.5V20h14V9.5" /></svg
+                  >Home
+                </div>
+                <div class="tab">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                  >
+                    <path d="M4 6h16M4 12h16M4 18h10" /></svg
+                  >Tasks
+                </div>
+                <div class="tab">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5z" />
+                    <path d="M20 5.5A1.5 1.5 0 0 0 18.5 4H13v16h5.5a1.5 1.5 0 0 0 1.5-1.5z" /></svg
+                  >Study
+                </div>
+                <div class="tab">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M5 21V4" />
+                    <path d="M5 5h11l-2 3 2 3H5" /></svg
+                  >Quests
+                </div>
+                <div class="tab">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                  >
+                    <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" /></svg
+                  >Progress
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div
+            style="flex: 1; min-width: 300px; display: grid; gap: var(--s4); align-content: start"
+          >
+            <div class="card amb-hero">
+              <div class="ambient" aria-hidden="true"></div>
+              <div style="position: relative">
+                <div class="empty" style="border: 0; background: transparent; padding: var(--s6) 0">
+                  <div
+                    class="mono"
+                    style="
+                      margin: 0 auto;
+                      width: 52px;
+                      height: 52px;
+                      border-radius: var(--r-lg);
+                      font-size: 17px;
+                    "
+                  >
+                    +
+                  </div>
+                  <b>Add your first subject</b>
+                  <small style="display: block; max-width: 32ch; margin: 0 auto"
+                    >Subjects hold your topics, notes, quizzes and flashcards.</small
+                  >
+                  <button class="btn btn-p" style="margin-top: var(--s5)">Add subject</button>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <h3>What you're looking at</h3>
+              <table style="margin-top: var(--s2)">
+                <tr>
+                  <th>Block</th>
+                  <th>Answers</th>
+                </tr>
+                <tr>
+                  <td>Progress strip</td>
+                  <td>Level, XP to next, streak, today's ring</td>
+                </tr>
+                <tr>
+                  <td>Today's Quest</td>
+                  <td>The personalised daily list (PRD §19)</td>
+                </tr>
+                <tr>
+                  <td>Continue Learning</td>
+                  <td>Where you left off</td>
+                </tr>
+                <tr>
+                  <td>What's next</td>
+                  <td>One recommendation, always (§27)</td>
+                </tr>
+              </table>
+            </div>
+            <div class="card">
+              <h3>Layout rules</h3>
+              <p>
+                390 px mobile first · 20 px screen padding · pill-shaped buttons and inputs · bottom
+                tabs for the five sections · 46 px touch targets · one primary action per screen ·
+                ambient gradient only behind the greeting.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="states">
+        <div class="sec-head">
+          <span class="eyebrow">§12 Accessibility</span>
+          <h2>Seven requirements, part of done</h2>
+          <p>
+            Not a later pass. And cutting the palette must not cut legibility — sand-500 on white is
+            4.6:1 and is the lightest permitted body-adjacent text.
+          </p>
+        </div>
+        <div class="card">
+          <table>
+            <tr>
+              <th>#</th>
+              <th>Requirement</th>
+            </tr>
+            <tr>
+              <td class="num">1</td>
+              <td>Keyboard reachable and operable, visible focus ring everywhere</td>
+            </tr>
+            <tr>
+              <td class="num">2</td>
+              <td>Touch targets at least 44 × 44 px</td>
+            </tr>
+            <tr>
+              <td class="num">3</td>
+              <td>
+                Progress exposes <code>role="progressbar"</code> and <code>aria-valuenow"</code>
+              </td>
+            </tr>
+            <tr>
+              <td class="num">4</td>
+              <td>Quiz runner announces questions and results via a live region</td>
+            </tr>
+            <tr>
+              <td class="num">5</td>
+              <td>Colour is never the only signal — always paired with a label or icon</td>
+            </tr>
+            <tr>
+              <td class="num">6</td>
+              <td><code>prefers-reduced-motion</code> honoured</td>
+            </tr>
+            <tr>
+              <td class="num">7</td>
+              <td>AA contrast in both light and dark themes</td>
+            </tr>
           </table>
+          <p style="margin-top: var(--s4)">
+            Use the toggle in the header — every surface above is defined for both themes, and
+            nothing is a lighter-than-legible grey in either.
+          </p>
         </div>
-        <div class="card">
-          <h3>Layout rules</h3>
-          <p>390 px mobile first · 20 px screen padding · pill-shaped buttons and inputs ·
-             bottom tabs for the five sections · 46 px touch targets · one primary action per
-             screen · ambient gradient only behind the greeting.</p>
-        </div>
-      </div>
-    </div>
-  </section>
+      </section>
 
-  <section id="states">
-    <div class="sec-head">
-      <span class="eyebrow">§12 Accessibility</span>
-      <h2>Seven requirements, part of done</h2>
-      <p>Not a later pass. And cutting the palette must not cut legibility — sand-500 on white is
-         4.6:1 and is the lightest permitted body-adjacent text.</p>
+      <p
+        style="
+          margin-top: var(--s12);
+          padding-top: var(--s6);
+          border-top: 1px solid var(--border);
+          color: var(--muted);
+          font-size: 14px;
+        "
+      >
+        Preview from
+        <code class="mono-c" style="font-size: 12px">docs/IMPLEMENTATION_PLAN.md</code> Part I ·
+        Real token values · Static mockup, not the built app · Live app arrives with Phase 0–1
+      </p>
     </div>
-    <div class="card">
-      <table>
-        <tr><th>#</th><th>Requirement</th></tr>
-        <tr><td class="num">1</td><td>Keyboard reachable and operable, visible focus ring everywhere</td></tr>
-        <tr><td class="num">2</td><td>Touch targets at least 44 × 44 px</td></tr>
-        <tr><td class="num">3</td><td>Progress exposes <code>role="progressbar"</code> and <code>aria-valuenow"</code></td></tr>
-        <tr><td class="num">4</td><td>Quiz runner announces questions and results via a live region</td></tr>
-        <tr><td class="num">5</td><td>Colour is never the only signal — always paired with a label or icon</td></tr>
-        <tr><td class="num">6</td><td><code>prefers-reduced-motion</code> honoured</td></tr>
-        <tr><td class="num">7</td><td>AA contrast in both light and dark themes</td></tr>
-      </table>
-      <p style="margin-top:var(--s4)">Use the toggle in the header — every surface above is
-         defined for both themes, and nothing is a lighter-than-legible grey in either.</p>
-    </div>
-  </section>
-
-  <p style="margin-top:var(--s12);padding-top:var(--s6);border-top:1px solid var(--border);color:var(--muted);font-size:14px">
-    Preview from <code class="mono-c" style="font-size:12px">docs/IMPLEMENTATION_PLAN.md</code> Part I ·
-    Real token values · Static mockup, not the built app · Live app arrives with Phase 0–1
-  </p>
-</div>
-</body>
+  </body>
 </html>

@@ -8,7 +8,14 @@ export function QuestsPage() {
   return (
     <div className="sq-col" style={{ marginTop: "var(--s6)" }}>
       <div>
-        <h1 style={{ font: "var(--t-h1)", margin: "0 0 var(--s1)", color: "var(--strong)", letterSpacing: "-.025em" }}>
+        <h1
+          style={{
+            font: "var(--t-h1)",
+            margin: "0 0 var(--s1)",
+            color: "var(--strong)",
+            letterSpacing: "-.025em",
+          }}
+        >
           Quests
         </h1>
         <p style={{ margin: 0, color: "var(--muted)", font: "var(--t-body-sm)" }}>
@@ -25,7 +32,11 @@ export function QuestsPage() {
         }
       >
         <QuestStepper steps={activeQuest.steps} />
-        <button type="button" className="sq-btn sq-btn-primary sq-btn-block" style={{ marginTop: "var(--s4)" }}>
+        <button
+          type="button"
+          className="sq-btn sq-btn-primary sq-btn-block"
+          style={{ marginTop: "var(--s4)" }}
+        >
           Continue quest
         </button>
       </Card>

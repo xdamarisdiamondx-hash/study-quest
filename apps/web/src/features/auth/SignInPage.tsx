@@ -45,7 +45,8 @@ export function SignInPage() {
 
   function humanise(err: unknown): string {
     const message = err instanceof Error ? err.message : String(err);
-    if (/invalid|credential/i.test(message)) return "That email and password do not match an account.";
+    if (/invalid|credential/i.test(message))
+      return "That email and password do not match an account.";
     if (/already exists|already registered|unique/i.test(message)) {
       return "An account with that email already exists. Try signing in instead.";
     }
@@ -127,7 +128,16 @@ export function SignInPage() {
 
           {error ? (
             <p className="sq-error" id="auth-error" role="alert">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                aria-hidden="true"
+              >
                 <circle cx="12" cy="12" r="9" />
                 <path d="M12 7.5v5M12 16h.01" />
               </svg>

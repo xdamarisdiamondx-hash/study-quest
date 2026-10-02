@@ -11,9 +11,15 @@ export default defineConfig({
     // "@sq/ui/tokens.css" and rewrite it to a non-existent path.
     alias: [
       { find: "@sq/ui/tokens.css", replacement: pkg("../../packages/ui/src/styles/tokens.css") },
-      { find: "@sq/ui/components.css", replacement: pkg("../../packages/ui/src/styles/components.css") },
+      {
+        find: "@sq/ui/components.css",
+        replacement: pkg("../../packages/ui/src/styles/components.css"),
+      },
       { find: "@sq/ui", replacement: pkg("../../packages/ui/src/index.tsx") },
-      { find: "@sq/core/gamification", replacement: pkg("../../packages/core/src/gamification/index.ts") },
+      {
+        find: "@sq/core/gamification",
+        replacement: pkg("../../packages/core/src/gamification/index.ts"),
+      },
       { find: "@sq/core/progress", replacement: pkg("../../packages/core/src/progress/index.ts") },
       { find: "@sq/db/schema", replacement: pkg("../../packages/db/src/schema/index.ts") },
     ],

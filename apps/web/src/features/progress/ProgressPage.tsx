@@ -9,7 +9,14 @@ export function ProgressPage() {
   return (
     <div className="sq-col" style={{ marginTop: "var(--s6)" }}>
       <div>
-        <h1 style={{ font: "var(--t-h1)", margin: "0 0 var(--s1)", color: "var(--strong)", letterSpacing: "-.025em" }}>
+        <h1
+          style={{
+            font: "var(--t-h1)",
+            margin: "0 0 var(--s1)",
+            color: "var(--strong)",
+            letterSpacing: "-.025em",
+          }}
+        >
           Progress
         </h1>
         <p style={{ margin: 0, color: "var(--muted)", font: "var(--t-body-sm)" }}>
@@ -45,11 +52,7 @@ export function ProgressPage() {
               caption={`${Math.floor(totalStudyMinutes / 60)}h ${totalStudyMinutes % 60}m of 10h`}
             />
             <div style={{ marginTop: "var(--s4)" }}>
-              <Track
-                label="Quiz average"
-                value={quizAverage}
-                caption={`${quizAverage}%`}
-              />
+              <Track label="Quiz average" value={quizAverage} caption={`${quizAverage}%`} />
             </div>
           </div>
         </div>
@@ -65,8 +68,8 @@ export function ProgressPage() {
 
       <Card>
         <p>
-          These percentages are computed by <code>@sq/core/progress</code> from real formulas in
-          the architecture doc. Charts and history arrive in P16.
+          These percentages are computed by <code>@sq/core/progress</code> from real formulas in the
+          architecture doc. Charts and history arrive in P16.
         </p>
       </Card>
     </div>

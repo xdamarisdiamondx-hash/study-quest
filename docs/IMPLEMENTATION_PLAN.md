@@ -4,11 +4,11 @@ Version 1.0 · Single source of truth for building Study Quest
 
 This one document contains everything needed to build the product:
 
-| Part | Contents |
-| --- | --- |
-| **Part I — Design system** (§1–§13) | Brand and logo usage, colour, typography, spacing, motion, layout, component inventory, theming, voice, accessibility |
-| **Part II — Architecture** (§14–§22) | Stack, system shape, repository layout, 26 architecture decisions, data model, API surface, AI layer, non-functional targets, technical risks |
-| **Part III — Delivery plan** (§23–§30) | 23 phases in 6 milestones, with checklists, exit criteria, effort, traceability, risks and backlog |
+| Part                                   | Contents                                                                                                                                      |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Part I — Design system** (§1–§13)    | Brand and logo usage, colour, typography, spacing, motion, layout, component inventory, theming, voice, accessibility                         |
+| **Part II — Architecture** (§14–§22)   | Stack, system shape, repository layout, 26 architecture decisions, data model, API surface, AI layer, non-functional targets, technical risks |
+| **Part III — Delivery plan** (§23–§30) | 23 phases in 6 milestones, with checklists, exit criteria, effort, traceability, risks and backlog                                            |
 
 Product requirements: [PRD.md](PRD.md) · Original source document: `Study Quest PRD.docx`
 
@@ -20,7 +20,7 @@ provider-agnostic AI (local Ollama first) · everything else free and open sourc
 
 # Part I — Design system
 
-This section is the single source of truth for how Study Quest *looks and feels*. Every screen
+This section is the single source of truth for how Study Quest _looks and feels_. Every screen
 in the app must be assembled from the tokens and components defined here. If something is not
 in this document, it does not ship — extend this document first.
 
@@ -30,13 +30,13 @@ in this document, it does not ship — extend this document first.
 
 The five product principles (PRD §33) become five design rules:
 
-| Principle | Design consequence |
-| --- | --- |
-| Learning comes first | Gamification (gold, XP, streaks) is never more visually prominent than the learning action itself. No confetti on a screen where the student is reading. |
-| Simple but powerful | Progressive disclosure. One primary action per screen. Secondary AI actions live in a single "AI actions" row on notes. Never more than 3 primary CTAs on a screen. |
-| Everything connects | Every screen answers "what's next?" — a persistent suggestion strip on Home and a "Next up" row after every completed activity. |
-| Students stay in control | Anything auto-generated is visibly editable and clearly labelled ("Suggested by Study Quest"), never silently applied. |
-| Always answer "What's next?" | After quiz/flashcard/session completion, the result screen's primary button is the next logical action (e.g. *Retry weak topics*), not "Back to home". |
+| Principle                    | Design consequence                                                                                                                                                  |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Learning comes first         | Gamification (gold, XP, streaks) is never more visually prominent than the learning action itself. No confetti on a screen where the student is reading.            |
+| Simple but powerful          | Progressive disclosure. One primary action per screen. Secondary AI actions live in a single "AI actions" row on notes. Never more than 3 primary CTAs on a screen. |
+| Everything connects          | Every screen answers "what's next?" — a persistent suggestion strip on Home and a "Next up" row after every completed activity.                                     |
+| Students stay in control     | Anything auto-generated is visibly editable and clearly labelled ("Suggested by Study Quest"), never silently applied.                                              |
+| Always answer "What's next?" | After quiz/flashcard/session completion, the result screen's primary button is the next logical action (e.g. _Retry weak topics_), not "Back to home".              |
 
 Additional design rules:
 
@@ -59,18 +59,18 @@ An **open book** (study) beneath a **four-point quest star** (reward, progress, 
 Study Quest), on a violet gradient tile. The book's white is the only pure white in the brand —
 which is why every card in the app is also white, so the mark feels like it belongs.
 
-**One mark, used everywhere.** The primary logo is `brand/logo-mark.svg`, and it is the *only*
+**One mark, used everywhere.** The primary logo is `brand/logo-mark.svg`, and it is the _only_
 logo in the product. The favicon and monochrome variants exist purely as technical
 derivations of that one mark, not as alternative designs to choose between — the favicon is the
 same drawing with the spine detail removed, because the spine is invisible below 32 px.
 
 ### 2.2 Files
 
-| File | Status | Use |
-| --- | --- | --- |
-| `brand/logo-mark.svg` | **The logo** | Everywhere in the product: header, splash, login, app icon, favicon |
-| `brand/favicon.svg` | Derivative | Generated from the mark for ≤ 32 px (spine detail removed) |
-| `brand/logo-mono.svg` | Derivative | Single-colour fallback when the gradient cannot render — print, email, watermarks |
+| File                  | Status       | Use                                                                               |
+| --------------------- | ------------ | --------------------------------------------------------------------------------- |
+| `brand/logo-mark.svg` | **The logo** | Everywhere in the product: header, splash, login, app icon, favicon               |
+| `brand/favicon.svg`   | Derivative   | Generated from the mark for ≤ 32 px (spine detail removed)                        |
+| `brand/logo-mono.svg` | Derivative   | Single-colour fallback when the gradient cannot render — print, email, watermarks |
 
 There is no wordmark lockup file. In the app, and in the repository header, the mark sits beside
 an already-typeset product name at 8 px gap — a second baked-in wordmark would be redundant and
@@ -120,15 +120,15 @@ The previous palette had eight subject colours, four semantic colours, violet as
 hue, and gold as a third. That is what made the app look like a generic AI product: colour
 carrying no meaning, competing for attention, and turning every screen into a rainbow.
 
-The new system inverts that. Colour is *scarce*, so when it appears it means something.
+The new system inverts that. Colour is _scarce_, so when it appears it means something.
 
-| Layer | What it is | How much |
-| --- | --- | --- |
-| Accent | One hue, `iris` | Buttons, active states, progress, focus |
-| Reward | `gold`, used **only** for XP / levels / streaks | Rare — a few moments per session |
-| Neutrals | Warm greys (`sand`) | ~95 % of every screen |
-| Status | Three, desaturated | Only on error, overdue, and completion |
-| Ambient | Very low-opacity accent gradients | Decoration behind hero areas only |
+| Layer    | What it is                                      | How much                                |
+| -------- | ----------------------------------------------- | --------------------------------------- |
+| Accent   | One hue, `iris`                                 | Buttons, active states, progress, focus |
+| Reward   | `gold`, used **only** for XP / levels / streaks | Rare — a few moments per session        |
+| Neutrals | Warm greys (`sand`)                             | ~95 % of every screen                   |
+| Status   | Three, desaturated                              | Only on error, overdue, and completion  |
+| Ambient  | Very low-opacity accent gradients               | Decoration behind hero areas only       |
 
 Gradients are **ambient only** — they sit behind headers, empty states and onboarding, blurred
 and washed out. Never on a button, a progress bar, a chart series, or anything the user must
@@ -140,32 +140,32 @@ information.
 A single violet-leaning hue, chosen to sit close to the logo gradient so the mark never fights
 the interface.
 
-| Token | Value | Use |
-| --- | --- | --- |
-| `iris-50` | `#F7F5FF` | Tinted surface, hover on a card |
-| `iris-100` | `#EEE9FE` | Selected row, progress track |
-| `iris-200` | `#DDD3FE` | Border on a tinted surface |
-| `iris-300` | `#C4B5FD` | Decorative gradient stop, disabled fill |
-| `iris-400` | `#A78BFA` | Decorative gradient stop, dark-theme accent |
-| `iris-500` | `#8B5CF6` | Ambient gradient midpoint |
+| Token      | Value     | Use                                             |
+| ---------- | --------- | ----------------------------------------------- |
+| `iris-50`  | `#F7F5FF` | Tinted surface, hover on a card                 |
+| `iris-100` | `#EEE9FE` | Selected row, progress track                    |
+| `iris-200` | `#DDD3FE` | Border on a tinted surface                      |
+| `iris-300` | `#C4B5FD` | Decorative gradient stop, disabled fill         |
+| `iris-400` | `#A78BFA` | Decorative gradient stop, dark-theme accent     |
+| `iris-500` | `#8B5CF6` | Ambient gradient midpoint                       |
 | `iris-600` | `#7C3AED` | **Primary action**, active progress, focus ring |
-| `iris-700` | `#6D28D9` | Primary hover / pressed |
-| `iris-800` | `#5B21B6` | Accent text on light surfaces |
-| `iris-900` | `#4C1D95` | Headings on light, dark-theme text |
-| `iris-950` | `#2E1065` | Dark-mode page background |
+| `iris-700` | `#6D28D9` | Primary hover / pressed                         |
+| `iris-800` | `#5B21B6` | Accent text on light surfaces                   |
+| `iris-900` | `#4C1D95` | Headings on light, dark-theme text              |
+| `iris-950` | `#2E1065` | Dark-mode page background                       |
 
 ### 3.2 Reward — Gold
 
 Unchanged in value, reduced in use.
 
-| Token | Value | Use |
-| --- | --- | --- |
-| `gold-100` | `#FEF3C7` | Achievement tile background |
-| `gold-200` | `#FDE68A` | Star gradient start |
-| `gold-300` | `#FCD34D` | Gold star on dark |
+| Token      | Value     | Use                             |
+| ---------- | --------- | ------------------------------- |
+| `gold-100` | `#FEF3C7` | Achievement tile background     |
+| `gold-200` | `#FDE68A` | Star gradient start             |
+| `gold-300` | `#FCD34D` | Gold star on dark               |
 | `gold-400` | `#FBBF24` | Star gradient end, streak flame |
-| `gold-500` | `#F59E0B` | XP bar fill, level badge |
-| `gold-600` | `#D97706` | XP text on light surfaces |
+| `gold-500` | `#F59E0B` | XP bar fill, level badge        |
+| `gold-600` | `#D97706` | XP text on light surfaces       |
 
 **Gold rule:** gold is never a button, a link, a chart series or body text. If something is
 gold, it is a reward. Text on gold is always `iris-950`. Gold appears on roughly one element per
@@ -176,33 +176,33 @@ screen — never on a whole card or a whole section.
 Deliberately muted so a success state does not shout. Full-strength red and green are an
 "AI dashboard" tell.
 
-| Token | Value | Use |
-| --- | --- | --- |
-| `ok-500` | `#0E9F6E` | Correct answers, completed quests, improvement |
-| `ok-100` | `#D1FAE5` | Tinted background for a correct answer |
-| `warn-500` | `#B45309` | Due soon, low mastery |
-| `warn-100` | `#FEF3C7` | Tinted background for a warning |
-| `bad-500` | `#DC2626` | Overdue, destructive action, wrong answer |
-| `bad-100` | `#FEE2E2` | Tinted background for an error |
+| Token      | Value     | Use                                            |
+| ---------- | --------- | ---------------------------------------------- |
+| `ok-500`   | `#0E9F6E` | Correct answers, completed quests, improvement |
+| `ok-100`   | `#D1FAE5` | Tinted background for a correct answer         |
+| `warn-500` | `#B45309` | Due soon, low mastery                          |
+| `warn-100` | `#FEF3C7` | Tinted background for a warning                |
+| `bad-500`  | `#DC2626` | Overdue, destructive action, wrong answer      |
+| `bad-100`  | `#FEE2E2` | Tinted background for an error                 |
 
 ### 3.4 Neutrals — Sand
 
 Warm greys, not blue-greys. The warmth is what makes the interface feel considered rather than
 default, and it pairs with the pink-violet cast of the reference aesthetic.
 
-| Token | Value | Use |
-| --- | --- | --- |
-| `sand-50` | `#FAFAF9` | Page background |
+| Token      | Value     | Use                            |
+| ---------- | --------- | ------------------------------ |
+| `sand-50`  | `#FAFAF9` | Page background                |
 | `sand-100` | `#F5F5F4` | Subtle fill, track backgrounds |
-| `sand-200` | `#E7E5E4` | Borders, dividers |
-| `sand-300` | `#D6D3D1` | Disabled borders |
-| `sand-400` | `#A8A29E` | Muted icons |
-| `sand-500` | `#78716C` | Secondary text |
-| `sand-600` | `#57534E` | Body text on light |
-| `sand-700` | `#44403C` | Strong body text |
-| `sand-800` | `#292524` | Headings on light |
-| `sand-900` | `#1C1917` | Dark card, dark text |
-| `sand-950` | `#0C0A09` | Dark page background |
+| `sand-200` | `#E7E5E4` | Borders, dividers              |
+| `sand-300` | `#D6D3D1` | Disabled borders               |
+| `sand-400` | `#A8A29E` | Muted icons                    |
+| `sand-500` | `#78716C` | Secondary text                 |
+| `sand-600` | `#57534E` | Body text on light             |
+| `sand-700` | `#44403C` | Strong body text               |
+| `sand-800` | `#292524` | Headings on light              |
+| `sand-900` | `#1C1917` | Dark card, dark text           |
+| `sand-950` | `#0C0A09` | Dark page background           |
 
 **Light theme surfaces:** page `sand-50` · card `#FFFFFF` · border `sand-200` · body `sand-700`
 · muted `sand-500`.
@@ -228,11 +228,15 @@ The soft, out-of-focus colour washes from the reference aesthetic, used sparingl
 ```css
 /* Decorative only. Always aria-hidden, always low opacity, never behind body text. */
 .ambient {
-  position: absolute; inset: 0; z-index: -1; pointer-events: none;
-  filter: blur(64px); opacity: .55;
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  filter: blur(64px);
+  opacity: 0.55;
   background:
     radial-gradient(40% 50% at 20% 15%, var(--iris-300) 0%, transparent 70%),
-    radial-gradient(35% 45% at 85% 25%, #F9A8D4 0%, transparent 70%),
+    radial-gradient(35% 45% at 85% 25%, #f9a8d4 0%, transparent 70%),
     radial-gradient(45% 55% at 60% 90%, var(--iris-400) 0%, transparent 70%);
 }
 ```
@@ -258,26 +262,54 @@ subtle. Dark mode uses the same gradients at .45 over `sand-950`.
 
 ## 4. Typography
 
-**Family:** Inter (self-hosted variable font, subset `latin`, ~45 KB woff2) with fallback
-`system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`. No web-font CDN — the app must work
-offline. Tabular numerals enabled for all stat displays.
+**Two families, one job each.** Display and headings are a **serif**; UI and body are a
+**sans**. This is the single biggest thing separating the app from a generic dashboard — a
+study tool should read like something you would want to read in, not a form you fill in.
 
-| Style token | Size / line-height | Weight | Use |
-| --- | --- | --- | --- |
-| `display` | 32 / 40 | 800 | Home greeting, level number |
-| `h1` | 28 / 34 | 700 | Screen titles |
-| `h2` | 24 / 30 | 700 | Section headings |
-| `h3` | 20 / 28 | 600 | Card titles, subject names |
-| `body-lg` | 18 / 28 | 400 | Note body on mobile |
-| `body` | 16 / 26 | 400 | Default UI text |
-| `body-sm` | 14 / 22 | 400 | Secondary text, helper text |
-| `caption` | 12 / 16 | 600 | Badges, meta, timestamps (uppercase only for badges) |
-| `stat` | 24 / 28 | 700, tabular | XP, scores, timers |
+| Role                    | Family                                     | File                                                        | Fallback                                |
+| ----------------------- | ------------------------------------------ | ----------------------------------------------------------- | --------------------------------------- |
+| Display, h1–h3          | **Fraunces** (variable, optical size axis) | `packages/ui/src/styles/fonts/fraunces-latin.woff2` (66 KB) | Georgia, Times New Roman, serif         |
+| UI, body, caption, stat | **Inter** (variable)                       | `packages/ui/src/styles/fonts/inter-latin.woff2` (47 KB)    | system-ui, Segoe UI, Roboto, sans-serif |
 
+Both are self-hosted, `latin` subset, served as `woff2-variations`, `font-display: swap`. **No
+web-font CDN** — the app must work offline, and a font request to a third party would leak a
+usage signal (§14 constraint 6).
+
+**Why this pairing:** Fraunces is a variable serif with an optical-size axis, so it stays
+readable at 19px while keeping its character at 40px, and it is warm rather than austere — right
+for a student audience that the product principles explicitly exclude from being childish. Inter
+does the small text, where personality is worth less than legibility.
+
+| Style token | Size / line-height | Weight       | Family | Use                                                  |
+| ----------- | ------------------ | ------------ | ------ | ---------------------------------------------------- |
+| `display`   | 40 / 44            | 500          | serif  | Home greeting, the one hero line per screen          |
+| `h1`        | 32 / 38            | 500          | serif  | Screen titles                                        |
+| `h2`        | 25 / 32            | 500          | serif  | Section headings                                     |
+| `h3`        | 19 / 26            | 600          | serif  | Card titles, subject names                           |
+| `body-lg`   | 18 / 31            | 400          | sans   | Note body on mobile                                  |
+| `body`      | 16 / 26            | 400          | sans   | Default UI text                                      |
+| `body-sm`   | 14 / 21            | 400          | sans   | Secondary text, helper text                          |
+| `caption`   | 11 / 14            | 500          | sans   | Badges, meta, timestamps (uppercase only for badges) |
+| `stat`      | 24 / 29            | 600, tabular | sans   | XP, scores, timers                                   |
+
+**Rules that come with a serif:**
+
+- **Serif sits optically smaller.** Display sizes are a step up (40 rather than 32) to match a
+  sans at the same perceived size.
+- **Serif sits optically heavier.** Heading weights drop to 500; a 600 serif reads as heavy
+  where a 600 sans reads as normal.
+- **Tracking tightens upward.** `-.03em` at display, `-.025em` at h1, `-.02em` at h2. Serif
+  sidebearings are generous and look loose when tracked out.
+- **Optical size axis.** Set `font-variation-settings: "opsz"` to match the rendered size —
+  9 for display, 32 for h3 — so thin strokes do not go spindly at small sizes.
+- **The serif never goes below 19px.** Below that, use sans. This is a hard rule, not a
+  preference: small serif is the fastest way to make an interface look broken.
+- **Numerals stay in the sans.** `stat` is Inter with tabular figures — lining figures in a
+  text serif are harder to align in a column of scores.
 - **Measure:** 60–75 characters for note and summary text; UI text is not width-constrained.
-- **Note editor:** `body-lg`, 1.7 line-height, max-width 70ch, comfortable tap targets in lists.
-- **Science notation:** support `x²`, `H₂O`, `CO₂` styling via a small `sub`/`sup` helper in the
-  note renderer (math is a core use case — see Phase 5).
+- **Note editor:** `body-lg` (sans), 1.7 line-height, max-width 70ch.
+- **Science notation:** support `x²`, `H₂O`, `CO₂` via a small `sub`/`sup` helper in the note
+  renderer — math is a core use case (P5).
 - Uppercase is reserved for `caption` badges. Never uppercase body text.
 
 ---
@@ -295,13 +327,13 @@ offline. Tabular numerals enabled for all stat displays.
 
 **Elevation**
 
-| Token | Use |
-| --- | --- |
-| `e0` | Flat — cards on `sand-50` use a border, no shadow |
-| `e1` | Resting cards: `0 1px 2px rgb(15 23 42 / 0.06), 0 1px 3px rgb(15 23 42 / 0.10)` |
-| `e2` | Raised: sticky headers, floating action button |
-| `e3` | Popovers, dropdowns, active drag |
-| `e4` | Modals and sheets only |
+| Token | Use                                                                             |
+| ----- | ------------------------------------------------------------------------------- |
+| `e0`  | Flat — cards on `sand-50` use a border, no shadow                               |
+| `e1`  | Resting cards: `0 1px 2px rgb(15 23 42 / 0.06), 0 1px 3px rgb(15 23 42 / 0.10)` |
+| `e2`  | Raised: sticky headers, floating action button                                  |
+| `e3`  | Popovers, dropdowns, active drag                                                |
+| `e4`  | Modals and sheets only                                                          |
 
 **Focus ring** — `0 0 0 2px <surface>, 0 0 0 4px iris-600`. Always visible on keyboard focus,
 never removed without a replacement.
@@ -321,13 +353,13 @@ never removed without a replacement.
 
 ## 7. Motion
 
-| Token | Duration | Easing | Use |
-| --- | --- | --- | --- |
-| `instant` | 100 ms | `cubic-bezier(0.2, 0, 0, 1)` | Press feedback, toggles |
-| `fast` | 150 ms | same | Hover, small reveals |
-| `base` | 200 ms | same | Sheets, dropdowns, card lift |
-| `slow` | 300 ms | `cubic-bezier(0.16, 1, 0.3, 1)` | Page transitions, progress fills |
-| `deliberate` | 500 ms | `cubic-bezier(0.34, 1.56, 0.64, 1)` | XP bar fill, level-up, quest complete |
+| Token        | Duration | Easing                              | Use                                   |
+| ------------ | -------- | ----------------------------------- | ------------------------------------- |
+| `instant`    | 100 ms   | `cubic-bezier(0.2, 0, 0, 1)`        | Press feedback, toggles               |
+| `fast`       | 150 ms   | same                                | Hover, small reveals                  |
+| `base`       | 200 ms   | same                                | Sheets, dropdowns, card lift          |
+| `slow`       | 300 ms   | `cubic-bezier(0.16, 1, 0.3, 1)`     | Page transitions, progress fills      |
+| `deliberate` | 500 ms   | `cubic-bezier(0.34, 1.56, 0.64, 1)` | XP bar fill, level-up, quest complete |
 
 - **Reduced motion:** `prefers-reduced-motion: reduce` collapses all durations to 0 ms except
   opacity fades (100 ms), and replaces the level-up animation with a static badge.
@@ -434,17 +466,18 @@ ConfirmDialog, CommandPalette (⌘K, global search).
 
 ## 13. Delivery
 
-| Concern | Mechanism |
-| --- | --- |
-| Tokens | `packages/ui/src/styles/tokens.css` → Tailwind v4 `@theme` |
-| Components | `packages/ui` (React, no app dependencies), consumed via workspace import |
-| Catalogue | Storybook, run with `pnpm storybook`, deployed to a private local port |
-| Icons | `lucide-react` + custom SVGs, tree-shaken |
-| Fonts | Self-hosted Inter variable, preloaded, `font-display: swap` |
-| App icon | Generated from `brand/logo-mark.svg` by a build script |
-| Review | Every new component needs a Storybook story and an a11y check before merge |---
+| Concern    | Mechanism                                                                  |
+| ---------- | -------------------------------------------------------------------------- |
+| Tokens     | `packages/ui/src/styles/tokens.css` → Tailwind v4 `@theme`                 |
+| Components | `packages/ui` (React, no app dependencies), consumed via workspace import  |
+| Catalogue  | Storybook, run with `pnpm storybook`, deployed to a private local port     |
+| Icons      | `lucide-react` + custom SVGs, tree-shaken                                  |
+| Fonts      | Self-hosted Inter variable, preloaded, `font-display: swap`                |
+| App icon   | Generated from `brand/logo-mark.svg` by a build script                     |
+| Review     | Every new component needs a Storybook story and an a11y check before merge | --- |
 
 # Part II — Architecture
+
 ---
 
 ## 14. Context and constraints
@@ -474,27 +507,27 @@ These drove every decision below:
 
 Named and decided — these are the project's technology choices.
 
-| Layer | Choice | Cost | Runs where |
-| --- | --- | --- | --- |
-| **App framework** | **React 19 + TypeScript + Vite** (SPA, PWA) | Free | Local |
-| **Database** | **PostgreSQL 17** in Docker, with Drizzle ORM | Free | **Local container** |
-| **Authentication** | **Better Auth** (email + password, session cookies) | Free | Local |
-| **File storage** | **Cloudflare R2** (S3-compatible object storage) | Free tier | Cloud |
-| Runtime | Node.js 22 LTS | Free | Local |
-| Package manager | pnpm workspaces | Free | — |
-| Styling | Tailwind CSS v4 + CSS variable tokens | Free | — |
-| Routing | React Router | Free | — |
-| Server | Hono on Node (`@hono/node-server`) | Free | Local |
-| Validation | Zod (shared contracts) | Free | — |
-| Server state | TanStack Query | Free | — |
-| UI state | Zustand | Free | — |
-| AI | Provider adapters: Ollama (local) / Gemini / Groq / OpenAI-compatible / mock | Free tiers | Local or cloud |
-| Speech | Web Speech API (browser) | Free | Browser |
-| Search | PostgreSQL full-text search + `pg_trgm` | Built in | Local container |
-| Components | Storybook | Free | Local |
-| Tests | Vitest + React Testing Library + Playwright | Free | Local |
-| PWA | vite-plugin-pwa | Free | — |
-| Containerisation | Docker (database only) | Free | Local |
+| Layer              | Choice                                                                       | Cost       | Runs where          |
+| ------------------ | ---------------------------------------------------------------------------- | ---------- | ------------------- |
+| **App framework**  | **React 19 + TypeScript + Vite** (SPA, PWA)                                  | Free       | Local               |
+| **Database**       | **PostgreSQL 17** in Docker, with Drizzle ORM                                | Free       | **Local container** |
+| **Authentication** | **Better Auth** (email + password, session cookies)                          | Free       | Local               |
+| **File storage**   | **Cloudflare R2** (S3-compatible object storage)                             | Free tier  | Cloud               |
+| Runtime            | Node.js 22 LTS                                                               | Free       | Local               |
+| Package manager    | pnpm workspaces                                                              | Free       | —                   |
+| Styling            | Tailwind CSS v4 + CSS variable tokens                                        | Free       | —                   |
+| Routing            | React Router                                                                 | Free       | —                   |
+| Server             | Hono on Node (`@hono/node-server`)                                           | Free       | Local               |
+| Validation         | Zod (shared contracts)                                                       | Free       | —                   |
+| Server state       | TanStack Query                                                               | Free       | —                   |
+| UI state           | Zustand                                                                      | Free       | —                   |
+| AI                 | Provider adapters: Ollama (local) / Gemini / Groq / OpenAI-compatible / mock | Free tiers | Local or cloud      |
+| Speech             | Web Speech API (browser)                                                     | Free       | Browser             |
+| Search             | PostgreSQL full-text search + `pg_trgm`                                      | Built in   | Local container     |
+| Components         | Storybook                                                                    | Free       | Local               |
+| Tests              | Vitest + React Testing Library + Playwright                                  | Free       | Local               |
+| PWA                | vite-plugin-pwa                                                              | Free       | —                   |
+| Containerisation   | Docker (database only)                                                       | Free       | Local               |
 
 The same decisions, with the reasoning behind each one, are also recorded in
 [PRD.md Appendix A](PRD.md#appendix-a--notes-technical-approach-and-decisions).
@@ -503,14 +536,14 @@ The same decisions, with the reasoning behind each one, are also recorded in
 
 Chosen for file storage (photos, PDFs, exports). Everything else is local.
 
-| | |
-| --- | --- |
-| Free tier | 10 GB-month storage · 1M Class A (write) operations/month · 10M Class B (read) operations/month · **free egress** |
-| Paid beyond that | $0.015/GB-month, $4.50/M writes, $0.36/M reads — so the failure mode is a small bill, never a large one |
-| Requirement | A free Cloudflare account and an R2 API token |
-| Credential handling | Token lives in `config.local.json` (git-ignored), server-side only |
-| Offline behaviour | Attachments are unavailable offline; the app shows a clear "reconnect to view" state and never blocks the rest of the app |
-| Fallback | A `FileStore` interface with a local-disk implementation, so the app is fully usable with zero configuration (ADR-027) |
+|                     |                                                                                                                           |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Free tier           | 10 GB-month storage · 1M Class A (write) operations/month · 10M Class B (read) operations/month · **free egress**         |
+| Paid beyond that    | $0.015/GB-month, $4.50/M writes, $0.36/M reads — so the failure mode is a small bill, never a large one                   |
+| Requirement         | A free Cloudflare account and an R2 API token                                                                             |
+| Credential handling | Token lives in `config.local.json` (git-ignored), server-side only                                                        |
+| Offline behaviour   | Attachments are unavailable offline; the app shows a clear "reconnect to view" state and never blocks the rest of the app |
+| Fallback            | A `FileStore` interface with a local-disk implementation, so the app is fully usable with zero configuration (ADR-027)    |
 
 **Privacy consequence to be explicit about:** with R2 configured, uploaded files leave the
 machine. The app must therefore never auto-upload anything, show a clear file-storage indicator
@@ -573,14 +606,14 @@ container is the PostgreSQL database (ADR-028, ADR-029). **In development**, `do
 
 **What runs where, at a glance**
 
-| Component | Location |
-| --- | --- |
-| Web app (PWA) | Local — browser, installed to phone over LAN |
-| API + engines | Local — Node process on `:4321` |
-| Database | Local — PostgreSQL 17 in Docker, `localhost:5432` |
-| Authentication | Local — Better Auth, sessions in PostgreSQL |
-| AI provider | Local (Ollama) or cloud, per user choice |
-| Files (photos, PDFs) | Cloudflare R2, with a local-disk fallback |
+| Component            | Location                                          |
+| -------------------- | ------------------------------------------------- |
+| Web app (PWA)        | Local — browser, installed to phone over LAN      |
+| API + engines        | Local — Node process on `:4321`                   |
+| Database             | Local — PostgreSQL 17 in Docker, `localhost:5432` |
+| Authentication       | Local — Better Auth, sessions in PostgreSQL       |
+| AI provider          | Local (Ollama) or cloud, per user choice          |
+| Files (photos, PDFs) | Cloudflare R2, with a local-disk fallback         |
 
 ---
 
@@ -641,6 +674,7 @@ Each ADR records the decision, the reason, and what it costs us. Full detail liv
 `docs/decisions/ADR-XXX.md` when a decision is revisited.
 
 ### ADR-001 — The app and database run locally
+
 **Decision.** The Node server and a local PostgreSQL instance both run on one Windows machine.
 The app is unusable without that machine running, by design. There is no cloud deployment.
 **Why.** Zero hosting cost, no accounts needed, notes stay on the machine, works offline, and
@@ -650,6 +684,7 @@ failure. Mitigated by ADR-022 (automated local backups) and by keeping the data 
 multi-user so ADR-026 can move it later without a rewrite.
 
 ### ADR-002 — React + Vite SPA, not Next.js
+
 **Decision.** Client-side SPA served by the Hono server; no SSR.
 **Why.** The app is 100 % behind a login on a private network, so there is no SEO or public-page
 requirement. A Vite SPA is faster to build, faster to run locally, and has no server-rendering
@@ -657,6 +692,7 @@ cold-start cost. Next.js would only add a second rendering model to maintain.
 **Cost.** No SSR/OG previews. Acceptable for a private study tool.
 
 ### ADR-003 — PostgreSQL (local) + Drizzle ORM
+
 **Decision.** PostgreSQL 17, running in a Docker container on `localhost:5432`, database
 `studyquest`, with Drizzle ORM for typed queries and real SQL migrations. Search uses
 PostgreSQL full-text search with `pg_trgm` (ADR-013). Files are not stored here (ADR-027).
@@ -672,6 +708,7 @@ backups) and by Drizzle keeping the access layer portable. Also: `postgres` type
 strict (`text` + `check` rather than loose `any`), and connections must be pooled.
 
 ### ADR-004 — Hono API server
+
 **Decision.** One Hono app on Node, serving `/api/*` and (in production) the static SPA.
 **Why.** TypeScript end to end, tiny surface, first-class Zod validation, easy to add a
 WebSocket or SSE route for streaming AI output.
@@ -679,6 +716,7 @@ WebSocket or SSE route for streaming AI output.
 Windows task for auto-start.
 
 ### ADR-005 — npm/pnpm workspaces, four packages
+
 **Decision.** `apps/web`, `apps/server`, `packages/core`, `packages/db`, `packages/ui`.
 **Why.** Separates domain logic from UI and from persistence, so AI-assisted changes touch one
 layer at a time. `core` being pure and framework-free means the planning and XP rules are
@@ -687,6 +725,7 @@ unit-testable without a browser or a database.
 proves too heavy, collapse `db` into `server` first.
 
 ### ADR-006 — Provider-agnostic AI adapter layer
+
 **Decision.** One internal `AiProvider` interface; adapters for Ollama, Gemini, Groq,
 OpenAI-compatible endpoints (OpenRouter, Together, local vLLM) and a deterministic `mock`.
 Provider is selected per request from settings.
@@ -696,14 +735,15 @@ keys. Swapping providers must never touch feature code.
 
 ```ts
 interface AiProvider {
-  name: string
-  complete<T>(req: AiRequest<T>): Promise<AiResult<T>>  // structured output
-  stream?(req: AiRequest): AsyncIterable<string>         // long-form text
-  health(): Promise<{ ok: boolean; model?: string; detail?: string }>
+  name: string;
+  complete<T>(req: AiRequest<T>): Promise<AiResult<T>>; // structured output
+  stream?(req: AiRequest): AsyncIterable<string>; // long-form text
+  health(): Promise<{ ok: boolean; model?: string; detail?: string }>;
 }
 ```
 
 ### ADR-007 — Provider order: local first
+
 **Decision.** Default order: **Ollama** (free, offline, private) → **free cloud tier** (Gemini
 Flash-Lite, Groq) → **user's own key** for paid providers. If no provider is configured, the app
 runs in **offline mode**: every feature except AI generation works, and AI actions show a
@@ -713,6 +753,7 @@ leave the machine if they choose local models.
 **Cost.** Local model quality varies; the app must degrade gracefully.
 
 ### ADR-008 — Artifact cache and prompt versioning
+
 **Decision.** Every AI result is stored in `ai_artifacts` with
 `(kind, source_id, input_hash, options, prompt_version, provider, model)` as the cache key.
 **Why.** Re-generating a summary costs money and time for no reason. Caching also makes results
@@ -721,6 +762,7 @@ reproducible and lets us A/B prompt versions.
 `input_hash`.
 
 ### ADR-009 — Structured output via JSON Schema
+
 **Decision.** Quizzes, flashcards, plans, recommendations and mastery tags are requested as JSON
 matching a Zod-derived schema, then validated. Free-form summaries and explanations are text.
 **Why.** A quiz is unusable if the model returns prose. Validation + one repair retry turns a
@@ -728,12 +770,14 @@ best-effort response into a guarantee.
 **Cost.** Slightly higher token cost; occasional repair call.
 
 ### ADR-010 — Zod contracts shared everywhere
+
 **Decision.** Request/response types live in `packages/core/src/schemas` and are used by the
 server routes, the API client and the forms.
 **Why.** One definition, no drift between client and server; free runtime validation on both
 sides.
 
 ### ADR-011 — TanStack Query + Zustand
+
 **Decision.** Server state (notes, tasks, progress) in TanStack Query with query keys per
 domain. Ephemeral UI state (open sheet, current quiz answer, timer state) in Zustand.
 **Why.** Separating "data from the server" from "what the UI is doing now" prevents the most
@@ -741,6 +785,7 @@ common source of bugs in apps of this size. Derived state (progress %, level) is
 stored twice.
 
 ### ADR-012 — Local authentication
+
 **Decision.** Better Auth running server-side in the Node process, with email + password,
 scrypt/argon2 hashing, opaque session tokens in an httpOnly, SameSite=Lax cookie, and sessions
 stored in PostgreSQL. A LAN PIN guards access when the server is exposed to the network.
@@ -753,6 +798,7 @@ rate-limiting, and the decision of which endpoints require a session. Its admin/
 is large, so we enable only what we need (email+password, and later passkey or OAuth if wanted).
 
 ### ADR-013 — PostgreSQL full-text search for search
+
 **Decision.** A `search_index` table maintained by database triggers on notes, tasks, quizzes,
 questions, flashcards, subjects and topics, queried with a `tsvector` column
 (`to_tsvector('english', …)`) plus `pg_trgm` for typo and prefix tolerance ("Newt" finds
@@ -765,6 +811,7 @@ setup rather than a manual step.
 update, and `pg_trgm` indexes cost write throughput and disk — irrelevant at this scale.
 
 ### ADR-014 — Web Speech API for Read My Notes
+
 **Decision.** Browser `speechSynthesis` for "read aloud", with a `TtsProvider` interface so a
 server TTS (or local Piper) can replace it later. Word-boundary events drive follow-along
 highlighting.
@@ -773,6 +820,7 @@ highlighting.
 fallback needed where boundary events are missing.
 
 ### ADR-015 — XP as an append-only ledger
+
 **Decision.** All XP is written to `xp_ledger` with a unique key on
 `(user_id, reason, source_type, source_id)` so awarding is idempotent. Level and total XP are
 derived from the ledger, never incremented in place.
@@ -781,6 +829,7 @@ replayed and recomputed.
 **Cost.** An extra table and a small recompute job.
 
 ### ADR-016 — Progress is computed, then cached
+
 **Decision.** Topic and subject progress are calculated by `packages/core/progress` from
 sessions, quiz mastery, review coverage and quest completion, and written to a `progress_cache`
 column for cheap reads. Recomputed on the events that affect it.
@@ -789,6 +838,7 @@ data is worse than a computed one.
 **Cost.** Cache invalidation logic; mitigated by recomputing from the ledger on every write.
 
 ### ADR-017 — Recurrence in the server scheduler
+
 **Decision.** Recurring tasks store a small rrule-lite (`freq`, `interval`, `byWeekday`,
 `until`). A local scheduler materialises occurrences for the next 14 days and fires reminders.
 **Why.** No cron daemon, no cloud scheduler, works with the machine off (catches up on next
@@ -796,6 +846,7 @@ start).
 **Cost.** Limited to the recurrence patterns students actually use.
 
 ### ADR-018 — PWA with offline read
+
 **Decision.** `vite-plugin-pwa` precaches the app shell and previously visited content. Writes
 made offline are queued in IndexedDB and replayed on reconnect.
 **Why.** Students lose connectivity constantly (commute, library, exams). The app must at least
@@ -804,6 +855,7 @@ open and show their data.
 cache-first for the shell.
 
 ### ADR-019 — Tailwind v4 with CSS variable tokens
+
 **Decision.** Design tokens are CSS custom properties defined once and exposed to Tailwind via
 `@theme`. Components use semantic utilities (`bg-surface`, `text-muted`), never raw colours.
 **Why.** Keeps the design system (Part I) and the code in sync, and makes dark
@@ -811,12 +863,14 @@ mode a variable swap.
 **Cost.** Requires discipline; enforced by lint rule banning arbitrary hex values.
 
 ### ADR-020 — Storybook as the component catalogue
+
 **Decision.** Every component in `packages/ui` has stories for all eight states; Storybook runs
 locally on port 6006.
 **Why.** Design quality is a stated product principle ("simple but powerful"); a catalogue is
 the only way to keep 40+ components consistent.
 
 ### ADR-021 — Test stack
+
 **Decision.** Vitest for `core` logic (XP, progress, planning, recurrence) and server services;
 React Testing Library for components; Playwright for a handful of end-to-end journeys
 (create subject → add note → summarise → quiz → earn XP).
@@ -824,6 +878,7 @@ React Testing Library for components; Playwright for a handful of end-to-end jou
 cheap to test in isolation. E2E is reserved for the five journeys that define the product.
 
 ### ADR-022 — Automated local backups
+
 **Decision.** `scripts/db-backup.ps1` runs `docker compose exec -T db pg_dump -Fc` into
 `data/backups/studyquest-YYYYMMDD-HHmmss.dump` (keeping the last 14) and can export a full
 `.zip` of the database, the local file folder and a config template. Restore is `pg_restore`.
@@ -835,6 +890,7 @@ delete by accident with `docker compose down -v` — so backups must be automate
 Settings, and a restore drill in P22.
 
 ### ADR-023 — Security posture
+
 **Decision.** The server binds `127.0.0.1` by default. LAN access is an explicit opt-in in
 Settings that also requires a 4-digit app PIN for unlocking. The local database listens on
 loopback with a dedicated role and a generated password, and is never exposed on the network.
@@ -848,6 +904,7 @@ are all reachable from this machine.
 fully offline-capable once files are used — hence the local-disk fallback (ADR-027).
 
 ### ADR-024 — Windows ergonomics
+
 **Decision.** PowerShell scripts for `setup`, `dev`, `start`, `db:up`, `db:down`, `db:migrate`,
 `db:seed`, `db:backup`, `db:restore`, and `install-autostart` (a scheduled task at logon that
 starts Docker Desktop, the database container, and the Node server). Paths are resolved relative
@@ -857,6 +914,7 @@ to the repo root; no absolute paths are committed. The local-disk file fallback 
 process — the user should never have to remember that, nor type a Docker command.
 
 ### ADR-025 — Cost guardrails
+
 **Decision.** The server tracks token usage and estimated cost per request in
 `ai_artifacts`, exposes a monthly estimate in Settings, enforces a per-user daily AI call cap,
 and caches aggressively (ADR-008). Default prompts are tuned for small models. R2 usage is
@@ -865,6 +923,7 @@ surfaced in Settings with a warning at 80 % of the free tier.
 produce a surprise bill on either the AI provider or R2.
 
 ### ADR-026 — Reversibility
+
 **Decision.** Every layer is swappable behind an interface: local PostgreSQL→hosted Postgres
 (same dialect, same Drizzle schema), `FileStore` R2→local disk or any S3-compatible provider,
 Ollama→any AI provider (ADR-006), local server→hosted (same API), SPA→wrapped native app
@@ -873,6 +932,7 @@ Ollama→any AI provider (ADR-006), local server→hosted (same API), SPA→wrap
 choosing Postgres and S3-compatible R2 now is precisely what keeps that door open.
 
 ### ADR-027 — Cloudflare R2 for file storage
+
 **Decision.** Uploaded files (photos, PDFs, exports) are stored in a private Cloudflare R2
 bucket via its S3-compatible API, behind a `FileStore` interface with a local-disk
 implementation as the default when R2 is not configured. The database stores only metadata and
@@ -889,12 +949,13 @@ default. Attachments are therefore opt-in: the app never uploads anything withou
 user action, and Settings states plainly which files live off-device.
 
 ### ADR-028 — PostgreSQL runs in Docker
+
 **Decision.** PostgreSQL 17 runs as a container defined in `docker-compose.yml`
 (`postgres:17-alpine`), bound to `127.0.0.1:5432` only, with a named volume (`sq_pgdata`)
 holding the data directory, a healthcheck, and credentials from `.env`. Everything else — the
 Node server, the Vite dev server — still runs natively on Windows. The only container is the
 database.
-**Why.** Docker is the cleanest way to run *the* PostgreSQL — the exact version, the exact
+**Why.** Docker is the cleanest way to run _the_ PostgreSQL — the exact version, the exact
 extensions (`pg_trgm`), the same configuration on any machine — without installing a Windows
 service, worrying about registry entries, or leaving a database running after the project is
 abandoned. `docker compose down -v` gives a clean delete of all data, which is a genuine
@@ -909,6 +970,7 @@ logon. If Docker is unacceptable, the documented fallback is a native PostgreSQL
 the same `DATABASE_URL` — nothing in the code changes.
 
 ### ADR-029 — One container, not a containerised stack
+
 **Decision.** Only PostgreSQL is containerised. The app server runs natively via `pnpm`, in
 development and in production.
 **Why.** A fully containerised stack (app + web + db) would be the "textbook" answer, but on
@@ -953,18 +1015,18 @@ erDiagram
 
 Applied to every table in §18.1:
 
-| Concern | Convention |
-| --- | --- |
-| Primary key | `uuid` with `gen_random_uuid()` default (Drizzle-generated) — no sequence guessing, safe to merge data later |
-| Timestamps | `timestamptz`, always UTC. The app formats for display; the database never stores local time |
-| Money/limits | `integer` (XP cents, minutes, milliseconds), never floats |
-| Flexible payloads | `jsonb` for `options_json`, `output_json`, `settings_json`, `criteria_json` with a `jsonb` GIN index where queried |
-| Enumerations | `text` + `check` constraint, not a Postgres `enum` type — adding a value must never require a type migration |
+| Concern             | Convention                                                                                                                                                                                |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Primary key         | `uuid` with `gen_random_uuid()` default (Drizzle-generated) — no sequence guessing, safe to merge data later                                                                              |
+| Timestamps          | `timestamptz`, always UTC. The app formats for display; the database never stores local time                                                                                              |
+| Money/limits        | `integer` (XP cents, minutes, milliseconds), never floats                                                                                                                                 |
+| Flexible payloads   | `jsonb` for `options_json`, `output_json`, `settings_json`, `criteria_json` with a `jsonb` GIN index where queried                                                                        |
+| Enumerations        | `text` + `check` constraint, not a Postgres `enum` type — adding a value must never require a type migration                                                                              |
 | Enforced invariants | Unique indexes in SQL, not just application code: `xp_ledger (user_id, reason, source_type, source_id)` and `ai_artifacts (kind, source_id, input_hash, prompt_version, provider, model)` |
-| Search | `search_index(entity_type, entity_id, title, body, tsv tsvector, …)` maintained by triggers, GIN on `tsv`, GIN trigram on `title` |
-| Cascades | Deleting a subject cascades to topics; a topic with content is archived instead of deleted (§18.1 `archived_at`) |
-| Row ownership | Every user-owned table carries `user_id` so queries are always scoped and a future hosted version needs no schema change |
-| Migrations | Drizzle-generated SQL checked into `packages/db/migrations`; never edit the live database by hand |
+| Search              | `search_index(entity_type, entity_id, title, body, tsv tsvector, …)` maintained by triggers, GIN on `tsv`, GIN trigram on `title`                                                         |
+| Cascades            | Deleting a subject cascades to topics; a topic with content is archived instead of deleted (§18.1 `archived_at`)                                                                          |
+| Row ownership       | Every user-owned table carries `user_id` so queries are always scoped and a future hosted version needs no schema change                                                                  |
+| Migrations          | Drizzle-generated SQL checked into `packages/db/migrations`; never edit the live database by hand                                                                                         |
 
 ### 18.2 Core tables
 
@@ -1040,20 +1102,20 @@ Applied to every table in §18.1:
 
 ### 18.3 Rules that are code, not data
 
-| Rule | Implementation | Source |
-| --- | --- | --- |
-| Level from XP | `levelForXp(total)` = highest level whose `xp_required ≤ total` | ADR-015 |
-| Level curve | `xpRequired(n) = round(100 · n^1.35)` (L2 = 246, L5 = 1000, L10 = 2243, L20 = 5973) | ADR-015 |
-| Level titles | Newcomer, Explorer, Apprentice, Scholar, Adept, Strategist, Champion, Master | — |
-| Topic mastery | `Σ correct / Σ attempts` over last 20 questions, weighted 1.0 / 0.6 by recency | ADR-016 |
-| Topic progress | `0.40·mastery + 0.20·reviewCoverage + 0.20·sessionCoverage + 0.20·questCompletion` | PRD §25 |
-| Subject progress | mean of its topics' progress, plus `0.1` for each completed subject quest (capped 1.0) | PRD §25 |
-| Streak | a day counts if ≥ 1 qualifying action (session, quiz, flashcard batch, ≥ 25 min of task work) | PRD §22 |
-| Streak grace | 1 freeze per 14 days, auto-granted; never retroactive beyond 1 day | §22, §33.4 |
-| XP awards | quiz attempt +10, quiz ≥ 80 % +25, retry improved +15, session +100, focus session +2/10 min, flashcards 20 cards +15, task +10, quest step +20, quest complete +500 | PRD §22 |
-| Retry quiz | group wrong answers by `concept_tag`, take the 3 weakest topics, generate `min(5, misses)` new questions weighted 2:1 fresh:rephrased | PRD §13 |
-| Recommendation score | `0.35·overdue + 0.25·weakMastery + 0.2·dueSoon + 0.1·inactivity + 0.1·streakProtect`, capped at 3 shown | PRD §27 |
-| Daily AI cap | 40 generations per user per day; over the cap the UI offers cached results only | ADR-025 |
+| Rule                 | Implementation                                                                                                                                                       | Source     |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| Level from XP        | `levelForXp(total)` = highest level whose `xp_required ≤ total`                                                                                                      | ADR-015    |
+| Level curve          | `xpRequired(n) = round(100 · (n-1)^1.35)`, level 1 at 0 XP (L2 = 100, L3 = 255, L5 = 650, L10 = 1942, L20 = 5325)                                                    | ADR-015    |
+| Level titles         | Newcomer, Explorer, Apprentice, Scholar, Adept, Strategist, Champion, Master                                                                                         | —          |
+| Topic mastery        | `Σ correct / Σ attempts` over last 20 questions, weighted 1.0 / 0.6 by recency                                                                                       | ADR-016    |
+| Topic progress       | `0.40·mastery + 0.20·reviewCoverage + 0.20·sessionCoverage + 0.20·questCompletion`                                                                                   | PRD §25    |
+| Subject progress     | mean of its topics' progress, plus `0.1` for each completed subject quest (capped 1.0)                                                                               | PRD §25    |
+| Streak               | a day counts if ≥ 1 qualifying action (session, quiz, flashcard batch, ≥ 25 min of task work)                                                                        | PRD §22    |
+| Streak grace         | 1 freeze per 14 days, auto-granted; never retroactive beyond 1 day                                                                                                   | §22, §33.4 |
+| XP awards            | quiz attempt +10, quiz ≥ 80 % +25, retry improved +15, session +100, focus session +2/10 min, flashcards 20 cards +15, task +10, quest step +20, quest complete +500 | PRD §22    |
+| Retry quiz           | group wrong answers by `concept_tag`, take the 3 weakest topics, generate `min(5, misses)` new questions weighted 2:1 fresh:rephrased                                | PRD §13    |
+| Recommendation score | `0.35·overdue + 0.25·weakMastery + 0.2·dueSoon + 0.1·inactivity + 0.1·streakProtect`, capped at 3 shown                                                              | PRD §27    |
+| Daily AI cap         | 40 generations per user per day; over the cap the UI offers cached results only                                                                                      | ADR-025    |
 
 ---
 
@@ -1147,17 +1209,17 @@ prompt, user template, output schema, recommended temperature, max tokens, model
 
 Prompts that must exist before the MVP is complete:
 
-| Prompt | Output | Tier | Grounding rule |
-| --- | --- | --- | --- |
-| `summary.v1` | text + optional bullets | small | Use only the student's notes; label anything added as "Extra explanation" |
-| `explain.v1` | text, style-parameterised | small | Assume a student who just met the topic; give one concrete example |
-| `quiz.v1` | JSON: questions[] | small | Every question answerable from the notes; tag each with a concept and topic |
-| `flashcards.v1` | JSON: cards[] | small | One idea per card; front is a question, back ≤ 30 words |
-| `mastery_tags.v1` | JSON: concept tags per question | small | 1–3 tags, lowercase, from the note's vocabulary |
-| `daily_quest.v1` | JSON: activities[] | small | Respect deadlines and available minutes; max 6 items |
-| `study_plan.v1` | JSON: blocks[] | small | Never exceed available time; include a break after 50 min |
-| `recommend.v1` | JSON: recommendations[] | large | Max 3; must be actionable today; no guilt framing |
-| `weak_topic_explain.v1` | text | small | Re-explain the exact concept the student missed |
+| Prompt                  | Output                          | Tier  | Grounding rule                                                              |
+| ----------------------- | ------------------------------- | ----- | --------------------------------------------------------------------------- |
+| `summary.v1`            | text + optional bullets         | small | Use only the student's notes; label anything added as "Extra explanation"   |
+| `explain.v1`            | text, style-parameterised       | small | Assume a student who just met the topic; give one concrete example          |
+| `quiz.v1`               | JSON: questions[]               | small | Every question answerable from the notes; tag each with a concept and topic |
+| `flashcards.v1`         | JSON: cards[]                   | small | One idea per card; front is a question, back ≤ 30 words                     |
+| `mastery_tags.v1`       | JSON: concept tags per question | small | 1–3 tags, lowercase, from the note's vocabulary                             |
+| `daily_quest.v1`        | JSON: activities[]              | small | Respect deadlines and available minutes; max 6 items                        |
+| `study_plan.v1`         | JSON: blocks[]                  | small | Never exceed available time; include a break after 50 min                   |
+| `recommend.v1`          | JSON: recommendations[]         | large | Max 3; must be actionable today; no guilt framing                           |
+| `weak_topic_explain.v1` | text                            | small | Re-explain the exact concept the student missed                             |
 
 ### 20.3 Provider configuration
 
@@ -1168,9 +1230,9 @@ Prompts that must exist before the MVP is complete:
   "ai": {
     "defaultProvider": "ollama",
     "providers": {
-      "ollama":    { "baseUrl": "http://127.0.0.1:11434", "model": "qwen2.5:7b-instruct" },
-      "gemini":    { "model": "gemini-2.5-flash-lite", "apiKey": "" },
-      "groq":      { "model": "llama-3.3-70b-versatile", "apiKey": "" },
+      "ollama": { "baseUrl": "http://127.0.0.1:11434", "model": "qwen2.5:7b-instruct" },
+      "gemini": { "model": "gemini-2.5-flash-lite", "apiKey": "" },
+      "groq": { "model": "llama-3.3-70b-versatile", "apiKey": "" },
       "openaiCompat": { "baseUrl": "", "model": "", "apiKey": "" }
     },
     "dailyCallCap": 40
@@ -1185,36 +1247,36 @@ UI never receives an existing key back, only a "configured / not configured" fla
 
 ## 21. Non-functional targets
 
-| Concern | Target |
-| --- | --- |
-| Cold start | App usable in < 2 s locally; API p95 < 50 ms for local queries |
-| First contentful paint | < 1.5 s on a mid-range phone over Wi-Fi |
-| Bundle | < 200 KB gzipped initial JS, route-level code splitting, lazy AI routes |
-| Offline | App shell and last-viewed data available with no network; attachments require R2 |
-| Data | 10 years of study history well under the 10 GB R2 free tier and far below any local disk limit |
-| Database | Connection pool of 10; migrations < 2 s; no query over 100 ms on seeded data |
-| AI | Structured generations validated 100 %; no unvalidated model output reaches the UI |
-| Privacy | Zero telemetry; no third-party requests except the AI provider and R2 the user configures |
-| Accessibility | WCAG 2.1 AA for all MVP screens |
+| Concern                | Target                                                                                         |
+| ---------------------- | ---------------------------------------------------------------------------------------------- |
+| Cold start             | App usable in < 2 s locally; API p95 < 50 ms for local queries                                 |
+| First contentful paint | < 1.5 s on a mid-range phone over Wi-Fi                                                        |
+| Bundle                 | < 200 KB gzipped initial JS, route-level code splitting, lazy AI routes                        |
+| Offline                | App shell and last-viewed data available with no network; attachments require R2               |
+| Data                   | 10 years of study history well under the 10 GB R2 free tier and far below any local disk limit |
+| Database               | Connection pool of 10; migrations < 2 s; no query over 100 ms on seeded data                   |
+| AI                     | Structured generations validated 100 %; no unvalidated model output reaches the UI             |
+| Privacy                | Zero telemetry; no third-party requests except the AI provider and R2 the user configures      |
+| Accessibility          | WCAG 2.1 AA for all MVP screens                                                                |
 
 ---
 
 ## 22. Known technical risks
 
-| Risk | Impact | Mitigation |
-| --- | --- | --- |
-| Local model quality varies | Weak quizzes/summaries | Structured output + validation, cache by model, prompt tuned for small models, easy provider swap |
-| AI service unreachable | Feature dead-ends | Offline mode, cached artifacts, clear "connect a model" guidance |
-| R2 is a cloud dependency | Attachments need network + an account; student files leave the machine | `FileStore` interface with a local-disk default; strict opt-in uploads; write-only token; offline state in the UI (ADR-027) |
-| R2 free tier exceeded | Small bill; uploads stop working | Usage shown in Settings with an 80 % warning; local fallback; per-file size cap |
-| R2 token compromise | Bucket read/delete | Token server-side in a git-ignored config, write-only in the UI, scoped to one bucket, rotatable |
-| Docker not installed or not running | App cannot start | Health check waits for the container and fails with the exact fix command; `dev.ps1` starts the DB first |
-| Database volume deleted | Total data loss | Automated `pg_dump` backups, warning in Settings, restore drill (ADR-022) |
-| Connection pool exhaustion | Requests hang under load | Pool of 10, short transactions, one transaction per completed activity |
-| Scheduler depends on machine being on | Missed reminders | Catch-up window of 24 h on start, all reminders evaluated lazily on read as well |
-| PWA cache staleness | Students see old data | Network-first for data, versioned cache names, explicit "update available" prompt |
-| Scope creep (23 phases) | Nothing ships | Milestone gates; MVP is M0–M4, everything after is explicitly optional |
-| Windows-specific tooling | Setup friction | Scripts for setup/dev/start/backup/autostart; documented prerequisites |
+| Risk                                  | Impact                                                                 | Mitigation                                                                                                                  |
+| ------------------------------------- | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Local model quality varies            | Weak quizzes/summaries                                                 | Structured output + validation, cache by model, prompt tuned for small models, easy provider swap                           |
+| AI service unreachable                | Feature dead-ends                                                      | Offline mode, cached artifacts, clear "connect a model" guidance                                                            |
+| R2 is a cloud dependency              | Attachments need network + an account; student files leave the machine | `FileStore` interface with a local-disk default; strict opt-in uploads; write-only token; offline state in the UI (ADR-027) |
+| R2 free tier exceeded                 | Small bill; uploads stop working                                       | Usage shown in Settings with an 80 % warning; local fallback; per-file size cap                                             |
+| R2 token compromise                   | Bucket read/delete                                                     | Token server-side in a git-ignored config, write-only in the UI, scoped to one bucket, rotatable                            |
+| Docker not installed or not running   | App cannot start                                                       | Health check waits for the container and fails with the exact fix command; `dev.ps1` starts the DB first                    |
+| Database volume deleted               | Total data loss                                                        | Automated `pg_dump` backups, warning in Settings, restore drill (ADR-022)                                                   |
+| Connection pool exhaustion            | Requests hang under load                                               | Pool of 10, short transactions, one transaction per completed activity                                                      |
+| Scheduler depends on machine being on | Missed reminders                                                       | Catch-up window of 24 h on start, all reminders evaluated lazily on read as well                                            |
+| PWA cache staleness                   | Students see old data                                                  | Network-first for data, versioned cache names, explicit "update available" prompt                                           |
+| Scope creep (23 phases)               | Nothing ships                                                          | Milestone gates; MVP is M0–M4, everything after is explicitly optional                                                      |
+| Windows-specific tooling              | Setup friction                                                         | Scripts for setup/dev/start/backup/autostart; documented prerequisites                                                      |
 
 ---
 
@@ -1251,15 +1313,15 @@ Milestone map, phases P0–P22, and everything needed to execute them.
 
 ## 24. Milestone map
 
-| Milestone | Phases | Theme | Outcome | Effort |
-| --- | --- | --- | --- | --- |
-| **M0 Foundation** | P0–P3 | Tooling, design system, data, shell | App runs locally with Postgres in Docker, looks like Study Quest, has an account | 13 d |
-| **M1 Learn** | P4–P6 | Subjects, notes, AI platform | Can organise subjects and write notes; AI works | 12 d |
-| **M2 Understand & Practice** | P7–P10 | Summaries, quizzes, flashcards, reading | The full Plan→Review loop works | 18 d |
-| **M3 Organise** | P11–P14 | Tasks, planning, quests, sessions | Study Quest guides the day | 15 d |
-| **M4 Motivate** | P15–P19 | XP, progress, recommendations, reminders, search | Progress visible, "what's next?" always answered | 15 d |
-| **M5 Ship** | P20–P22 | PWA, quality bar, release | Installable, accessible, backed up, running daily | 11 d |
-| | | | **Total** | **≈ 83 d** |
+| Milestone                    | Phases  | Theme                                            | Outcome                                                                          | Effort     |
+| ---------------------------- | ------- | ------------------------------------------------ | -------------------------------------------------------------------------------- | ---------- |
+| **M0 Foundation**            | P0–P3   | Tooling, design system, data, shell              | App runs locally with Postgres in Docker, looks like Study Quest, has an account | 13 d       |
+| **M1 Learn**                 | P4–P6   | Subjects, notes, AI platform                     | Can organise subjects and write notes; AI works                                  | 12 d       |
+| **M2 Understand & Practice** | P7–P10  | Summaries, quizzes, flashcards, reading          | The full Plan→Review loop works                                                  | 18 d       |
+| **M3 Organise**              | P11–P14 | Tasks, planning, quests, sessions                | Study Quest guides the day                                                       | 15 d       |
+| **M4 Motivate**              | P15–P19 | XP, progress, recommendations, reminders, search | Progress visible, "what's next?" always answered                                 | 15 d       |
+| **M5 Ship**                  | P20–P22 | PWA, quality bar, release                        | Installable, accessible, backed up, running daily                                | 11 d       |
+|                              |         |                                                  | **Total**                                                                        | **≈ 83 d** |
 
 Realistic elapsed time for one person studying part-time: **5–7 months**. Full time: 4 months.
 
@@ -1275,6 +1337,7 @@ the R2 storage service.
 # Milestone 0 — Foundation
 
 ## P0 · Repository and toolchain
+
 **Goal:** a clean machine can clone, install and run the app with one command.
 
 - [ ] Install and pin Node 22 LTS, pnpm, Git, GitHub CLI, **Docker Desktop** (WSL 2 backend)
@@ -1302,6 +1365,7 @@ Postgres container, a working `/api/health`, and a green CI badge.
 **Effort:** 3 d · **Depends on:** none
 
 ## P1 · Design system and brand
+
 **Goal:** every later screen is assembled from this, and it looks like one product.
 
 - [ ] **Logo** — `brand/` finalised (done: one mark plus its favicon and mono derivatives),
@@ -1328,6 +1392,7 @@ story; a real screen built only from these looks finished.
 **Effort:** 5 d · **Depends on:** P0
 
 ## P2 · Data foundation
+
 **Goal:** the domain is modelled, migrated and seedable; the server speaks Zod.
 
 - [ ] Drizzle schema for all tables in §18.2 (identity, files, structure, notes, AI artifacts,
@@ -1352,6 +1417,7 @@ returns a typed error for a bad request; `/api/health` reports each dependency.
 **Effort:** 4 d · **Depends on:** P0, P1 (for types)
 
 ## P3 · Auth, onboarding and app shell
+
 **Goal:** the app opens, you sign in, and you can move between the five sections.
 
 - [ ] Better Auth wired into the Hono server with its Drizzle adapter (ADR-012); only the
@@ -1376,6 +1442,7 @@ returns a typed error for a bad request; `/api/health` reports each dependency.
 # Milestone 1 — Learn
 
 ## P4 · Subjects and topics
+
 **Goal:** the structure everything else hangs from.
 
 - [ ] Subject CRUD: name, auto-derived monogram, optional icon, order, archive (no colour
@@ -1393,6 +1460,7 @@ and appear everywhere the subject is referenced.
 **Effort:** 2 d · **Depends on:** P3
 
 ## P5 · Notes
+
 **Goal:** capture material in a form the rest of the app can use.
 
 - [ ] Note editor: markdown + shortcuts, autosave with debounce, "saved" indicator, word count
@@ -1412,6 +1480,7 @@ chemical/scientific notation.
 **Effort:** 3 d · **Depends on:** P4
 
 ## P6 · AI platform
+
 **Goal:** one provider layer that every AI feature then rides on. No feature code may know
 which model it called.
 
@@ -1436,6 +1505,7 @@ feature code; switching providers changes no UI.
 # Milestone 2 — Understand and practice
 
 ## P7 · Summaries and Explain
+
 **Goal:** turn a wall of notes into something a student can actually learn from.
 
 - [ ] Summary composer: length (quick/standard/detailed) × format (paragraph/bullets/key
@@ -1454,6 +1524,7 @@ are cached and regenerable.
 **Effort:** 3 d · **Depends on:** P6
 
 ## P8 · Quiz generation, taking and retry
+
 **Goal:** the practice loop, including the retry that makes it a loop.
 
 - [ ] Quiz composer: source note or topic, 5/10/15/20 questions, types (MCQ / true-false /
@@ -1474,6 +1545,7 @@ cycle of PRD §13 works end to end.
 **Effort:** 6 d · **Depends on:** P6, P7 (needs mastery tagging)
 
 ## P9 · Flashcards with spaced repetition
+
 **Goal:** cheap, repeated review that feeds the same mastery data as quizzes.
 
 - [ ] Deck generation from a note or topic; editable cards before saving
@@ -1488,6 +1560,7 @@ cycle of PRD §13 works end to end.
 **Effort:** 4 d · **Depends on:** P6, P8 (mastery data)
 
 ## P10 · Read My Notes
+
 **Goal:** listening that is interactive rather than passive.
 
 - [ ] Reading mode: clean typography, comfortable measure, chapter scroll, progress
@@ -1509,6 +1582,7 @@ be explained without leaving the screen.
 # Milestone 3 — Organise
 
 ## P11 · Task manager
+
 **Goal:** assignments and revision, with repetition.
 
 - [ ] Task composer: title, kind (homework/assignment/revision/project/personal/goal),
@@ -1525,6 +1599,7 @@ days and can be skipped without deleting the series.
 **Effort:** 4 d · **Depends on:** P4
 
 ## P12 · Connected tasks and study planning
+
 **Goal:** tasks stop being a separate feature (PRD §17–19).
 
 - [ ] Task suggestions: "review Motion for 20 min, then a short quiz" generated from the task's
@@ -1543,6 +1618,7 @@ quest reflects real progress as items are completed.
 **Effort:** 5 d · **Depends on:** P11, P8 (mastery informs suggestions)
 
 ## P13 · Quest system
+
 **Goal:** quests as meaningful study goals, not renamed tasks (PRD §20–21).
 
 - [ ] Quest templates: Topic, Subject, Exam, Weekly, Personal (PRD §21)
@@ -1558,6 +1634,7 @@ tracked, and the reward lands in the XP ledger.
 **Effort:** 3 d · **Depends on:** P12, P9
 
 ## P14 · Study sessions
+
 **Goal:** three ways to sit down and study (PRD §26).
 
 - [ ] Session modes: Quick Focus (just work), Focus Session (timer, optional pomodoro breaks),
@@ -1577,6 +1654,7 @@ XP and update subject progress.
 # Milestone 4 — Motivate
 
 ## P15 · Gamification
+
 **Goal:** rewards that encourage learning, not app opening (principle 1).
 
 - [ ] XP ledger with idempotent awards and all reasons from §18.3
@@ -1592,6 +1670,7 @@ XP and update subject progress.
 **Effort:** 4 d · **Depends on:** P2 (ledger), P12–P14 (sources)
 
 ## P16 · Progress tracking
+
 **Goal:** make progress easy to understand visually (PRD §24–25).
 
 - [ ] Home progress strip: level, XP to next, streak, today's progress ring
@@ -1608,6 +1687,7 @@ the events behind it.
 **Effort:** 4 d · **Depends on:** P8, P9, P14, P15
 
 ## P17 · Recommendations and "what's next?"
+
 **Goal:** always answer what's next, helpfully (PRD §27, principle 5).
 
 - [ ] Rule engine in `packages/core/planning`: score overdue, weak mastery, due-soon,
@@ -1622,6 +1702,7 @@ the events behind it.
 **Effort:** 2 d · **Depends on:** P16, P12
 
 ## P18 · Notifications and reminders
+
 **Goal:** useful nudges, fully under the student's control (PRD §28).
 
 - [ ] Local scheduler in the server process; catch-up window on start (ADR-017)
@@ -1636,6 +1717,7 @@ notification at the right time, and can be snoozed or switched off per type.
 **Effort:** 3 d · **Depends on:** P11, P13, P19 (search not needed; depends on quests/tasks)
 
 ## P19 · Global search
+
 **Goal:** find anything, fast (PRD §29).
 
 - [ ] `tsvector` + `pg_trgm` index populated by triggers; ranked results with typo and prefix
@@ -1654,6 +1736,7 @@ and the related revision task.
 # Milestone 5 — Ship
 
 ## P20 · PWA and offline
+
 **Goal:** installable, and useful on a bad connection.
 
 - [ ] `vite-plugin-pwa`: app shell precache, network-first data, cache-first assets
@@ -1668,6 +1751,7 @@ queues an edit that syncs when the network returns.
 **Effort:** 3 d · **Depends on:** P3, P19
 
 ## P21 · Quality bar
+
 **Goal:** the app is trustworthy.
 
 - [ ] Accessibility audit: axe on every screen, keyboard-only pass, screen-reader pass on the
@@ -1686,6 +1770,7 @@ queues an edit that syncs when the network returns.
 **Effort:** 4 d · **Depends on:** all previous
 
 ## P22 · Release and daily use
+
 **Goal:** it is running every day.
 
 - [ ] First-run content: onboarding quests, a demo subject with real material
@@ -1703,53 +1788,53 @@ on a clean machine using only the README.
 
 ## 25. Cross-cutting work
 
-| Concern | When | Notes |
-| --- | --- | --- |
-| Testing | Every phase | `packages/core` unit tests; Playwright journeys added at P5, P8, P12, P14, P20 |
-| Fixtures and seed data | P2, refreshed each phase | Realistic study material beats lorem ipsum for catching layout bugs |
-| Copy and microcopy | Every phase | §11; no placeholder strings |
-| Design review | P1, then every milestone | Milestone demos are design reviews |
-| Performance budget | P1, enforced P21 | < 200 KB gzipped initial JS |
-| Privacy review | P6, P21 | Every network call accounted for |
-| Docs | Continuous | README quickstart, USER_GUIDE, CHANGELOG |
+| Concern                | When                     | Notes                                                                          |
+| ---------------------- | ------------------------ | ------------------------------------------------------------------------------ |
+| Testing                | Every phase              | `packages/core` unit tests; Playwright journeys added at P5, P8, P12, P14, P20 |
+| Fixtures and seed data | P2, refreshed each phase | Realistic study material beats lorem ipsum for catching layout bugs            |
+| Copy and microcopy     | Every phase              | §11; no placeholder strings                                                    |
+| Design review          | P1, then every milestone | Milestone demos are design reviews                                             |
+| Performance budget     | P1, enforced P21         | < 200 KB gzipped initial JS                                                    |
+| Privacy review         | P6, P21                  | Every network call accounted for                                               |
+| Docs                   | Continuous               | README quickstart, USER_GUIDE, CHANGELOG                                       |
 
 ---
 
 ## 26. PRD traceability
 
-| PRD section | Phase |
-| --- | --- |
+| PRD section                                   | Phase                          |
+| --------------------------------------------- | ------------------------------ |
 | §1–4 Overview, vision, users, core experience | P3 (shell), P14 (guided study) |
-| §5 Home dashboard | P3 (shell), P16, P17 |
-| §6 Subjects and topics | P4 |
-| §7 Notes | P5 |
-| §8 AI summary | P7 |
-| §9 Explain | P7 |
-| §10 Read My Notes | P10 |
-| §11 Quiz generator | P8 |
-| §12 Quiz results | P8 |
-| §13 Smart retry quizzes | P8 |
-| §14 Flashcards | P9 |
-| §15 Task manager | P11 |
-| §16 Recurring tasks | P11 |
-| §17 Connected tasks | P12 |
-| §18 Study planning | P12 |
-| §19 Daily Study Quest | P12 |
-| §20 Quest system | P13 |
-| §21 Special quests | P13 |
-| §22 Gamification | P15 |
-| §23 Achievements | P15 |
-| §24 Progress tracking | P16 |
-| §25 Subject progress | P16 |
-| §26 Study sessions | P14 |
-| §27 Recommendations | P17 |
-| §28 Notifications | P18 |
-| §29 Search | P19 |
-| §30 User journey | End-to-end demo at P22 |
-| §31 Main sections | P3 |
-| §32 MVP scope | P0–P19 |
-| §33 Product principles | §1, enforced in DoD |
-| §34 Core idea | P12 + P14 + P17 together |
+| §5 Home dashboard                             | P3 (shell), P16, P17           |
+| §6 Subjects and topics                        | P4                             |
+| §7 Notes                                      | P5                             |
+| §8 AI summary                                 | P7                             |
+| §9 Explain                                    | P7                             |
+| §10 Read My Notes                             | P10                            |
+| §11 Quiz generator                            | P8                             |
+| §12 Quiz results                              | P8                             |
+| §13 Smart retry quizzes                       | P8                             |
+| §14 Flashcards                                | P9                             |
+| §15 Task manager                              | P11                            |
+| §16 Recurring tasks                           | P11                            |
+| §17 Connected tasks                           | P12                            |
+| §18 Study planning                            | P12                            |
+| §19 Daily Study Quest                         | P12                            |
+| §20 Quest system                              | P13                            |
+| §21 Special quests                            | P13                            |
+| §22 Gamification                              | P15                            |
+| §23 Achievements                              | P15                            |
+| §24 Progress tracking                         | P16                            |
+| §25 Subject progress                          | P16                            |
+| §26 Study sessions                            | P14                            |
+| §27 Recommendations                           | P17                            |
+| §28 Notifications                             | P18                            |
+| §29 Search                                    | P19                            |
+| §30 User journey                              | End-to-end demo at P22         |
+| §31 Main sections                             | P3                             |
+| §32 MVP scope                                 | P0–P19                         |
+| §33 Product principles                        | §1, enforced in DoD            |
+| §34 Core idea                                 | P12 + P14 + P17 together       |
 
 **Every MVP item in PRD §32 is covered by P0–P19.** Nothing from the "later features" list is
 required for the MVP.
@@ -1758,15 +1843,15 @@ required for the MVP.
 
 ## 27. Effort summary
 
-| Milestone | Days |
-| --- | --- |
-| M0 Foundation | 12 |
-| M1 Learn | 12 |
-| M2 Understand & Practice | 18 |
-| M3 Organise | 15 |
-| M4 Motivate | 15 |
-| M5 Ship | 10 |
-| **Total** | **82** |
+| Milestone                | Days   |
+| ------------------------ | ------ |
+| M0 Foundation            | 12     |
+| M1 Learn                 | 12     |
+| M2 Understand & Practice | 18     |
+| M3 Organise              | 15     |
+| M4 Motivate              | 15     |
+| M5 Ship                  | 10     |
+| **Total**                | **82** |
 
 Contingency for a first-time solo build of something this size: **+25 %** (≈ 100 days total).
 
@@ -1774,18 +1859,18 @@ Contingency for a first-time solo build of something this size: **+25 %** (≈ 1
 
 ## 28. Risk register
 
-| # | Risk | Likelihood | Impact | Mitigation |
-| --- | --- | --- | --- | --- |
-| R1 | Local model output quality varies | High | High | Structured output + validation, provider-agnostic layer, prompt tuned for small models (P6) |
-| R2 | Scope: 23 phases is a lot | High | High | Milestone gates; MVP ends at P19; post-MVP strictly optional |
-| R3 | PWA cache causes stale or confusing data | Medium | Medium | Network-first for data, explicit update prompt, offline indicator (P20) |
-| R4 | Machine off means no reminders | Medium | Low | Catch-up window on start; reminders also evaluated lazily on read (P18) |
-| R5 | Data loss (single machine, single file) | Medium | High | Automated backups, export/restore, retention of 14 (P2, P21) |
-| R6 | Gamification distracts from learning | Medium | High | Gold reserved for rewards, no login rewards, principle 1 in the design review checklist |
-| R7 | AI cost surprises if a key is configured | Low | Medium | Daily call cap, cache, monthly estimate, mock provider default (P6) |
-| R8 | Design system drift as components multiply | Medium | Medium | Lint rules, Storybook DoD, milestone design reviews |
-| R9 | Windows tooling friction on setup | Medium | Low | One-command scripts, documented prerequisites, clean-machine reinstall test (P22) |
-| R10 | Motivation dips on a long solo build | High | Medium | Milestone demos every 2–3 weeks, ship the P0–P3 vertical slice early and use the app daily |
+| #   | Risk                                       | Likelihood | Impact | Mitigation                                                                                  |
+| --- | ------------------------------------------ | ---------- | ------ | ------------------------------------------------------------------------------------------- |
+| R1  | Local model output quality varies          | High       | High   | Structured output + validation, provider-agnostic layer, prompt tuned for small models (P6) |
+| R2  | Scope: 23 phases is a lot                  | High       | High   | Milestone gates; MVP ends at P19; post-MVP strictly optional                                |
+| R3  | PWA cache causes stale or confusing data   | Medium     | Medium | Network-first for data, explicit update prompt, offline indicator (P20)                     |
+| R4  | Machine off means no reminders             | Medium     | Low    | Catch-up window on start; reminders also evaluated lazily on read (P18)                     |
+| R5  | Data loss (single machine, single file)    | Medium     | High   | Automated backups, export/restore, retention of 14 (P2, P21)                                |
+| R6  | Gamification distracts from learning       | Medium     | High   | Gold reserved for rewards, no login rewards, principle 1 in the design review checklist     |
+| R7  | AI cost surprises if a key is configured   | Low        | Medium | Daily call cap, cache, monthly estimate, mock provider default (P6)                         |
+| R8  | Design system drift as components multiply | Medium     | Medium | Lint rules, Storybook DoD, milestone design reviews                                         |
+| R9  | Windows tooling friction on setup          | Medium     | Low    | One-command scripts, documented prerequisites, clean-machine reinstall test (P22)           |
+| R10 | Motivation dips on a long solo build       | High       | Medium | Milestone demos every 2–3 weeks, ship the P0–P3 vertical slice early and use the app daily  |
 
 ---
 

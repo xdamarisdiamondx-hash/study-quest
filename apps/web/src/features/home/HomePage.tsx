@@ -1,15 +1,7 @@
 import { useMemo, useState } from "react";
 import { Card, CheckItem, LevelBadge, Monogram, Streak, Track } from "@sq/ui";
 
-import {
-  activeQuest,
-  continueLearning,
-  level,
-  profile,
-  recommendation,
-  subjects,
-  todayQuest,
-} from "../../data/mock";
+import { continueLearning, level, profile, recommendation, todayQuest } from "../../data/mock";
 import { useHealth } from "../../lib/useHealth";
 
 function greeting(now = new Date()): string {
@@ -55,7 +47,11 @@ function ServiceStatus() {
         <Row
           label="AI provider"
           ok={health.ai.configured}
-          note={health.ai.configured ? (health.ai.provider ?? "configured") : "none configured — Ollama or a cloud key"}
+          note={
+            health.ai.configured
+              ? (health.ai.provider ?? "configured")
+              : "none configured — Ollama or a cloud key"
+          }
         />
         <Row
           label="File storage"
@@ -89,10 +85,7 @@ export function HomePage() {
     Object.fromEntries(todayQuest.map((i) => [i.id, i.done])),
   );
 
-  const completed = useMemo(
-    () => todayQuest.filter((i) => done[i.id]).length,
-    [done],
-  );
+  const completed = useMemo(() => todayQuest.filter((i) => done[i.id]).length, [done]);
   const total = todayQuest.length;
   const todayPct = total === 0 ? 0 : (completed / total) * 100;
 
@@ -175,9 +168,7 @@ export function HomePage() {
       </Card>
 
       <Card title="What's next">
-        <div className="sq-callout sq-callout-accent">
-          {recommendation.text}
-        </div>
+        <div className="sq-callout sq-callout-accent">{recommendation.text}</div>
         <div className="sq-row" style={{ marginTop: "var(--s4)" }}>
           <button type="button" className="sq-btn sq-btn-primary">
             {recommendation.cta}

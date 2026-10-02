@@ -62,9 +62,7 @@ app.get("/api/me", async (c) => {
         image: session.user.image ?? null,
         emailVerified: session.user.emailVerified,
       },
-      profile: profile
-        ? { displayName: profile.displayName, timezone: profile.timezone }
-        : null,
+      profile: profile ? { displayName: profile.displayName, timezone: profile.timezone } : null,
       session: { expiresAt: session.session.expiresAt },
     },
     200,

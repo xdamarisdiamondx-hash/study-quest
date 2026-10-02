@@ -6,7 +6,14 @@ export function StudyPage() {
   return (
     <div className="sq-col" style={{ marginTop: "var(--s6)" }}>
       <div>
-        <h1 style={{ font: "var(--t-h1)", margin: "0 0 var(--s1)", color: "var(--strong)", letterSpacing: "-.025em" }}>
+        <h1
+          style={{
+            font: "var(--t-h1)",
+            margin: "0 0 var(--s1)",
+            color: "var(--strong)",
+            letterSpacing: "-.025em",
+          }}
+        >
           Study
         </h1>
         <p style={{ margin: 0, color: "var(--muted)", font: "var(--t-body-sm)" }}>
@@ -38,8 +45,8 @@ export function StudyPage() {
 
       <Card>
         <p>
-          Subjects and topics become editable in P4. Notes arrive in P5, quizzes in P8,
-          flashcards in P9.
+          Subjects and topics become editable in P4. Notes arrive in P5, quizzes in P8, flashcards
+          in P9.
         </p>
       </Card>
     </div>

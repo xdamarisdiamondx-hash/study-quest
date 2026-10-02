@@ -1,0 +1,70 @@
+import js from "@eslint/js";
+import tseslint from "typescript-eslint";
+import reactHooks from "eslint-plugin-react-hooks";
+import globals from "globals";
+import prettier from "eslint-config-prettier";
+
+/**
+ * Lint rules that encode the definition of done, not just style (Part I section 13):
+ *  - no raw hex colours, so the design system stays the only source of colour
+ *  - no `any`, so types stay real
+ *  - no `console` outside the server and scripts
+ */
+export default tseslint.config(
+  { ignores: ["**/dist/**", "**/node_modules/**", "**/storybook-static/**", "data/**"] },
+
+  js.configs.recommended,
+  ...tseslint.configs.recommended,
+
+  {
+    files: ["**/*.{ts,tsx}"],
+    languageOptions: {
+      globals: { ...globals.browser, ...globals.node },
+      parserOptions: { ecmaFeatures: { jsx: true } },
+    },
+    plugins: { "react-hooks": reactHooks },
+    rules: {
+      ...reactHooks.configs.recommended.rules,
+      "@typescript-eslint/no-explicit-any": "error",
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
+      ],
+      "no-console": ["warn", { allow: ["warn", "error"] }],
+      eqeqeq: ["error", "always", { null: "ignore" }],
+      "prefer-const": "error",
+    },
+  },
+
+  // Design-system rule: a raw hex in a component bypasses the tokens in section 3.
+  // Pure black and white are exempt — they are absolutes, not theme decisions.
+  {
+    files: ["apps/web/src/**/*.{ts,tsx}", "packages/ui/**/*.{ts,tsx}"],
+    ignores: ["**/styles/**", "**/*.css"],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "Literal[value=/#[0-9a-fA-F]{3,8}\\b/]",
+          message:
+            "Use a design token (--iris-*, --sand-*, --gold-*, status) instead of a raw hex. See docs/IMPLEMENTATION_PLAN.md section 3.",
+        },
+      ],
+    },
+  },
+  {
+    // The logo is the one place the mark's own colours are literal: they are the
+    // brand, not a theme decision, and it must render identically outside the app.
+    files: ["**/index.tsx"],
+    ignores: ["**/styles/**"],
+    rules: { "no-restricted-syntax": "off" },
+  },
+
+  // Server-side infrastructure may log to the terminal.
+  {
+    files: ["apps/server/**/*.ts", "packages/db/src/**/*.ts", "scripts/**/*.ts"],
+    rules: { "no-console": "off" },
+  },
+
+  prettier,
+);

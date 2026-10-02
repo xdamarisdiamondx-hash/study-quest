@@ -83,7 +83,7 @@
 }
 .sq-auth-head h1 {
   font: var(--t-h2);
-  letter-spacing: -.02em;
+  letter-spacing: -0.02em;
   color: var(--strong);
   margin: var(--s3) 0 var(--s1);
 }

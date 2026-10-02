@@ -14,10 +14,18 @@ import * as schema from "./schema/index.ts";
 
 export type Driver = "postgres" | "pglite";
 
+/**
+ * Drizzle's query interface. Both drivers expose the same builder API, so a union is
+ * honest here: callers get the real type of whichever driver is active rather than a
+ * cast to one of them.
+ */
+export type Orm =
+  | import("drizzle-orm/postgres-js").PostgresJsDatabase<typeof schema>
+  | import("drizzle-orm/pglite").PgliteDatabase<typeof schema>;
+
 export interface Db {
   driver: Driver;
-  /** Drizzle query interface. */
-  orm: import("drizzle-orm/postgres-js").PostgresJsDatabase<typeof schema>;
+  orm: Orm;
   /** Executable SQL, used to apply migrations to PGlite. */
   sql: (query: string) => Promise<unknown>;
   close: () => Promise<void>;
@@ -49,7 +57,9 @@ async function migratePGlite(pglite: import("@electric-sql/pglite").PGlite): Pro
   );
 
   const applied = new Set(
-    (await pglite.query<{ name: string }>("select name from _sq_migrations")).rows.map((r) => r.name),
+    (await pglite.query<{ name: string }>("select name from _sq_migrations")).rows.map(
+      (r) => r.name,
+    ),
   );
 
   for (const [name, sql] of await migrationEntries()) {
@@ -68,7 +78,9 @@ async function migratePGlite(pglite: import("@electric-sql/pglite").PGlite): Pro
       }
     }
 
-    await pglite.exec(`insert into _sq_migrations (name) values ('${name}') on conflict do nothing;`);
+    await pglite.exec(
+      `insert into _sq_migrations (name) values ('${name}') on conflict do nothing;`,
+    );
     console.log(`[db] applied ${name}`);
   }
 }
@@ -76,10 +88,11 @@ async function migratePGlite(pglite: import("@electric-sql/pglite").PGlite): Pro
 export async function createDb(databaseUrl = process.env.DATABASE_URL): Promise<Db> {
   if (databaseUrl) {
     try {
-      const [{ drizzle }, postgres] = await Promise.all([
+      const [{ drizzle }, postgresModule] = await Promise.all([
         import("drizzle-orm/postgres-js"),
         import("postgres"),
       ]);
+      const postgres = postgresModule.default;
       const sql = postgres(databaseUrl, { max: 5, connect_timeout: 5 });
       const orm = drizzle(sql, { schema });
       await sql`select 1`;
@@ -101,7 +114,8 @@ export async function createDb(databaseUrl = process.env.DATABASE_URL): Promise<
   // Resolve to the repository root, not the app folder, so the database survives a
   // rebuild and sits next to the backup script (ADR-022).
   const dataDir =
-    process.env.PGLITE_DIR ?? join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "data", "pgdata");
+    process.env.PGLITE_DIR ??
+    join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "data", "pgdata");
   await mkdir(dataDir, { recursive: true });
   const pglite = new PGlite(dataDir);
   await pglite.waitReady;

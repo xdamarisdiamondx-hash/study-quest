@@ -61,11 +61,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await refresh();
   }, [refresh]);
 
+  // Bootstrapping the session on mount is the one case where fetching in an effect is
+  // correct: there is no event to fetch from, and no route may render until the app
+  // knows whether a session exists. setState happens in the async callback, never
+  // synchronously in the effect body.
   useEffect(() => {
-    void refresh();
-  }, [refresh]);
+    let cancelled = false;
 
-  return <AuthContext.Provider value={{ ...state, refresh, signOut }}>{children}</AuthContext.Provider>;
+    fetch("/api/me", { credentials: "same-origin" })
+      .then((res) => res.json() as Promise<MeResponse>)
+      .then((data) => {
+        if (cancelled) return;
+        setState((s) => ({
+          ...s,
+          status: data.user ? "authenticated" : "anonymous",
+          user: data.user,
+          profile: data.profile,
+        }));
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setState((s) => ({ ...s, status: "anonymous", user: null, profile: null }));
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return (
+    <AuthContext.Provider value={{ ...state, refresh, signOut }}>{children}</AuthContext.Provider>
+  );
 }
 
 export function useAuth(): AuthState {
