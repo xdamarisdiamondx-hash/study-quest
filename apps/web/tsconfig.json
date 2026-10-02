@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": ["vite/client"],
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@sq/ui": ["../../packages/ui/src/index.tsx"],
+      "@sq/core/gamification": ["../../packages/core/src/gamification/index.ts"],
+      "@sq/core/progress": ["../../packages/core/src/progress/index.ts"],
+      "@sq/db/schema": ["../../packages/db/src/schema/index.ts"]
+    }
+  },
+  "include": ["src", "vite.config.ts"]
+}

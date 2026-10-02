@@ -1,0 +1,24 @@
+{
+    "name": "@sq/db",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "description": "Study Quest database schema, migrations and repositories.",
+    "exports": {
+        "./schema": "./src/schema/index.ts",
+        "./client": "./src/client.ts",
+        "./auth-schema": "./src/schema/auth.ts"
+    },
+    "scripts": {
+        "typecheck": "tsc --noEmit",
+        "generate": "drizzle-kit generate"
+    },
+    "dependencies": {
+        "@electric-sql/pglite": "^0.5.8",
+        "drizzle-orm": "^0.45.3"
+    },
+    "devDependencies": {
+        "drizzle-kit": "^0.31.11",
+        "typescript": "^5.7.2"
+    }
+}

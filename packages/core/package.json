@@ -1,0 +1,17 @@
+{
+  "name": "@sq/core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Study Quest domain logic: XP, levels, streaks, progress, planning.",
+  "exports": {
+    "./gamification": "./src/gamification/index.ts",
+    "./progress": "./src/progress/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  }
+}

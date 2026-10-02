@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2023"],
+    "types": ["node"],
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "baseUrl": ".",
+    "paths": {
+      "@sq/db/schema": ["../../packages/db/src/schema/index.ts"],
+      "@sq/db/client": ["../../packages/db/src/client.ts"],
+      "@sq/db/auth-schema": ["../../packages/db/src/schema/auth.ts"]
+    }
+  },
+  "include": ["src"]
+}
