@@ -3,8 +3,8 @@
  *
  * Prefers the Docker PostgreSQL from ADR-028 (DATABASE_URL). When that is not
  * available, falls back to PGlite — real PostgreSQL compiled to WebAssembly, running
- * in-process. That keeps the app fully functional during M0 while Docker's WSL 2
- * backend is being set up, and it is the same SQL either way.
+ * in-process. That keeps the app fully functional before Docker is configured, and it
+ * is the same schema and the same SQL either way.
  */
 import { mkdir, readdir, readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
@@ -15,19 +15,26 @@ import * as schema from "./schema/index.ts";
 export type Driver = "postgres" | "pglite";
 
 /**
- * Drizzle's query interface. Both drivers expose the same builder API, so a union is
- * honest here: callers get the real type of whichever driver is active rather than a
- * cast to one of them.
+ * Drizzle's shared PostgreSQL base type.
+ *
+ * `PostgresJsDatabase` and `PgliteDatabase` are both concrete wrappers around the same
+ * `PgDatabase`, so declaring the base type means callers get the real query builder for
+ * either driver instead of a union the compiler cannot resolve method calls on.
  */
-export type Orm =
-  | import("drizzle-orm/postgres-js").PostgresJsDatabase<typeof schema>
-  | import("drizzle-orm/pglite").PgliteDatabase<typeof schema>;
+export type Orm = import("drizzle-orm/pg-core").PgDatabase<
+  import("drizzle-orm/pg-core").PgQueryResultHKT,
+  typeof schema
+>;
+
+export interface QueryResult {
+  rows: Record<string, unknown>[];
+}
 
 export interface Db {
   driver: Driver;
   orm: Orm;
-  /** Executable SQL, used to apply migrations to PGlite. */
-  sql: (query: string) => Promise<unknown>;
+  /** Run raw SQL. Returns a uniform { rows } shape whichever driver is active. */
+  sql: (query: string) => Promise<QueryResult>;
   close: () => Promise<void>;
 }
 
@@ -42,25 +49,23 @@ async function migrationEntries(): Promise<[string, string][]> {
 }
 
 /**
- * Apply migrations that have not run yet.
+ * Apply every migration that has not run yet.
  *
- * Tracks applied files by name in `_sq_migrations`, so restarting the server does not
- * re-run them. Each generated file is split on its statement breakpoints, because a
- * batch that fails part-way through is not resumable.
+ * Both drivers share this, so a schema change can never land on one and not the other.
+ * Applied files are recorded in `_sq_migrations`, so restarting does not re-run them.
+ * Each file is split on its statement breakpoints because a batch that fails part-way
+ * through is not resumable.
  */
-async function migratePGlite(pglite: import("@electric-sql/pglite").PGlite): Promise<void> {
-  await pglite.exec(
+async function migrate(run: (sql: string) => Promise<unknown>): Promise<void> {
+  await run(
     `create table if not exists _sq_migrations (
        name text primary key,
        applied_at timestamptz not null default now()
      );`,
   );
 
-  const applied = new Set(
-    (await pglite.query<{ name: string }>("select name from _sq_migrations")).rows.map(
-      (r) => r.name,
-    ),
-  );
+  const existing = (await run("select name from _sq_migrations")) as QueryResult;
+  const applied = new Set(existing.rows.map((r) => String(r.name)));
 
   for (const [name, sql] of await migrationEntries()) {
     if (applied.has(name)) continue;
@@ -69,7 +74,7 @@ async function migratePGlite(pglite: import("@electric-sql/pglite").PGlite): Pro
       const trimmed = statement.trim();
       if (trimmed.length === 0) continue;
       try {
-        await pglite.exec(trimmed);
+        await run(trimmed);
       } catch (err) {
         // A dev database is often seeded by an earlier run and then the schema
         // changes. A statement that only fails because the object already exists
@@ -78,9 +83,7 @@ async function migratePGlite(pglite: import("@electric-sql/pglite").PGlite): Pro
       }
     }
 
-    await pglite.exec(
-      `insert into _sq_migrations (name) values ('${name}') on conflict do nothing;`,
-    );
+    await run(`insert into _sq_migrations (name) values ('${name}') on conflict do nothing;`);
     console.log(`[db] applied ${name}`);
   }
 }
@@ -93,14 +96,30 @@ export async function createDb(databaseUrl = process.env.DATABASE_URL): Promise<
         import("postgres"),
       ]);
       const postgres = postgresModule.default;
-      const sql = postgres(databaseUrl, { max: 5, connect_timeout: 5 });
-      const orm = drizzle(sql, { schema });
-      await sql`select 1`;
+      // `onnotice` is silenced on purpose: `create table if not exists` emits a NOTICE
+      // on every start, and postgres-js raises it as an exception otherwise.
+      const client = postgres(databaseUrl, {
+        max: 5,
+        connect_timeout: 5,
+        onnotice: () => {},
+      });
+      await client`select 1`;
+
+      // postgres-js `unsafe` already resolves to the rows array for a SELECT; for DDL it
+      // resolves to an array of Result objects, which carry no rows. Normalise both.
+      const run = async (q: string): Promise<QueryResult> => {
+        const result: unknown = await client.unsafe(q);
+        if (Array.isArray(result)) return { rows: result as never[] };
+        return { rows: ((result as { rows?: unknown[] })?.rows ?? []) as never[] };
+      };
+
+      await migrate(run);
+
       return {
         driver: "postgres",
-        orm,
-        sql: async (q: string) => sql.unsafe(q),
-        close: async () => sql.end({ timeout: 2 }),
+        orm: drizzle(client, { schema }),
+        sql: run,
+        close: async () => client.end({ timeout: 2 }),
       };
     } catch (err) {
       console.warn(
@@ -119,14 +138,19 @@ export async function createDb(databaseUrl = process.env.DATABASE_URL): Promise<
   await mkdir(dataDir, { recursive: true });
   const pglite = new PGlite(dataDir);
   await pglite.waitReady;
-  const { drizzle } = await import("drizzle-orm/pglite");
-  const orm = drizzle(pglite, { schema });
-  await migratePGlite(pglite);
 
+  const run = async (q: string): Promise<QueryResult> => {
+    const result = await pglite.exec(q);
+    return { rows: ((result as { rows?: unknown[] }).rows ?? []) as never[] };
+  };
+
+  await migrate(run);
+
+  const { drizzle } = await import("drizzle-orm/pglite");
   return {
     driver: "pglite",
-    orm,
-    sql: async (q: string) => pglite.exec(q),
+    orm: drizzle(pglite, { schema }),
+    sql: run,
     close: async () => pglite.close(),
   };
 }

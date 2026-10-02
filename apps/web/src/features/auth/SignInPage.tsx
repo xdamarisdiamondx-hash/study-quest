@@ -43,9 +43,19 @@ export function SignInPage() {
     }
   }
 
+  /**
+   * Better Auth rejects with a plain object, not an Error, so `String(err)` would
+   * render "[object Object]". Read the message off whatever shape arrived.
+   */
   function humanise(err: unknown): string {
-    const message = err instanceof Error ? err.message : String(err);
-    if (/invalid|credential/i.test(message))
+    const message =
+      err instanceof Error
+        ? err.message
+        : typeof err === "object" && err !== null && "message" in err
+          ? String((err as { message: unknown }).message)
+          : String(err);
+
+    if (/invalid|credential|not found|unauthorized/i.test(message))
       return "That email and password do not match an account.";
     if (/already exists|already registered|unique/i.test(message)) {
       return "An account with that email already exists. Try signing in instead.";
@@ -54,7 +64,7 @@ export function SignInPage() {
     if (/fetch|network|failed to fetch/i.test(message)) {
       return "Could not reach the local server. Start it with `pnpm dev:all`.";
     }
-    return message;
+    return message || "Something went wrong. Try again.";
   }
 
   const isSignUp = mode === "sign-up";

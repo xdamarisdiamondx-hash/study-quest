@@ -13,6 +13,8 @@ export interface CurrentUser {
 export interface Profile {
   displayName: string;
   timezone: string;
+  /** True until the account has been through onboarding. */
+  needsOnboarding: boolean;
 }
 
 type Status = "loading" | "authenticated" | "anonymous";
@@ -76,7 +78,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           ...s,
           status: data.user ? "authenticated" : "anonymous",
           user: data.user,
-          profile: data.profile,
+          // Fall back to a profile that forces onboarding rather than trusting a null.
+          profile: data.user
+            ? (data.profile ?? {
+                displayName: data.user.name,
+                timezone: "UTC",
+                needsOnboarding: true,
+              })
+            : null,
         }));
       })
       .catch(() => {

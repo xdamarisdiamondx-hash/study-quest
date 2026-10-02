@@ -6,6 +6,8 @@
  */
 import type { ReactNode } from "react";
 
+import { LEVEL_TITLES, levelTitle } from "@sq/core/gamification";
+
 /* --- brand ------------------------------------------------------------- */
 
 /** The logo. `brand/logo-mark.svg` is the only mark; derivatives are technical only. */
@@ -198,7 +200,8 @@ export function LevelBadge({ level }: { level: number }) {
       <span className="sq-lvl-badge">{level}</span>
       <span>
         <span className="sq-lvl-name">
-          {LEVEL_TITLES[Math.min(level, LEVEL_TITLES.length) - 1]}
+          {/* Titles come from @sq/core so the badge and the XP rules cannot disagree. */}
+          {levelTitle(level)}
         </span>
         <br />
         <span className="sq-lvl-sub">Level {level}</span>
@@ -264,17 +267,5 @@ export function QuestStepper({
     </ol>
   );
 }
-
-/* --- level titles (shared with @sq/core) --------------------------------- */
-const LEVEL_TITLES = [
-  "Newcomer",
-  "Explorer",
-  "Apprentice",
-  "Scholar",
-  "Adept",
-  "Strategist",
-  "Champion",
-  "Master",
-] as const;
 
 export { LEVEL_TITLES };

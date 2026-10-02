@@ -9,9 +9,13 @@ import { serve } from "@hono/node-server";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 
-import { createDb } from "@sq/db/client";
 import * as dbSchema from "@sq/db/schema";
-import { createAuth } from "./auth.ts";
+
+import { createAuth, ensureProfile } from "./auth.ts";
+import type { AuthedEnv } from "./auth/session.ts";
+import { getSession } from "./auth/session.ts";
+import { db } from "./db.ts";
+import { onboarding } from "./routes/onboarding.ts";
 
 const { users, subjects } = dbSchema;
 
@@ -19,7 +23,6 @@ const PORT = Number(process.env.PORT ?? 4321);
 const HOST = process.env.HOST ?? "127.0.0.1";
 const BASE_URL = process.env.BASE_URL ?? process.env.BETTER_AUTH_URL ?? `http://${HOST}:${PORT}`;
 
-const db = await createDb();
 console.log(`[db] driver: ${db.driver}`);
 
 const auth = createAuth({
@@ -28,25 +31,25 @@ const auth = createAuth({
   isProduction: process.env.NODE_ENV === "production",
 });
 
-const app = new Hono();
+const app = new Hono<AuthedEnv>();
+
+/** Make the Better Auth instance available to every route. */
+app.use("*", async (c, next) => {
+  c.set("auth", auth);
+  await next();
+});
 
 /* --- auth: Better Auth owns every route under /api/auth/* -------------- */
 app.on(["GET", "POST"], "/api/auth/*", (c) => auth.handler(c.req.raw));
 
-/** Ensure an app-level profile row exists for an authenticated user (P3). */
-async function ensureProfile(userId: string, name: string) {
-  await db.orm
-    .insert(users)
-    .values({ authUserId: userId, displayName: name })
-    .onConflictDoNothing({ target: users.authUserId });
-}
-
 /* --- session: who am I? ------------------------------------------------- */
 app.get("/api/me", async (c) => {
-  const session = await auth.api.getSession({ headers: c.req.raw.headers });
+  const session = await getSession(c.req.raw.headers, auth);
   if (!session) return c.json({ user: null, profile: null }, 200);
 
-  await ensureProfile(session.user.id, session.user.name);
+  // Backstop for accounts created before the sign-up hook existed.
+  await ensureProfile(db.orm, session.user.id, session.user.name);
+
   const [profile] = await db.orm
     .select()
     .from(users)
@@ -62,21 +65,43 @@ app.get("/api/me", async (c) => {
         image: session.user.image ?? null,
         emailVerified: session.user.emailVerified,
       },
-      profile: profile ? { displayName: profile.displayName, timezone: profile.timezone } : null,
+      profile: profile
+        ? {
+            displayName: profile.displayName,
+            timezone: profile.timezone,
+            needsOnboarding: !(profile.settings as { onboardedAt?: string }).onboardedAt,
+          }
+        : null,
       session: { expiresAt: session.session.expiresAt },
     },
     200,
   );
 });
 
-/* --- subjects: authenticated only ---------------------------------------- */
+/* --- subjects: authenticated, and scoped to the caller ------------------ */
 app.get("/api/subjects", async (c) => {
-  const session = await auth.api.getSession({ headers: c.req.raw.headers });
+  const session = await getSession(c.req.raw.headers, auth);
   if (!session) return c.json({ error: "unauthorized" }, 401);
 
-  const rows = await db.orm.select().from(subjects).orderBy(subjects.orderIndex).limit(50);
+  const [profile] = await db.orm
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.authUserId, session.user.id))
+    .limit(1);
+  if (!profile) return c.json({ error: "no_profile" }, 409);
+
+  // Always filter by userId: an unscoped read would return every account's subjects.
+  const rows = await db.orm
+    .select()
+    .from(subjects)
+    .where(eq(subjects.userId, profile.id))
+    .orderBy(subjects.orderIndex)
+    .limit(50);
+
   return c.json({ subjects: rows }, 200);
 });
+
+app.route("/api/onboarding", onboarding);
 
 /* --- health ------------------------------------------------------------- */
 app.get("/api/health", (c) =>

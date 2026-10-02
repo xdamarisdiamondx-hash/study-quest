@@ -32,11 +32,11 @@ services:
       timeout: 5s
       retries: 10
       start_period: 10s
+    # `data_checksums` is deliberately absent: it is an initdb-time setting and
+    # PostgreSQL refuses to change it on an existing data directory. Checksums are
+    # enabled by default by initdb anyway.
     command:
-      # Checksums catch silent data corruption; log lines stay readable for a local app.
       - postgres
-      - -c
-      - data_checksums=on
       - -c
       - log_min_messages=warning
 

@@ -122,6 +122,158 @@
   font: var(--t-body-sm);
 }
 
+/* --- onboarding --------------------------------------------------------- */
+.sq-onb {
+  position: relative;
+  isolation: isolate;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: var(--s6) var(--s4);
+}
+.sq-onb-card {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  padding: var(--s6);
+  box-shadow: var(--e3);
+}
+.sq-onb-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s4);
+  margin-bottom: var(--s6);
+}
+.sq-onb-progress {
+  display: flex;
+  gap: 6px;
+}
+.sq-onb-dot {
+  width: 22px;
+  height: 4px;
+  border-radius: var(--r-full);
+  background: var(--track);
+}
+.sq-onb-dot[data-state="done"] {
+  background: var(--iris-300);
+}
+.sq-onb-dot[data-state="now"] {
+  background: var(--accent);
+}
+
+.sq-onb-step {
+  font: var(--t-caption);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.sq-onb-title {
+  font: var(--t-h1);
+  letter-spacing: -0.025em;
+  color: var(--strong);
+  margin: var(--s2) 0 var(--s2);
+}
+.sq-onb-sub {
+  margin: 0;
+  color: var(--muted);
+  font: var(--t-body-sm);
+  line-height: 1.6;
+}
+.sq-onb-icon {
+  margin-top: var(--s6);
+  width: 56px;
+  height: 56px;
+  border-radius: var(--r-md);
+  display: grid;
+  place-items: center;
+  background: var(--iris-50);
+  color: var(--accent);
+}
+.sq-onb-icon svg {
+  width: 26px;
+  height: 26px;
+}
+
+.sq-onb-list {
+  list-style: none;
+  margin: var(--s5) 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--s2);
+}
+.sq-onb-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  width: 100%;
+  padding: var(--s3);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  cursor: pointer;
+  text-align: left;
+  transition:
+    border-color var(--fast),
+    background var(--fast);
+}
+.sq-onb-row:hover {
+  border-color: var(--iris-300);
+}
+.sq-onb-row[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--iris-50);
+}
+.sq-onb-row:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--card),
+    0 0 0 4px var(--accent);
+}
+.sq-onb-row-text {
+  flex: 1;
+  min-width: 0;
+}
+.sq-onb-row-text b {
+  display: block;
+  font: 600 15px/1.3 var(--font-sans);
+  color: var(--strong);
+}
+.sq-onb-row-text small {
+  font-size: 13px;
+  color: var(--muted);
+}
+.sq-onb-check {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  border-radius: 50%;
+  border: 1.5px solid var(--sand-300);
+  display: grid;
+  place-items: center;
+  color: #fff;
+  transition:
+    background var(--fast),
+    border-color var(--fast);
+}
+.sq-onb-check[data-on="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.sq-onb-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+  margin-top: var(--s6);
+  padding-top: var(--s5);
+  border-top: 1px solid var(--border);
+}
+
 /* --- account menu ------------------------------------------------------- */
 .sq-account {
   position: relative;

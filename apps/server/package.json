@@ -7,6 +7,8 @@
   "scripts": {
     "dev": "node --watch --experimental-strip-types src/index.ts",
     "start": "node --experimental-strip-types src/index.ts",
+    "seed": "node --experimental-strip-types src/seed.ts",
+    "migrate": "node --experimental-strip-types src/migrate-check.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

@@ -112,17 +112,36 @@ types · social features · leaderboards · shared study groups · advanced pers
 
 ## ## Running the app
 
-The app and the database both run locally. The database is the only container.
+The app and the database both run locally.
 
 ```bash
-pnpm setup     # checks Node/pnpm/Docker, creates .env, starts Postgres, installs deps
-pnpm dev       # database + API on :4321 + web on :5173
+pnpm install     # once
+pnpm db:seed     # levels and achievements
+pnpm dev:all     # database + API on :4321 + web on :5173
 ```
 
-Prerequisites: Node 22 LTS, pnpm, Docker Desktop. Optionally a Cloudflare account for R2 file
-storage and an AI provider — the app runs without either.
+Then open **http://localhost:5173** and create an account.
 
-See the [Repository Contents](#repository-contents) below for what lives where, and
+| Command                  | What it does                                                        |
+| ------------------------ | ------------------------------------------------------------------- |
+| `pnpm dev:all`           | Database, API and web app together                                  |
+| `pnpm verify`            | Typecheck, lint and the unit tests                                  |
+| `pnpm test`              | 30 tests over the XP curve, levels, streaks, progress and monograms |
+| `pnpm storybook`         | Component catalogue on http://localhost:6006                        |
+| `pnpm db:seed`           | 50 levels, 8 achievements                                           |
+| `pnpm db:up` / `db:down` | Start or stop the PostgreSQL container                              |
+| `pnpm build`             | Production build of the web app                                     |
+
+**The database has two drivers.** With `DATABASE_URL` set it uses PostgreSQL 17 in Docker
+(the intended setup). Without it, it falls back to **PGlite** — real PostgreSQL compiled to
+WebAssembly, running in-process. That is why the app is fully working today even though the
+Docker engine is still waiting on WSL 2 and a reboot. The same generated SQL applies to both.
+
+Prerequisites: Node 22 LTS and pnpm. Docker Desktop is needed only for the containerised
+database. A Cloudflare account (R2) and an AI provider are both optional — the app runs
+without either.
+
+See [Repository Contents](#repository-contents) below for what lives where, and
 [docs/PRD.md](docs/PRD.md#appendix-a--notes-technical-approach-and-decisions) Appendix A for the
 technology decisions and their rationale.
 
@@ -134,31 +153,51 @@ Study quest/
 ├── Study Quest PRD.docx       # original requirements document (v1.0, by Praise)
 ├── docker-compose.yml         # local PostgreSQL 17 (the only container)
 ├── .env.example               # DATABASE_URL, R2 and AI settings
+├── package.json               # pnpm workspace root and scripts
+├── tsconfig.base.json         # shared strict TypeScript config
+├── eslint.config.js           # includes the "no raw hex" design-system rule
+├── vitest.config.ts
 ├── design.html                # colour, type, buttons and inputs reference
 ├── design-preview.html        # full preview with screens, light and dark
+├── .storybook/                # component catalogue config
+├── .github/workflows/ci.yml   # typecheck, lint, test, build, migration check
+├── apps/
+│   ├── web/                   # React PWA
+│   │   └── src/
+│   │       ├── app/           # shell, route guards, theme
+│   │       ├── features/     # home, tasks, study, quests, progress, auth, onboarding
+│   │       └── lib/          # auth client, session, health
+│   └── server/                # Hono API, auth, routes, seed, migration check
+├── packages/
+│   ├── ui/                    # design system: tokens, components, fonts, stories
+│   ├── core/                  # XP curve, levels, streaks, progress, starter templates
+│   └── db/                    # Drizzle schema, client, generated migrations
+├── brand/                     # the logo and its derivatives
 ├── db/
 │   └── init.sql               # extensions on first container start
 ├── docs/
 │   ├── PHASES.md              # phase index — start here
 │   ├── PRD.md                 # requirements + Appendix A (notes: tech decisions)
 │   └── IMPLEMENTATION_PLAN.md # design system + architecture + all 23 phases
-└── (created during P0) apps/, packages/, scripts/, data/
+├── scripts/                   # setup, dev, start, backup helpers
+└── data/                      # local database and backups (git-ignored)
 ```
 
 ## Build order
 
 The work is split into **23 sequential phases** across 6 milestones. **P0–P19 is the MVP.**
 
-| Milestone                    | Outcome                                                  | Phases  | Days |
-| ---------------------------- | -------------------------------------------------------- | ------- | ---- |
-| **M0 Foundation**            | App runs locally, looks like Study Quest, has an account | P0–P3   | 13   |
-| **M1 Learn**                 | Organise subjects, write notes, AI works                 | P4–P6   | 12   |
-| **M2 Understand & Practice** | The full Plan→Review loop works                          | P7–P10  | 18   |
-| **M3 Organise**              | Study Quest guides the day                               | P11–P14 | 15   |
-| **M4 Motivate**              | Progress visible, "what's next?" always answered         | P15–P19 | 15   |
-| **M5 Ship**                  | Installable, accessible, backed up, running daily        | P20–P22 | 11   |
+| Milestone                    | Outcome                                                  | Phases  | Days  |
+| ---------------------------- | -------------------------------------------------------- | ------- | ----- |
+| **M0 Foundation**            | App runs locally, looks like Study Quest, has an account | P0–P3   | 13 ✅ |
+| **M1 Learn**                 | Organise subjects, write notes, AI works                 | P4–P6   | 12    |
+| **M2 Understand & Practice** | The full Plan→Review loop works                          | P7–P10  | 18    |
+| **M3 Organise**              | Study Quest guides the day                               | P11–P14 | 15    |
+| **M4 Motivate**              | Progress visible, "what's next?" always answered         | P15–P19 | 15    |
+| **M5 Ship**                  | Installable, accessible, backed up, running daily        | P20–P22 | 11    |
 
-Full checklists and exit criteria: [docs/PHASES.md](docs/PHASES.md).
+Full checklists and exit criteria: [docs/PHASES.md](docs/PHASES.md). **Milestone 0 is complete** —
+see its status table there.
 
 ## Brand
 

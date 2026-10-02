@@ -6,7 +6,8 @@
   "description": "Study Quest domain logic: XP, levels, streaks, progress, planning.",
   "exports": {
     "./gamification": "./src/gamification/index.ts",
-    "./progress": "./src/progress/index.ts"
+    "./progress": "./src/progress/index.ts",
+    "./starter": "./src/starter/index.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"

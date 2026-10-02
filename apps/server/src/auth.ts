@@ -9,9 +9,23 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 
 import * as authSchema from "@sq/db/auth-schema";
+import type { Orm } from "@sq/db/client";
+import { users } from "@sq/db/schema";
+
+/**
+ * Create the app-level `users` row for an auth user, if it does not already exist.
+ *
+ * Idempotent, so it is safe to call from a sign-up hook and from a read path.
+ */
+export async function ensureProfile(orm: Orm, authUserId: string, name: string): Promise<void> {
+  await orm
+    .insert(users)
+    .values({ authUserId, displayName: name })
+    .onConflictDoNothing({ target: users.authUserId });
+}
 
 export interface AuthDeps {
-  orm: unknown;
+  orm: Orm;
   /** Public origin of the API, used for cookie and CSRF checks. */
   baseURL: string;
   isProduction: boolean;
@@ -52,6 +66,23 @@ export function createAuth({ orm, baseURL, isProduction }: AuthDeps) {
     },
 
     trustedOrigins: [baseURL, "http://localhost:5173", "http://127.0.0.1:5173"],
+
+    /**
+     * Create the app-level profile the moment an auth user exists.
+     *
+     * Doing it here rather than lazily in `/api/me` means the profile always exists by
+     * the time a request needs it, so onboarding cannot fail on a brand-new account
+     * that has not called `/api/me` yet.
+     */
+    databaseHooks: {
+      user: {
+        create: {
+          after: async (user) => {
+            await ensureProfile(orm, user.id, user.name);
+          },
+        },
+      },
+    },
   });
 }
 

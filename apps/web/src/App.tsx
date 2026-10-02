@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { AppShell } from "./app/AppShell";
 import { RedirectIfAuthed, RequireAuth } from "./app/guards";
 import { SignInPage } from "./features/auth/SignInPage";
+import { OnboardingPage } from "./features/onboarding/OnboardingPage";
 import { HomePage } from "./features/home/HomePage";
 import { TasksPage } from "./features/tasks/TasksPage";
 import { StudyPage } from "./features/study/StudyPage";
@@ -23,6 +24,8 @@ export function App() {
 
       {/* Everything below requires a session (P3). */}
       <Route element={<RequireAuth />}>
+        <Route path="onboarding" element={<OnboardingPage />} />
+
         <Route element={<AppShell />}>
           <Route index element={<HomePage />} />
           <Route path="tasks" element={<TasksPage />} />

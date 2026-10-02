@@ -4,7 +4,7 @@ import { useAuth } from "../lib/useAuth";
 
 /** Sends anonymous visitors to sign in, preserving where they were going. */
 export function RequireAuth() {
-  const { status } = useAuth();
+  const { status, profile } = useAuth();
   const location = useLocation();
 
   if (status === "loading") {
@@ -17,6 +17,12 @@ export function RequireAuth() {
 
   if (status === "anonymous") {
     return <Navigate to="/sign-in" replace state={{ from: location.pathname }} />;
+  }
+
+  // A signed-in account that has never finished onboarding goes to onboarding, not Home.
+  // `from` is preserved so they land back where they intended after setup.
+  if (profile && profile.needsOnboarding && location.pathname !== "/onboarding") {
+    return <Navigate to="/onboarding" replace state={{ from: location.pathname }} />;
   }
 
   return <Outlet />;
