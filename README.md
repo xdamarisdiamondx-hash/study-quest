@@ -139,10 +139,26 @@ Study quest/
 ├── db/
 │   └── init.sql               # extensions on first container start
 ├── docs/
+│   ├── PHASES.md              # phase index — start here
 │   ├── PRD.md                 # requirements + Appendix A (notes: tech decisions)
 │   └── IMPLEMENTATION_PLAN.md # design system + architecture + all 23 phases
 └── (created during P0) apps/, packages/, scripts/, data/
 ```
+
+## Build order
+
+The work is split into **23 sequential phases** across 6 milestones. **P0–P19 is the MVP.**
+
+| Milestone | Outcome | Phases | Days |
+| --- | --- | --- | --- |
+| **M0 Foundation** | App runs locally, looks like Study Quest, has an account | P0–P3 | 13 |
+| **M1 Learn** | Organise subjects, write notes, AI works | P4–P6 | 12 |
+| **M2 Understand & Practice** | The full Plan→Review loop works | P7–P10 | 18 |
+| **M3 Organise** | Study Quest guides the day | P11–P14 | 15 |
+| **M4 Motivate** | Progress visible, "what's next?" always answered | P15–P19 | 15 |
+| **M5 Ship** | Installable, accessible, backed up, running daily | P20–P22 | 11 |
+
+Full checklists and exit criteria: [docs/PHASES.md](docs/PHASES.md).
 
 ## Brand
 
@@ -169,6 +185,7 @@ and what changed from the first preview in
 
 | Document | What it covers |
 | --- | --- |
+| [docs/PHASES.md](docs/PHASES.md) | **Start here** — the 23 phases in order, one line each, with links |
 | [docs/PRD.md](docs/PRD.md) | The product requirements, plus Appendix A — notes on the technology decisions, their rationale and trade-offs |
 | [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) | Everything needed to build the product, in one document |
 

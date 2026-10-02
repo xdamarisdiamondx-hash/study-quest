@@ -1266,6 +1266,10 @@ Realistic elapsed time for one person studying part-time: **5–7 months**. Full
 The estimate includes the extra day in P0 for the Docker database setup and the day in P2 for
 the R2 storage service.
 
+> **Working through the phases?** [PHASES.md](PHASES.md) is the index — all 23 phases in order,
+> one line each, with links into the detail below. This document stays the single source of
+> truth; PHASES.md is only the table of contents.
+
 ---
 
 # Milestone 0 — Foundation
