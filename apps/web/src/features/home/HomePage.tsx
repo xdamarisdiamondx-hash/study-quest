@@ -1,8 +1,10 @@
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { Card, CheckItem, LevelBadge, Monogram, Streak, Track } from "@sq/ui";
 
-import { continueLearning, level, profile, recommendation, todayQuest } from "../../data/mock";
+import { level, profile, recommendation, todayQuest } from "../../data/mock";
 import { useHealth } from "../../lib/useHealth";
+import { useSubjects } from "../../lib/useSubjects";
 
 function greeting(now = new Date()): string {
   const h = now.getHours();
@@ -19,8 +21,8 @@ function ServiceStatus() {
       <div className="sq-card" style={{ borderColor: "var(--warn-500)" }}>
         <h2>API not reachable</h2>
         <p>
-          The app shell is running, but <code>/api/health</code> did not answer. Start the server
-          with <code>pnpm dev:all</code>. This is expected until P0's server is started.
+          The app shell is running, but <code>/api/health</code> did not answer. Start the database
+          and server with <code>pnpm db:up</code> and <code>pnpm dev:all</code>.
         </p>
       </div>
     );
@@ -43,7 +45,7 @@ function ServiceStatus() {
               : (health.database.error ?? "not running — start it with pnpm db:up")
           }
         />
-        <Row label="Authentication" ok={false} note="Better Auth — arrives with P3" />
+        <Row label="Authentication" ok note="Better Auth — email and password" />
         <Row
           label="AI provider"
           ok={health.ai.configured}
@@ -60,6 +62,51 @@ function ServiceStatus() {
         />
       </div>
     </div>
+  );
+}
+
+/**
+ * Where to pick up.
+ *
+ * Subjects and topics are real as of P4, so this shows the first subject that actually has
+ * topics. It cannot yet be "the last thing you studied" — `topics.lastStudiedAt` stays null
+ * until sessions exist in P14 — and the copy says so rather than inventing a timestamp.
+ */
+function ContinueLearning() {
+  const { subjects, status } = useSubjects();
+  const next = subjects.find((s) => !s.archived && s.topicCount > 0);
+
+  if (status === "loading") return null;
+
+  if (!next) {
+    return (
+      <Card title="Continue learning">
+        <p style={{ margin: 0, color: "var(--muted)", font: "var(--t-body-sm)" }}>
+          Add a subject with at least one topic and it will show up here.
+        </p>
+        <Link to="/study" className="sq-btn sq-btn-secondary sq-btn-sm">
+          Go to Study
+        </Link>
+      </Card>
+    );
+  }
+
+  return (
+    <Card title="Continue learning">
+      <div className="sq-row" style={{ flexWrap: "nowrap", gap: "var(--s3)" }}>
+        <Monogram text={next.monogram} active />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontWeight: 500 }}>{next.name}</div>
+          <div style={{ color: "var(--muted)", fontSize: 14 }}>
+            {next.topicCount} topic{next.topicCount === 1 ? "" : "s"} ·{" "}
+            {Math.round(next.progress * 100)}% complete
+          </div>
+        </div>
+        <Link to={`/study/${next.id}`} className="sq-btn sq-btn-primary sq-btn-sm">
+          Open
+        </Link>
+      </div>
+    </Card>
   );
 }
 
@@ -152,20 +199,7 @@ export function HomePage() {
         ))}
       </Card>
 
-      <Card title="Continue learning">
-        <div className="sq-row" style={{ flexWrap: "nowrap", gap: "var(--s3)" }}>
-          <Monogram text={continueLearning.monogram} active />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontWeight: 500 }}>{continueLearning.topic}</div>
-            <div style={{ color: "var(--muted)", fontSize: 14 }}>
-              Biology · {continueLearning.minutesAgo} min ago
-            </div>
-          </div>
-          <button type="button" className="sq-btn sq-btn-primary sq-btn-sm">
-            Resume
-          </button>
-        </div>
-      </Card>
+      <ContinueLearning />
 
       <Card title="What's next">
         <div className="sq-callout sq-callout-accent">{recommendation.text}</div>
@@ -182,8 +216,9 @@ export function HomePage() {
       <ServiceStatus />
 
       <p style={{ color: "var(--muted)", fontSize: 13, margin: "0 0 var(--s4)" }}>
-        Milestone 0 vertical slice. Content is placeholder data until subjects (P4) and notes (P5)
-        are built — see <code>docs/PHASES.md</code>.
+        Subjects, topics and subject progress are real as of P4. Today's Quest, XP and streaks are
+        still placeholder data — those arrive with quests (P13) and gamification (P15). See{" "}
+        <code>docs/PHASES.md</code>.
       </p>
     </div>
   );

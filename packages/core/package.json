@@ -3,14 +3,19 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Study Quest domain logic: XP, levels, streaks, progress, planning.",
+  "description": "Study Quest domain logic: XP, levels, streaks, progress, ordering, contracts.",
   "exports": {
     "./gamification": "./src/gamification/index.ts",
     "./progress": "./src/progress/index.ts",
-    "./starter": "./src/starter/index.ts"
+    "./starter": "./src/starter/index.ts",
+    "./subjects": "./src/subjects/index.ts",
+    "./schemas/subjects": "./src/schemas/subjects.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "@types/node": "^22.20.5",

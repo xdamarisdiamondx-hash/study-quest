@@ -1,10 +1,14 @@
-import { Card, LevelBadge, Ring, Track } from "@sq/ui";
+import { Card, LevelBadge, Monogram, Ring, Track } from "@sq/ui";
 
-import { level, profile, subjects } from "../../data/mock";
+import { level, profile } from "../../data/mock";
+import { useSubjects } from "../../lib/useSubjects";
 
 export function ProgressPage() {
   const totalStudyMinutes = 412;
   const quizAverage = 72;
+  // Subject progress is real as of P4: the same `subjectProgress` the Study page shows.
+  const { subjects, status } = useSubjects();
+  const active = subjects.filter((s) => !s.archived);
 
   return (
     <div className="sq-col" style={{ marginTop: "var(--s6)" }}>
@@ -58,18 +62,38 @@ export function ProgressPage() {
         </div>
       </Card>
 
-      <Card title="Subjects">
-        {subjects.map((s) => (
-          <div key={s.id} style={{ padding: "var(--s3) 0" }}>
-            <Track label={s.name} value={s.progress} caption={`${s.progress}%`} />
-          </div>
-        ))}
+      <Card title="Subjects" action={<span className="sq-label">{active.length} active</span>}>
+        {status === "loading" ? (
+          <p style={{ margin: 0, color: "var(--muted)", font: "var(--t-body-sm)" }}>Loading…</p>
+        ) : active.length === 0 ? (
+          <p style={{ margin: 0, color: "var(--muted)", font: "var(--t-body-sm)" }}>
+            No subjects yet. Add one in Study and it will appear here.
+          </p>
+        ) : (
+          active.map((s) => (
+            <div
+              key={s.id}
+              className="sq-row"
+              style={{ padding: "var(--s3) 0", gap: "var(--s3)", flexWrap: "nowrap" }}
+            >
+              <Monogram text={s.monogram} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <Track
+                  label={s.name}
+                  value={s.progress * 100}
+                  caption={`${Math.round(s.progress * 100)}% · ${s.topicCount} topics`}
+                />
+              </div>
+            </div>
+          ))
+        )}
       </Card>
 
       <Card>
         <p>
-          These percentages are computed by <code>@sq/core/progress</code> from real formulas in the
-          architecture doc. Charts and history arrive in P16.
+          Subject percentages come from <code>@sq/core/progress</code> and count real topic state.
+          Study time and quiz averages are still placeholders — those arrive with sessions (P14) and
+          quizzes (P8). Charts and history arrive in P16.
         </p>
       </Card>
     </div>

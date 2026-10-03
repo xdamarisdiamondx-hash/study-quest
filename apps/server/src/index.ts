@@ -16,8 +16,9 @@ import type { AuthedEnv } from "./auth/session.ts";
 import { getSession } from "./auth/session.ts";
 import { db } from "./db.ts";
 import { onboarding } from "./routes/onboarding.ts";
+import { subjectsRouter } from "./routes/subjects.ts";
 
-const { users, subjects } = dbSchema;
+const { users } = dbSchema;
 
 const PORT = Number(process.env.PORT ?? 4321);
 const HOST = process.env.HOST ?? "127.0.0.1";
@@ -78,28 +79,8 @@ app.get("/api/me", async (c) => {
   );
 });
 
-/* --- subjects: authenticated, and scoped to the caller ------------------ */
-app.get("/api/subjects", async (c) => {
-  const session = await getSession(c.req.raw.headers, auth);
-  if (!session) return c.json({ error: "unauthorized" }, 401);
-
-  const [profile] = await db.orm
-    .select({ id: users.id })
-    .from(users)
-    .where(eq(users.authUserId, session.user.id))
-    .limit(1);
-  if (!profile) return c.json({ error: "no_profile" }, 409);
-
-  // Always filter by userId: an unscoped read would return every account's subjects.
-  const rows = await db.orm
-    .select()
-    .from(subjects)
-    .where(eq(subjects.userId, profile.id))
-    .orderBy(subjects.orderIndex)
-    .limit(50);
-
-  return c.json({ subjects: rows }, 200);
-});
+/* --- subjects and topics (P4) ------------------------------------------- */
+app.route("/api/subjects", subjectsRouter);
 
 app.route("/api/onboarding", onboarding);
 

@@ -7,6 +7,7 @@ import { OnboardingPage } from "./features/onboarding/OnboardingPage";
 import { HomePage } from "./features/home/HomePage";
 import { TasksPage } from "./features/tasks/TasksPage";
 import { StudyPage } from "./features/study/StudyPage";
+import { SubjectDetailPage } from "./features/study/SubjectDetailPage";
 import { QuestsPage } from "./features/quests/QuestsPage";
 import { ProgressPage } from "./features/progress/ProgressPage";
 
@@ -30,6 +31,7 @@ export function App() {
           <Route index element={<HomePage />} />
           <Route path="tasks" element={<TasksPage />} />
           <Route path="study" element={<StudyPage />} />
+          <Route path="study/:subjectId" element={<SubjectDetailPage />} />
           <Route path="quests" element={<QuestsPage />} />
           <Route path="progress" element={<ProgressPage />} />
         </Route>

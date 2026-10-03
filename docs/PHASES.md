@@ -79,36 +79,38 @@ exit criteria, dependencies, effort — is in
 **P0** is the only phase that touches the machine: Node 22, pnpm, Git, GitHub CLI and Docker
 Desktop. Once it is done, every later phase is only code.
 
-Current machine state as of 2 October 2026:
+Current machine state as of 3 October 2026:
 
-| Tool                  | Status                                                         |
-| --------------------- | -------------------------------------------------------------- |
-| Git 2.55.0            | installed                                                      |
-| GitHub CLI 2.101.0    | installed, authenticated                                       |
-| Node 24.19.0 LTS      | installed                                                      |
-| pnpm 9.15.0           | installed; shim in `%APPDATA%\npm` forwarding to `corepack`    |
-| Docker Desktop 4.91.0 | installed; **blocked** — needs the WSL 2 kernel, then a reboot |
-| PostgreSQL 17         | not running; **PGlite** is standing in (see below)             |
+| Tool                  | Status                                                        |
+| --------------------- | ------------------------------------------------------------- |
+| Git 2.55.0            | installed                                                     |
+| GitHub CLI 2.101.0    | installed, authenticated                                      |
+| Node 24.19.0 LTS      | installed                                                     |
+| pnpm 9.15.0           | installed; shim in `%APPDATA%\npm` forwarding to `corepack`   |
+| Docker Desktop 4.91.0 | installed; **running** — WSL 3.0.1.0 installed, engine 29.8.0 |
+| PostgreSQL 17         | running in Docker on 127.0.0.1:5432, health check passing     |
 
-### Milestone 0 status
+### Milestone status
 
 | Phase                  | State                                                                 |
 | ---------------------- | --------------------------------------------------------------------- |
-| **P0** Toolchain       | Done, except the Docker engine (WSL + reboot outstanding)             |
+| **P0** Toolchain       | Done — including the Docker engine and a live PostgreSQL 17 container |
 | **P1** Design system   | Done — tokens, components, Storybook, dark mode, self-hosted fonts    |
 | **P2** Data foundation | Done — 30-table schema, generated migrations, seed, storage interface |
 | **P3** Auth and shell  | Done — Better Auth, route guards, five sections, onboarding           |
+| **P4** Subjects        | Done — subject/topic CRUD, reorder, archive, templates, detail page   |
 
-**PGlite is covering for Docker.** `packages/db/src/client.ts` uses the Docker PostgreSQL
-when `DATABASE_URL` is set, and falls back to PGlite — real PostgreSQL compiled to
-WebAssembly, in-process — when it is not. Auth, subjects and onboarding all work today, and
-the same generated SQL applies to both, so turning Docker on later needs no code change.
+**The database is PostgreSQL in Docker.** `packages/db/src/client.ts` still supports the
+PGlite fallback for when `DATABASE_URL` is unset, but the live database is now the container:
+`pnpm db:up` then start the server with `DATABASE_URL` from `.env`. The same generated SQL
+applies to both, so the fallback stays free to keep.
 
 Run it:
 
 ```bash
-pnpm dev:all     # database + API on :4321 + web on :5173
-pnpm verify      # typecheck, lint, 30 tests
+pnpm db:up       # start PostgreSQL 17 in Docker
+pnpm dev:all     # API on :4321 + web on :5173
+pnpm verify      # typecheck, lint, 48 tests
 pnpm storybook   # component catalogue on :6006
 pnpm db:seed     # 50 levels, 8 achievements
 ```

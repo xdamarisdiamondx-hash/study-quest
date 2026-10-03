@@ -4,7 +4,7 @@
  * Styling lives in `packages/ui/src/styles/*.css` as classes, so the app consumes
  * the system without a styling runtime. Source: docs/IMPLEMENTATION_PLAN.md Part I.
  */
-import type { ReactNode } from "react";
+import type { CSSProperties, KeyboardEvent, ReactNode } from "react";
 
 import { LEVEL_TITLES, levelTitle } from "@sq/core/gamification";
 
@@ -123,7 +123,7 @@ export function Ring({
   return (
     <div
       className={`sq-ring ${small ? "sq-ring-sm" : ""}`}
-      style={{ "--pct": pct } as React.CSSProperties}
+      style={{ "--pct": pct } as CSSProperties}
       role="progressbar"
       aria-valuenow={pct}
       aria-valuemin={0}
@@ -265,6 +265,224 @@ export function QuestStepper({
         </li>
       ))}
     </ol>
+  );
+}
+
+/* --- navigation within a page ------------------------------------------- */
+
+export interface TabItem {
+  id: string;
+  label: string;
+  /** Optional count badge, e.g. topics in a subject. */
+  count?: number;
+  /** A tab that is not built yet says so instead of pretending. */
+  soon?: boolean;
+}
+
+/**
+ * Segmented tabs for in-page navigation (section 9, "tabs / navigation").
+ *
+ * Roving tabindex: only the selected tab is in the tab order, and arrow keys move between
+ * them, which is what the ARIA tabs pattern expects.
+ */
+export function Tabs({
+  items,
+  active,
+  onChange,
+  label,
+}: {
+  items: TabItem[];
+  active: string;
+  onChange: (id: string) => void;
+  label: string;
+}) {
+  function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    const delta = event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0;
+    if (delta === 0) return;
+    event.preventDefault();
+    const index = items.findIndex((i) => i.id === active);
+    const next = items[(index + delta + items.length) % items.length];
+    if (next) onChange(next.id);
+  }
+
+  return (
+    <div className="sq-seg" role="tablist" aria-label={label} onKeyDown={onKeyDown}>
+      {items.map((item) => {
+        const selected = item.id === active;
+        return (
+          <button
+            key={item.id}
+            type="button"
+            role="tab"
+            id={`tab-${item.id}`}
+            aria-selected={selected}
+            aria-controls={`panel-${item.id}`}
+            tabIndex={selected ? 0 : -1}
+            className="sq-seg-btn"
+            data-on={selected}
+            onClick={() => onChange(item.id)}
+          >
+            {item.label}
+            {item.count !== undefined ? <span className="sq-seg-n">{item.count}</span> : null}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+export function TabPanel({
+  id,
+  active,
+  children,
+}: {
+  id: string;
+  active: string;
+  children: ReactNode;
+}) {
+  if (id !== active) return null;
+  return (
+    <div role="tabpanel" id={`panel-${id}`} aria-labelledby={`tab-${id}`} tabIndex={0}>
+      {children}
+    </div>
+  );
+}
+
+/* --- reordering --------------------------------------------------------- */
+
+/**
+ * Keyboard reordering (section 6: "drag or keyboard").
+ *
+ * Pointer dragging is handled by the list itself; these buttons are the reachable
+ * equivalent, so reordering never depends on being able to drag precisely.
+ */
+export function ReorderButtons({
+  index,
+  total,
+  onMove,
+  label,
+}: {
+  index: number;
+  total: number;
+  onMove: (from: number, to: number) => void;
+  label: string;
+}) {
+  return (
+    <span className="sq-reorder">
+      <button
+        type="button"
+        className="sq-icon-btn"
+        disabled={index === 0}
+        onClick={() => onMove(index, index - 1)}
+        aria-label={`Move ${label} up`}
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="m6 15 6-6 6 6" />
+        </svg>
+      </button>
+      <button
+        type="button"
+        className="sq-icon-btn"
+        disabled={index === total - 1}
+        onClick={() => onMove(index, index + 1)}
+        aria-label={`Move ${label} down`}
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      </button>
+    </span>
+  );
+}
+
+/** The drag affordance. Hidden from assistive tech: ReorderButtons is the keyboard path. */
+export function DragHandle({ label }: { label: string }) {
+  return (
+    <span className="sq-drag" aria-hidden="true" title={`Drag to reorder ${label}`}>
+      <svg
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        stroke="none"
+        strokeWidth="2"
+        strokeLinecap="round"
+      >
+        <circle cx="9" cy="6" r="1.6" />
+        <circle cx="15" cy="6" r="1.6" />
+        <circle cx="9" cy="12" r="1.6" />
+        <circle cx="15" cy="12" r="1.6" />
+        <circle cx="9" cy="18" r="1.6" />
+        <circle cx="15" cy="18" r="1.6" />
+      </svg>
+    </span>
+  );
+}
+
+/* --- pickers ------------------------------------------------------------ */
+
+export interface PickerOption {
+  value: string;
+  label: string;
+  /** Rendered before the label — a monogram for subjects. */
+  prefix?: string;
+}
+
+/**
+ * A labelled select. Used for the subject/topic picker that tasks, notes and sessions all
+ * share, so the choice of vocabulary is made once.
+ */
+export function Picker({
+  label,
+  value,
+  options,
+  onChange,
+  placeholder,
+  disabled,
+  hint,
+}: {
+  label: string;
+  value: string | null;
+  options: PickerOption[];
+  onChange: (value: string | null) => void;
+  placeholder?: string;
+  disabled?: boolean;
+  hint?: string;
+}) {
+  return (
+    <div className="sq-field">
+      <label htmlFor={`picker-${label.replace(/\W+/g, "-").toLowerCase()}`}>{label}</label>
+      <select
+        id={`picker-${label.replace(/\W+/g, "-").toLowerCase()}`}
+        className="sq-select"
+        value={value ?? ""}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.value === "" ? null : e.target.value)}
+      >
+        {placeholder ? <option value="">{placeholder}</option> : null}
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.prefix ? `${o.prefix} — ` : ""}
+            {o.label}
+          </option>
+        ))}
+      </select>
+      {hint ? <p className="sq-help">{hint}</p> : null}
+    </div>
   );
 }
 

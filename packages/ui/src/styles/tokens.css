@@ -54,10 +54,18 @@
   /* --- status ------------------------------------------------------ */
   --ok-500: #0e9f6e;
   --ok-100: #d1fae5;
+  /* Darker text steps. The -500 hues are for fills and borders; text on a
+     -100 background needs these to clear AA at 4.5:1. */
+  --ok-700: #076c4c;
   --warn-500: #b45309;
   --warn-100: #fef3c7;
+  --warn-700: #92400e;
   --bad-500: #dc2626;
   --bad-100: #fee2e2;
+  --bad-700: #b91c1c;
+  --gold-700: #8a5200;
+  /* Neutral chip text. Flipped to a light step in dark theme. */
+  --chip-ink: var(--sand-600);
 
   /* --- neutrals: sand (warm greys) --------------------------------- */
   --sand-50: #fafaf9;
@@ -149,7 +157,9 @@
   --raised: #262220;
   --border: #292524;
   --text: var(--sand-100);
-  --strong: var(--sand-950);
+  /* --strong is the *most prominent* text, so in dark it has to be the
+     lightest neutral. Pointing it at sand-950 made every heading invisible. */
+  --strong: var(--sand-50);
   --muted: var(--sand-400);
   --accent: #a78bfa;
   --accent-hover: #8b5cf6;
@@ -163,6 +173,15 @@
   --ok-100: rgb(14 159 110 / 0.16);
   --warn-100: rgb(180 83 9 / 0.16);
   --bad-100: rgb(220 38 38 / 0.16);
+
+  /* Tinted chip text has to invert with the background: the -700 steps are
+     unreadable on a dark surface. These are the lightest steps of each hue
+     that still clear AA on the 16% tints above. */
+  --gold-700: #fcd34d;
+  --ok-700: #6ee7b7;
+  --warn-700: #fcd34d;
+  --bad-700: #fca5a5;
+  --chip-ink: var(--sand-300);
 
   --e1: 0 1px 2px rgb(0 0 0 / 0.4);
   --e2: 0 4px 8px -2px rgb(0 0 0 / 0.45);

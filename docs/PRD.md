@@ -625,7 +625,8 @@ as the requirements and this appendix as the reasoning behind them.
 | --------- | --------------------------------------------------------------------- |
 | A.1 – A.6 | Technology decisions: stack, what changed and why, alternatives, cost |
 | A.7       | Design changes made to the first preview, and why                     |
-| A.8       | Where the full detail lives                                           |
+| A.8       | Product decisions taken while building (subjects and topics)          |
+| A.9       | Where the full detail lives                                           |
 
 **Decided so far:** React 19 + Vite · PostgreSQL 17 in Docker · Better Auth · Cloudflare R2 for
 files · provider-agnostic AI with Ollama first. The app and database run locally. The interface
@@ -787,7 +788,7 @@ subject palette. A subject list was a row of competing hues where no colour carr
   interface from a default-looking one.
 
 **Cost:** subjects can no longer be colour-coded, which is a real loss of quick visual scanning.
-§A.8 covers how that was recovered.
+§A.9 covers how that was recovered.
 
 ### 2. Subjects identified by monogram, not colour
 
@@ -866,7 +867,27 @@ The token rename is a one-pass migration: `indigo-*` → `iris-*`, `slate-*` →
 `success/warning/danger/info` → `ok-*/warn-*/bad-*`, and `violet-*` folded into the accent.
 Nothing changes for the user; only the token names in code.
 
-## A.8 Where the detail lives
+## A.8 Product decisions taken while building
+
+These refine §6 and §25 without changing what they require. They are recorded here because
+they are product choices, not just implementation detail.
+
+| Decision                                                                                    | Instead of                             | Why                                                                                                                                                                            |
+| ------------------------------------------------------------------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| A topic has a three-state status the student sets: not started / learning / mastered        | No status until real study data exists | §25 asks for per-topic progress. A status the student declares gives it a meaning today, and later phases overwrite it with measured mastery instead of replacing the concept. |
+| The status advances by tapping the chip, and wraps at mastered                              | A dropdown or a one-way progression    | Principle 4: the student stays in control, but the common action should not cost a menu. Wrapping means the control never dead-ends.                                           |
+| Topics can be reordered by drag **or** by arrow buttons on every row                        | Drag only                              | Dragging is imprecise on a phone and impossible with a keyboard or a screen reader. Both paths call the same ordering code so they cannot disagree.                            |
+| Renaming a subject updates its monogram automatically                                       | The monogram is set once and drifts    | The colour picker was already cut in A.7 §2; a monogram the student has to maintain by hand is the same problem in miniature.                                                  |
+| Archived subjects leave the main list but keep their topics                                 | Delete-only subjects                   | Students finish terms and exams. Archiving keeps the history — and the notes attached to it — without the subject cluttering the day.                                          |
+| Deleting a subject says how many topics go with it and asks twice                           | Deleting immediately                   | The delete cascades. Principle 4 is as much about being able to back out as it is about choosing.                                                                              |
+| Notes / Quizzes / Flashcards / Tasks tabs exist from day one and say which phase fills them | Building the page out tab by tab later | Principle 3: everything should connect. Fixing the page shape now means the later phases drop content into a settled frame.                                                    |
+
+**Cost of the status model:** `topics.status` is a student declaration, not a measurement.
+When P8 (quizzes) and P14 (sessions) land, "learning" and "mastered" become derived values
+rather than something the student sets, and the chip stops being editable. The transition is a
+data change in one place — `topicsApi.update` — because the vocabulary does not change.
+
+## A.9 Where the detail lives
 
 | Topic                                     | Location                                                        |
 | ----------------------------------------- | --------------------------------------------------------------- |

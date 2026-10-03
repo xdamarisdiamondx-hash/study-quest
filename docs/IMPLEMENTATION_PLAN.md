@@ -1445,19 +1445,83 @@ returns a typed error for a bad request; `/api/health` reports each dependency.
 
 **Goal:** the structure everything else hangs from.
 
-- [ ] Subject CRUD: name, auto-derived monogram, optional icon, order, archive (no colour
+- [x] Subject CRUD: name, auto-derived monogram, optional icon, order, archive (no colour
       picker — §3.5)
-- [ ] Reorder subjects and topics by drag or keyboard
-- [ ] Topic CRUD within a subject, with status (not started / learning / mastered)
-- [ ] Import template: pick a subject set (e.g. Biology, Chemistry, Mathematics) with sensible
+- [x] Reorder subjects and topics by drag or keyboard
+- [x] Topic CRUD within a subject, with status (not started / learning / mastered)
+- [x] Import template: pick a subject set (e.g. Biology, Chemistry, Mathematics) with sensible
       starter topics
-- [ ] Subject detail page with tabs: Overview / Topics / Notes / Quizzes / Flashcards / Tasks
-- [ ] Progress placeholders wired to the real calculation (P16) so the UI never changes later
-- [ ] Global subject/topic picker component (used by tasks, notes, sessions)
+- [x] Subject detail page with tabs: Overview / Topics / Notes / Quizzes / Flashcards / Tasks
+- [x] Progress placeholders wired to the real calculation (P16) so the UI never changes later
+- [x] Global subject/topic picker component (used by tasks, notes, sessions)
 
 **Exit:** create, edit, reorder, archive and delete subjects and topics; all changes persist
 and appear everywhere the subject is referenced.
 **Effort:** 2 d · **Depends on:** P3
+
+### How it was built
+
+**Ordering is one pure module.** `packages/core/src/subjects/order.ts` holds `applyReorder`,
+`resequence`, `move` and `nudge`. `applyReorder` ignores ids it does not recognise and keeps
+unnamed rows in their existing relative order after the named ones, so a drag from a stale
+list cannot silently drop a row. Because it is pure and takes plain arrays, it is tested
+without a database (18 tests across the module).
+
+**Order is a dense sequence.** `orderIndex` is always rewritten to `0..n-1`. A delete leaves a
+gap, so `resequence` runs after every delete rather than letting indices drift.
+
+**Reordering is reachable two ways.** The row itself is draggable, and every row also carries
+up/down buttons that call the same `move` helper. Reordering never depends on being able to
+drag precisely, and the keyboard path needs no announcement machinery because the buttons
+carry the label ("Move Chemistry up").
+
+**Every route is scoped in one place.** `apps/server/src/auth/currentProfile.ts` exposes a
+`requireProfile` middleware that resolves the session to an app-level profile id and puts it
+on the Hono context, returning 401/409 instead of letting the handler run. No route in
+`routes/subjects.ts` can read another account's rows: topics are only reachable through a
+subject the caller owns (`ownsSubject` / `ownedTopic`).
+
+**Status is a cycle, not a dropdown.** `nextTopicStatus` wraps at the end
+(`not_started → learning → mastered → learning`) so the common action — "I am working on
+this" — is one tap and never dead-ends. The chip's accessible name says what the next tap
+will do.
+
+**Progress is the real formula with honest zeros.** `subjectProgress` from `@sq/core/progress`
+is called with the topic rows as they stand. Two of its four inputs (`reviewCoverage`,
+`sessionMinutes`) are `0` because quizzes (P8), flashcards (P9) and study sessions (P14) do not
+exist yet. P16 fills in the inputs; the UI does not change.
+
+**Status chips map to the three reserved tones.** `not_started` neutral, `learning` iris,
+`mastered` ok — and the label always carries the meaning, so colour is never the only signal.
+
+**Contrast and dark-theme bugs found and fixed while doing this.** Four, all pre-existing from
+P1, all caught by measuring rather than looking:
+
+1. **The tinted chips failed AA.** They used the `-500` status hues as text on their own `-100`
+   backgrounds: 2.9:1 for gold, 3.0:1 for ok, 4.0:1 for bad. Chips now use `-700` text steps
+   (`--ok-700`, `--warn-700`, `--bad-700`, `--gold-700`) — 5.3:1 or better in light theme. The
+   dark theme redefines the same four names to the lightest step of each hue, clearing 8.0:1 on
+   the 16% tints.
+2. **`--strong` was inverted in dark theme.** It pointed at `--sand-950`, the darkest neutral,
+   so every heading rendered near-black on a near-black background. `--strong` is the _most_
+   prominent text, so in dark it now points at `--sand-50`.
+3. **The neutral chip's dark rule outranked the tinted ones.** `[data-theme="dark"] .sq-chip`
+   is specificity 0,2,0; `.sq-chip-ok` is 0,1,0. So in dark theme every tinted chip lost its
+   hue and became grey. Replaced with a `--chip-ink` token that flips with the theme, so no
+   attribute selector competes with the variants at all.
+4. **The segmented tabs and reorder buttons painted the browser's default button face.**
+   `.sq-seg-btn` and `.sq-icon-btn` set no background, so Chrome's `buttonface` grey covered
+   the `--track` fill the control is built on. Both now reset `background: transparent`.
+
+The lesson recorded for later phases: **read the computed values, don't eyeball the render.**
+Two of these are invisible in a screenshot at a glance and one only appears when you measure a
+ratio. Where a token is meant to invert with the theme, define the inversion as a token rather
+than as a `[data-theme]` rule — a rule with an attribute selector silently outranks every
+single-class variant below it.
+
+**The not-yet tabs are real, not hidden.** The subject detail page renders all six tabs from
+the start. Notes, Quizzes, Flashcards and Tasks say which phase delivers them, so the shape
+of the page is settled before any of that work lands.
 
 ## P5 · Notes
 

@@ -1,15 +1,21 @@
+import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 import {
   Card,
   CheckItem,
   Chip,
+  DragHandle,
   LevelBadge,
   Logo,
   Monogram,
+  Picker,
   QuestStepper,
+  ReorderButtons,
   Ring,
   Streak,
+  TabPanel,
+  Tabs,
   Track,
 } from "./index";
 
@@ -192,4 +198,121 @@ export const Fields: Story = {
       </div>
     </div>
   ),
+};
+
+/* --- P4: subjects, topics and the controls that manage them ------------- */
+
+export const SubjectTabs: Story = {
+  name: "Subject detail / Tabs",
+  render: function SubjectTabsStory() {
+    const [tab, setTab] = useState("overview");
+    const items = [
+      { id: "overview", label: "Overview" },
+      { id: "topics", label: "Topics", count: 4 },
+      { id: "notes", label: "Notes" },
+      { id: "quizzes", label: "Quizzes" },
+      { id: "flashcards", label: "Flashcards" },
+      { id: "tasks", label: "Tasks" },
+    ];
+    return (
+      <div style={{ display: "grid", gap: 16, maxWidth: 520 }}>
+        <Tabs items={items} active={tab} onChange={setTab} label="Physics sections" />
+        <TabPanel id="overview" active={tab}>
+          <Card>
+            <p style={{ margin: 0 }}>Four topics, none started. Progress 0%.</p>
+          </Card>
+        </TabPanel>
+        <TabPanel id="topics" active={tab}>
+          <Card title="Topics">
+            <p style={{ margin: 0 }}>Motion · Electricity · Waves · Heat</p>
+          </Card>
+        </TabPanel>
+        <TabPanel id="notes" active={tab}>
+          <Card>
+            <p style={{ margin: 0 }}>Notes arrive in P5.</p>
+          </Card>
+        </TabPanel>
+      </div>
+    );
+  },
+};
+
+export const Reordering: Story = {
+  name: "Subject / Topic reordering",
+  render: function ReorderingStory() {
+    const [order, setOrder] = useState(["Motion", "Electricity", "Waves", "Heat"]);
+    return (
+      <Card title="Topics" action={<span className="sq-label">drag or use the arrows</span>}>
+        <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+          {order.map((name, index) => (
+            <li key={name} className="sq-topic">
+              <DragHandle label={name} />
+              <span className="sq-topic-text">
+                <b>{name}</b>
+              </span>
+              <ReorderButtons
+                index={index}
+                total={order.length}
+                label={name}
+                onMove={(from, to) => {
+                  const next = [...order];
+                  const [moved] = next.splice(from, 1);
+                  next.splice(to, 0, moved!);
+                  setOrder(next);
+                }}
+              />
+            </li>
+          ))}
+        </ul>
+      </Card>
+    );
+  },
+};
+
+export const TopicStatus: Story = {
+  name: "Topic status chips",
+  render: () => (
+    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+      <Chip>Not started</Chip>
+      <Chip tone="iris">Learning</Chip>
+      <Chip tone="ok">Mastered</Chip>
+    </div>
+  ),
+};
+
+export const SubjectPickerField: Story = {
+  name: "Subject / topic picker",
+  render: function SubjectPickerStory() {
+    const [subject, setSubject] = useState<string | null>("physics");
+    const [topic, setTopic] = useState<string | null>(null);
+    return (
+      <div style={{ display: "grid", gap: 16, maxWidth: 420 }}>
+        <Picker
+          label="Subject"
+          value={subject}
+          onChange={setSubject}
+          options={[
+            { value: "physics", label: "Physics", prefix: "Ph" },
+            { value: "biology", label: "Biology", prefix: "Bi" },
+            { value: "chemistry", label: "Chemistry", prefix: "Ch" },
+          ]}
+        />
+        <Picker
+          label="Topic"
+          value={topic}
+          onChange={setTopic}
+          disabled={!subject}
+          placeholder="Any topic"
+          hint={
+            subject === "physics" ? "Only topics of the chosen subject appear here." : undefined
+          }
+          options={[
+            { value: "motion", label: "Motion" },
+            { value: "electricity", label: "Electricity" },
+            { value: "waves", label: "Waves" },
+          ]}
+        />
+      </div>
+    );
+  },
 };
