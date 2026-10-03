@@ -16,6 +16,7 @@ export function StudyPage() {
   const store = useSubjects();
   const [templates, setTemplates] = useState<TemplateSummary[]>([]);
   const [editing, setEditing] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
   const [dragId, setDragId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
   const liveRef = useRef<HTMLDivElement>(null);
@@ -64,15 +65,33 @@ export function StudyPage() {
                 )} topics`}
           </p>
         </div>
-        <Link to="new" className="sq-btn sq-btn-primary">
-          Add subject
-        </Link>
+        <button
+          type="button"
+          className="sq-btn sq-btn-primary"
+          aria-expanded={creating}
+          onClick={() => setCreating((v) => !v)}
+        >
+          {creating ? "Cancel" : "Add subject"}
+        </button>
       </div>
 
       {store.error ? (
         <p className="sq-error" role="alert">
           {store.error}
         </p>
+      ) : null}
+
+      {creating ? (
+        <Card title="New subject">
+          <SubjectComposer
+            busy={store.busy}
+            onCreate={async (name) => {
+              const ok = await store.create(name);
+              if (ok) setCreating(false);
+              return ok;
+            }}
+          />
+        </Card>
       ) : null}
 
       <div ref={liveRef} aria-live="polite">
@@ -89,10 +108,20 @@ export function StudyPage() {
               title={archived.length > 0 ? "No active subjects" : "No subjects yet"}
               hint={
                 archived.length > 0
-                  ? "Everything you have is archived. Restore one below or add a new subject."
+                  ? "Everything you have is archived. Restore one below, or add a new subject."
                   : "Add a subject, or start from a template with sensible starter topics."
               }
-              action={<SubjectCreator />}
+              action={
+                creating ? null : (
+                  <button
+                    type="button"
+                    className="sq-btn sq-btn-primary"
+                    onClick={() => setCreating(true)}
+                  >
+                    Add your first subject
+                  </button>
+                )
+              }
             />
           </Card>
         ) : (
@@ -256,40 +285,54 @@ function TemplateButton({
   );
 }
 
-/** The create form. Lives inline so the empty state stays a single focusable step. */
-function SubjectCreator() {
-  const store = useSubjects();
+/**
+ * The create form.
+ *
+ * It takes the parent's store rather than calling `useSubjects` itself: two instances would
+ * each hold their own copy of the list, so the new subject would appear in one and the page
+ * would still show the empty state.
+ */
+function SubjectComposer({
+  busy,
+  onCreate,
+}: {
+  busy: boolean;
+  onCreate: (name: string) => Promise<boolean>;
+}) {
   const [name, setName] = useState("");
 
   return (
     <form
       className="sq-row"
-      style={{ gap: "var(--s2)", justifyContent: "center" }}
-      onSubmit={(e) => {
+      style={{ gap: "var(--s3)", alignItems: "flex-end" }}
+      onSubmit={async (e) => {
         e.preventDefault();
         if (!name.trim()) return;
-        void store.create(name.trim());
-        setName("");
+        if (await onCreate(name.trim())) setName("");
       }}
     >
-      <div className="sq-field" style={{ flex: 1, minWidth: "180px", textAlign: "left" }}>
+      <div className="sq-field" style={{ flex: 1, minWidth: "180px" }}>
         <label htmlFor="new-subject">Subject name</label>
         <input
           id="new-subject"
           className="sq-input"
           value={name}
           maxLength={80}
+          autoFocus
           placeholder="e.g. Organic Chemistry"
           onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setName("");
+          }}
         />
+        <p className="sq-help">The monogram is taken from the name — there is nothing to choose.</p>
       </div>
       <button
         type="submit"
         className="sq-btn sq-btn-primary"
-        disabled={store.busy || name.trim().length === 0}
-        style={{ alignSelf: "flex-end" }}
+        disabled={busy || name.trim().length === 0}
       >
-        Add
+        {busy ? "Adding…" : "Add subject"}
       </button>
     </form>
   );
