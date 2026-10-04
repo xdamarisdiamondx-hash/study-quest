@@ -6,6 +6,7 @@
 [functions]
   node_bundler = "esbuild"
   external_node_modules = ["@neondatabase/serverless", "better-auth", "drizzle-orm", "hono", "zod"]
+  included_files = ["netlify/functions/**/*"]
 
 [[redirects]]
   from = "/api/*"
