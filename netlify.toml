@@ -6,15 +6,10 @@
 [functions]
   node_bundler = "esbuild"
   external_node_modules = ["@neondatabase/serverless", "better-auth", "drizzle-orm", "hono", "zod"]
-  included_files = ["netlify/functions/api/**/*", "netlify/functions/test/**/*"]
 
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/api/:splat"
-  status = 200
-
-  from = "/test/*"
-  to = "/.netlify/functions/test/:splat"
   status = 200
 
 [[redirects]]
