@@ -4,14 +4,31 @@ import { join } from "path";
 
 const outDir = "netlify/functions/api";
 const entryPoint = "netlify/functions/api.ts";
+const pkgSrc = join("netlify", "functions", "api", "package.json");
+const pkgDest = join(outDir, "package.json");
 
 async function buildFunction() {
   try {
-    // Clean output directory
-    if (existsSync(outDir)) {
-      rmSync(outDir, { recursive: true, force: true });
+    // Copy package.json FIRST (before cleaning output dir)
+    if (existsSync(pkgSrc)) {
+      copyFileSync(pkgSrc, pkgDest);
+      console.log("✅ package.json copied to output directory");
+    } else {
+      console.warn("⚠️ package.json not found at source");
     }
-    mkdirSync(outDir, { recursive: true });
+
+    // Clean output directory (but keep package.json)
+    if (existsSync(outDir)) {
+      // Remove everything except package.json
+      const files = (await import("fs")).readdirSync(outDir);
+      for (const file of files) {
+        if (file !== "package.json") {
+          rmSync(join(outDir, file), { recursive: true, force: true });
+        }
+      }
+    } else {
+      mkdirSync(outDir, { recursive: true });
+    }
 
     console.log("Building function...");
 
@@ -39,9 +56,6 @@ async function buildFunction() {
       minify: true,
       sourcemap: true,
     });
-
-    // package.json is already in the output directory (same as source)
-    console.log("✅ package.json already in output directory");
 
     console.log("✅ Function built successfully to", outDir);
   } catch (err) {
