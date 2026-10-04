@@ -1,5 +1,5 @@
 import { build } from "esbuild";
-import { copyFileSync, mkdirSync, rmSync, existsSync } from "fs";
+import { copyFileSync, mkdirSync, rmSync, existsSync, readdirSync } from "fs";
 import { join } from "path";
 
 const outDir = "netlify/functions/api";
@@ -20,7 +20,7 @@ async function buildFunction() {
     // Clean output directory (but keep package.json)
     if (existsSync(outDir)) {
       // Remove everything except package.json
-      const files = (await import("fs")).readdirSync(outDir);
+      const files = readdirSync(outDir);
       for (const file of files) {
         if (file !== "package.json") {
           rmSync(join(outDir, file), { recursive: true, force: true });
@@ -32,7 +32,7 @@ async function buildFunction() {
 
     console.log("Building function...");
 
-    // Build with esbuild
+    // Build with esbuild - handles TypeScript directly
     await build({
       entryPoints: [entryPoint],
       bundle: true,

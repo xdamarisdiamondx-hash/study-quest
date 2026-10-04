@@ -12,10 +12,6 @@
   to = "/.netlify/functions/api/:splat"
   status = 200
 
-  from = "/test/*"
-  to = "/.netlify/functions/test/:splat"
-  status = 200
-
 [[redirects]]
   from = "/*"
   to = "/index.html"
