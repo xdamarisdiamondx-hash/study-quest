@@ -1,20 +1,11 @@
 [build]
-  command = "pnpm install && pnpm --filter @sq/web build"
+  command = "pnpm install && pnpm --filter @sq/web build && node netlify/functions/build.mjs"
   publish = "apps/web/dist"
   functions = "netlify/functions"
-
-[functions]
-  node_bundler = "esbuild"
-  external_node_modules = ["@neondatabase/serverless", "better-auth", "drizzle-orm", "hono", "zod"]
-  included_files = ["netlify/functions/**/*"]
 
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/api/:splat"
-  status = 200
-
-  from = "/test/*"
-  to = "/.netlify/functions/test/:splat"
   status = 200
 
 [[redirects]]
