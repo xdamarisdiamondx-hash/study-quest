@@ -25,6 +25,7 @@ config.local.json.example
 
 # Local data: database backups, local-disk file fallback, uploads
 data/
+!data/mock.ts
 db/*.dump
 db/*.sql.gz
 
