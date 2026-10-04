@@ -1,5 +1,5 @@
 [build]
-  command = "pnpm install && pnpm --filter @sq/web build"
+  command = "pnpm install && pnpm --filter @sq/web build && node netlify/functions/build.cjs"
   publish = "apps/web/dist"
   functions = "netlify/functions"
 
@@ -9,10 +9,6 @@
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/api/:splat"
-  status = 200
-
-  from = "/test/*"
-  to = "/.netlify/functions/test/:splat"
   status = 200
 
 [[redirects]]
