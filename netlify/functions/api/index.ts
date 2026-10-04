@@ -174,12 +174,12 @@ function monogramFor(name: string): string {
 }
 
 // Neon database
-const sql = neon(process.env.DATABASE_URL!);
-const db = drizzle(sql, { schema: { users, session, account, verification, subjects, topics, notes, noteRevisions, flashcardDecks, flashcards, quizzes, quizQuestions, aiArtifacts } });
+const neonClient = neon(process.env.DATABASE_URL!);
+const db = drizzle(neonClient, { schema: { users, session, account, verification, subjects, topics, notes, noteRevisions, flashcardDecks, flashcards, quizzes, quizQuestions, aiArtifacts } });
 
 // Better Auth
 const auth = betterAuth({
-  database: (await import("better-auth/adapters/drizzle")).drizzleAdapter(drizzle(sql), {
+  database: drizzleAdapter(db, {
     provider: "pg",
     schema: { user: users, session, account, verification },
   }),
@@ -197,7 +197,7 @@ app.use("*", cors({
   allowHeaders: ["Content-Type", "Authorization"],
   allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   credentials: true,
-});
+}));
 
 // Make auth and db available
 app.use("*", async (c, next) => {
@@ -261,9 +261,8 @@ app.route("/api/ai", aiRouter);
 app.notFound((c) => c.json({ error: "not_found" }, 404));
 
 // Netlify Functions handler
-export default {
-  async fetch(request: Request, env: Record<string, string>): Promise<Response> {
-    Object.entries(env).forEach(([k, v]) => { if (!process.env[k]) process.env[k] = v; });
-    return app.fetch(request);
-  },
+export default async (request: Request): Promise<Response> => app.fetch(request);
+
+export const config = {
+  path: "/api/*",
 };
