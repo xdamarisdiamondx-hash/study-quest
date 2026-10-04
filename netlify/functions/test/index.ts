@@ -6,9 +6,9 @@ import { Hono } from "hono";
 
 const app = new Hono();
 
-app.get("/api/health", (c) => c.json({
+app.get("/health", (c) => c.json({
   ok: true,
-  message: "Minimal function works!",
+  message: "Test function works!",
   timestamp: new Date().toISOString(),
 }));
 
