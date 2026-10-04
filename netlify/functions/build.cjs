@@ -3,8 +3,8 @@ const { copyFileSync, mkdirSync, rmSync, existsSync, readdirSync } = require("fs
 const { join } = require("path");
 
 const outDir = "netlify/functions/api";
-const entryPoint = "netlify/functions/api.ts";
-const pkgSrc = join("netlify", "functions", "api", "package.json");
+const entryPoint = "netlify/functions/api.js";
+const pkgSrc = join("apps", "web", "netlify", "functions", "package.json");
 const pkgDest = join(outDir, "package.json");
 
 async function buildFunction() {
