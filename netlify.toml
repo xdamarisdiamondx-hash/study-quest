@@ -1,0 +1,18 @@
+[build]
+  command = "pnpm install && pnpm --filter @sq/web build"
+  publish = "apps/web/dist"
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+  included_files = ["packages/**/*"]
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
