@@ -13,6 +13,10 @@
     "verbatimModuleSyntax": true,
     "isolatedModules": true,
     "resolveJsonModule": true,
+    // Every project sets its own emit target, so nothing should ever compile in place
+    // over its own source — which is what scattered compiled .js files through src/ and
+    // turned `eslint .` into 5000 errors on files no one wrote.
+    "noEmit": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true

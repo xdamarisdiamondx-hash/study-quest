@@ -571,6 +571,51 @@
 .sq-li + .sq-li {
   border-top: 1px solid var(--border);
 }
+
+/* A note row. The whole row is the hit target so it reads as one object rather than a
+   title with a button attached, which is what the notes list needs to feel clickable. */
+.sq-note-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.sq-note-list li + li {
+  border-top: 1px solid var(--border);
+}
+.sq-note {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  width: 100%;
+  padding: var(--s3) 0;
+  background: none;
+  border: 0;
+  text-align: left;
+  font: var(--t-body);
+  color: var(--strong);
+  cursor: pointer;
+}
+.sq-note:hover .sq-note-title {
+  color: var(--accent);
+}
+.sq-note:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--card),
+    0 0 0 4px var(--accent);
+  border-radius: var(--r2);
+}
+.sq-note-title {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sq-note-meta {
+  display: block;
+  color: var(--muted);
+  font: var(--t-body-sm);
+}
 .sq-check {
   width: 20px;
   height: 20px;
@@ -888,4 +933,103 @@
   .sq-tabs {
     display: none;
   }
+}
+
+/* --- toolbar (P5) ------------------------------------------------------ */
+.sq-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  padding: var(--s2) var(--s3);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  flex-wrap: wrap;
+}
+.sq-toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: var(--s1);
+}
+.sq-toolbar-sep {
+  width: 1px;
+  height: 24px;
+  background: var(--border);
+  margin: 0 var(--s2);
+}
+
+/* --- button variants (P5) ---------------------------------------------- */
+.sq-btn-danger {
+  background: transparent;
+  color: var(--bad-500);
+}
+.sq-btn-danger:hover:not(:disabled) {
+  background: var(--bad-100);
+}
+
+/* --- icon button (P5) -------------------------------------------------- */
+.sq-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  border-radius: var(--r-sm);
+  color: var(--muted);
+  transition: color var(--fast), background var(--fast);
+}
+.sq-icon-btn svg {
+  width: 16px;
+  height: 16px;
+}
+.sq-icon-btn:hover:not(:disabled) {
+  background: var(--track);
+  color: var(--strong);
+}
+.sq-icon-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.sq-icon-btn:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--page),
+    0 0 0 4px var(--accent);
+}
+
+/* --- dialog (P5) ------------------------------------------------------- */
+.sq-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: var(--s4);
+  background: color-mix(in srgb, var(--sand-950) 45%, transparent);
+  backdrop-filter: blur(3px);
+}
+.sq-dialog {
+  width: min(600px, calc(100vw - 2 * var(--s4)));
+  max-height: calc(100vh - 2 * var(--s4));
+  overflow: auto;
+  padding: var(--s6);
+  color: var(--text);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: 0 24px 60px -20px color-mix(in srgb, var(--sand-950) 45%, transparent);
+}
+.sq-dialog:focus-visible {
+  outline: none;
+  box-shadow:
+    0 24px 60px -20px color-mix(in srgb, var(--sand-950) 45%, transparent),
+    0 0 0 4px var(--accent);
+}
+
+/* --- AI action bar (P5) ------------------------------------------------ */
+.sq-ai-bar {
+  padding: var(--s3);
 }

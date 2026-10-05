@@ -12,11 +12,12 @@ import type { TopicStatus } from "@sq/core/schemas/subjects";
 
 import { useSubjectTopics } from "../../lib/useSubjects";
 import { TopicComposer, TopicRow } from "./TopicRow";
+import { NotesPanel } from "./NotesPanel";
 
 const TABS: TabItem[] = [
   { id: "overview", label: "Overview" },
   { id: "topics", label: "Topics" },
-  { id: "notes", label: "Notes", soon: true },
+  { id: "notes", label: "Notes" },
   { id: "quizzes", label: "Quizzes", soon: true },
   { id: "flashcards", label: "Flashcards", soon: true },
   { id: "tasks", label: "Tasks", soon: true },
@@ -34,6 +35,17 @@ export function SubjectDetailPage() {
   const { subjectId } = useParams<{ subjectId: string }>();
   const store = useSubjectTopics(subjectId);
   const [tab, setTab] = useState("overview");
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
+
+  function onTopicDrop(targetId: string) {
+    const from = store.topics.findIndex((t) => t.id === dragId);
+    const to = store.topics.findIndex((t) => t.id === targetId);
+    setDragId(null);
+    setOverId(null);
+    if (from < 0 || to < 0 || from === to) return;
+    void store.moveTopic(from, to);
+  }
 
   const counts = useMemo(() => {
     const tally: Record<TopicStatus, number> = {
@@ -151,6 +163,18 @@ export function SubjectDetailPage() {
                   index={index}
                   total={store.topics.length}
                   busy={store.busy}
+                  isDragging={dragId === topic.id}
+                  isDropTarget={overId === topic.id && dragId !== topic.id}
+                  onDragStart={() => setDragId(topic.id)}
+                  onDragOver={() => {
+                    if (overId !== topic.id) setOverId(topic.id);
+                  }}
+                  onDragLeave={() => setOverId((id) => (id === topic.id ? null : id))}
+                  onDrop={() => onTopicDrop(topic.id)}
+                  onDragEnd={() => {
+                    setDragId(null);
+                    setOverId(null);
+                  }}
                   onMove={(from, to) => void store.moveTopic(from, to)}
                   onStatus={(status) => void store.updateTopic(topic.id, { status })}
                   onRename={(name) => void store.updateTopic(topic.id, { name })}
@@ -162,6 +186,10 @@ export function SubjectDetailPage() {
 
           <TopicComposer busy={store.busy} onAdd={(input) => store.createTopic(input)} />
         </Card>
+      </TabPanel>
+
+      <TabPanel id="notes" active={tab}>
+        <NotesPanel subjectId={subject.id} topics={store.topics} />
       </TabPanel>
 
       {TABS.filter((t) => t.soon).map((t) => (

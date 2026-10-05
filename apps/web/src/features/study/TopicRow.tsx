@@ -23,6 +23,13 @@ export function TopicRow({
   index,
   total,
   busy,
+  isDragging,
+  isDropTarget,
+  onDragStart,
+  onDragOver,
+  onDragLeave,
+  onDrop,
+  onDragEnd,
   onMove,
   onStatus,
   onRename,
@@ -32,6 +39,13 @@ export function TopicRow({
   index: number;
   total: number;
   busy: boolean;
+  isDragging?: boolean;
+  isDropTarget?: boolean;
+  onDragStart?: () => void;
+  onDragOver?: () => void;
+  onDragLeave?: () => void;
+  onDrop?: () => void;
+  onDragEnd?: () => void;
   onMove: (from: number, to: number) => void;
   onStatus: (status: TopicStatus) => void;
   onRename: (name: string) => void;
@@ -40,7 +54,6 @@ export function TopicRow({
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(topic.name);
   const [confirming, setConfirming] = useState(false);
-  const [dragging, setDragging] = useState(false);
 
   const status = topic.status as TopicStatus;
 
@@ -94,11 +107,22 @@ export function TopicRow({
       className="sq-topic"
       draggable
       onDragStart={(e) => {
-        setDragging(true);
         e.dataTransfer.effectAllowed = "move";
+        onDragStart?.();
       }}
-      onDragEnd={() => setDragging(false)}
-      data-dragging={dragging}
+      onDragOver={(e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+        onDragOver?.();
+      }}
+      onDragLeave={onDragLeave}
+      onDrop={(e) => {
+        e.preventDefault();
+        onDrop?.();
+      }}
+      onDragEnd={onDragEnd}
+      data-dragging={isDragging}
+      data-drop={isDropTarget}
     >
       <DragHandle label={topic.name} />
       <span className="sq-topic-text">
@@ -140,7 +164,10 @@ export function TopicRow({
           <button
             type="button"
             className="sq-btn sq-btn-secondary sq-btn-sm"
-            onClick={() => setEditing(true)}
+            onClick={() => {
+              setName(topic.name);
+              setEditing(true);
+            }}
             aria-label={`Rename ${topic.name}`}
           >
             Rename

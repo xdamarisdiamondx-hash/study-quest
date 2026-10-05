@@ -63,14 +63,16 @@ export function Card({
   action,
   children,
   className = "",
+  style,
 }: {
   title?: ReactNode;
   action?: ReactNode;
   children?: ReactNode;
   className?: string;
+  style?: React.CSSProperties;
 }) {
   return (
-    <section className={`sq-card ${className}`}>
+    <section className={`sq-card ${className}`} style={style}>
       {(title || action) && (
         <header className="sq-card-head">
           {title ? <h2>{title}</h2> : <span />}
@@ -482,6 +484,163 @@ export function Picker({
         ))}
       </select>
       {hint ? <p className="sq-help">{hint}</p> : null}
+    </div>
+  );
+}
+
+/* --- toolbar (P5) ------------------------------------------------------ */
+
+/** A toolbar row with groups and separators. */
+export function Toolbar({ children, className, style }: { children: ReactNode; className?: string; style?: CSSProperties }) {
+  return <div className={`sq-toolbar ${className ?? ""}`} style={style} role="toolbar">{children}</div>;
+}
+
+/** A group of toolbar buttons. */
+export function ToolbarGroup({ children }: { children: ReactNode }) {
+  return <div className="sq-toolbar-group">{children}</div>;
+}
+
+/** A vertical separator in a toolbar. */
+export function ToolbarSeparator() {
+  return <div className="sq-toolbar-sep" role="separator" />;
+}
+
+/** A button inside a toolbar. */
+export function ToolbarButton({
+  children,
+  onClick,
+  pressed,
+  disabled,
+  title,
+  "aria-label": ariaLabel,
+}: {
+  children: ReactNode;
+  onClick?: () => void;
+  pressed?: boolean;
+  disabled?: boolean;
+  title?: string;
+  "aria-label"?: string;
+}) {
+  return (
+    <button
+      type="button"
+      className={`sq-icon-btn ${pressed ? "sq-pressed" : ""} ${disabled ? "sq-disabled" : ""}`}
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      aria-label={ariaLabel}
+      aria-pressed={pressed}
+    >
+      {children}
+    </button>
+  );
+}
+
+/** A standard button. */
+export function Button({
+  children,
+  onClick,
+  variant = "primary",
+  size = "md",
+  disabled,
+  type = "button",
+  className,
+  style,
+}: {
+  children: ReactNode;
+  onClick?: () => void;
+  variant?: "primary" | "secondary" | "ghost";
+  size?: "sm" | "md" | "lg";
+  disabled?: boolean;
+  type?: "button" | "submit" | "reset";
+  className?: string;
+  style?: CSSProperties;
+}) {
+  return (
+    <button
+      type={type}
+      className={`sq-btn sq-btn-${variant} sq-btn-${size} ${className ?? ""}`}
+      onClick={onClick}
+      disabled={disabled}
+      style={style}
+    >
+      {children}
+    </button>
+  );
+}
+
+/** An icon-only button. */
+export function IconButton({
+  children,
+  onClick,
+  disabled,
+  title,
+  "aria-label": ariaLabel,
+  className,
+}: {
+  children: ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+  title?: string;
+  "aria-label"?: string;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      className={`sq-icon-btn ${className ?? ""}`}
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      aria-label={ariaLabel}
+    >
+      {children}
+    </button>
+  );
+}
+
+/** A text input field. */
+export function Input({
+  value,
+  onChange,
+  placeholder,
+  disabled,
+  className,
+  style,
+  ...props
+}: React.InputHTMLAttributes<HTMLInputElement> & { className?: string; style?: CSSProperties }) {
+  return (
+    <input
+      className={`sq-input ${className ?? ""}`}
+      value={value}
+      onChange={(e) => onChange?.(e)}
+      placeholder={placeholder}
+      disabled={disabled}
+      style={style}
+      {...props}
+    />
+  );
+}
+
+/** A modal dialog. */
+export function Dialog({
+  open,
+  onClose,
+  children,
+  title,
+}: {
+  open: boolean;
+  onClose: () => void;
+  children: ReactNode;
+  title?: string;
+}) {
+  if (!open) return null;
+  return (
+    <div className="sq-dialog-backdrop" onClick={onClose}>
+      <div className="sq-dialog" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby={title ? "dialog-title" : undefined}>
+        {title && <h3 id="dialog-title" style={{ margin: "0 0 var(--s3)" }}>{title}</h3>}
+        {children}
+      </div>
     </div>
   );
 }

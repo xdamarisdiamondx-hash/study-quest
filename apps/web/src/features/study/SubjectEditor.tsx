@@ -29,7 +29,13 @@ export function SubjectEditor({
   const [confirming, setConfirming] = useState<"delete" | null>(null);
 
   useEffect(() => {
-    ref.current?.showModal();
+    const dialog = ref.current;
+    if (dialog && !dialog.open) {
+      dialog.showModal();
+    }
+    return () => {
+      dialog?.close();
+    };
   }, []);
 
   function close() {

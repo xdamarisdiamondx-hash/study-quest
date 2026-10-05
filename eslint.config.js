@@ -36,6 +36,21 @@ export default tseslint.config(
     },
   },
 
+  // Build scripts and Netlify function shims are plain JS running in Node, not browser
+  // code. Only the TypeScript block above gets globals, so without this they all fail
+  // `no-undef` for `console`, `process` and `require`.
+  {
+    files: ["**/*.{js,cjs,mjs}"],
+    languageOptions: {
+      globals: { ...globals.node, ...globals.commonjs },
+    },
+    rules: {
+      // `.cjs` exists precisely to be CommonJS; forbidding require() there is a
+      // contradiction, not a standard.
+      "@typescript-eslint/no-require-imports": "off",
+    },
+  },
+
   // Design-system rule: a raw hex in a component bypasses the tokens in section 3.
   // Pure black and white are exempt — they are absolutes, not theme decisions.
   {

@@ -104,10 +104,13 @@ export function useSubjects(): SubjectsState {
     remove: (id) => run(() => subjectsApi.remove(id)),
     reorder: (ids) => run(() => subjectsApi.reorder(ids)),
     moveTo: async (from, to) => {
-      const ids = move(subjects, from, to).map((s) => s.id);
+      const live = subjects.filter((s) => !s.archived);
+      const archived = subjects.filter((s) => s.archived);
+      const nextLive = move(live, from, to);
+      const nextSubjects = [...nextLive, ...archived];
       // Optimistic: the order is unambiguous, so the row can move before the round trip.
-      setSubjects((current) => move(current, from, to));
-      return run(() => subjectsApi.reorder(ids));
+      setSubjects(nextSubjects);
+      return run(() => subjectsApi.reorder(nextSubjects.map((s) => s.id)));
     },
     importTemplates: async (names) => {
       let imported = 0;

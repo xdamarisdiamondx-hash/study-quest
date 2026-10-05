@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Logo, Monogram } from "@sq/ui";
+import { useAuth } from "../../lib/useAuth";
 
 /**
  * First-run onboarding (P3): the study loop, then a first subject.
@@ -58,6 +59,7 @@ const JOURNEY = [
 
 export function OnboardingPage() {
   const navigate = useNavigate();
+  const { refresh } = useAuth();
   const [step, setStep] = useState(0);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [picked, setPicked] = useState<Set<string>>(new Set());
@@ -98,6 +100,7 @@ export function OnboardingPage() {
       });
       if (!res.ok) throw new Error(String(res.status));
       await fetch("/api/onboarding/complete", { method: "POST" });
+      await refresh();
       navigate("/", { replace: true });
     } catch {
       setError("Could not set up your subjects. Check that the local server is running.");
