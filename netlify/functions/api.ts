@@ -1,30 +1,7 @@
-import { Hono } from "hono";
-import { cors } from "hono/cors";
-
-const app = new Hono();
-
-app.use("*", cors({
-  origin: process.env.CORS_ORIGIN || "http://localhost:5173",
-  allowHeaders: ["Content-Type", "Authorization"],
-  allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  credentials: true,
-}));
-
-app.get("/health", (c) => c.json({
-  ok: true,
-  message: "API works!",
-  timestamp: new Date().toISOString(),
-}));
-
-app.get("/test", (c) => c.json({
-  ok: true,
-  message: "Test endpoint works!",
-  timestamp: new Date().toISOString(),
-}));
+import { app } from "../../apps/server/src/index.ts";
 
 export default {
-  async fetch(request: Request, env: Record<string, string>): Promise<Response> {
-    Object.entries(env).forEach(([k, v]) => { if (!process.env[k]) process.env[k] = v; });
+  async fetch(request: Request) {
     return app.fetch(request);
   },
 };

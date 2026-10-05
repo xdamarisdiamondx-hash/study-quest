@@ -1,11 +1,12 @@
 [build]
-  command = "pnpm install && pnpm --filter @sq/web build"
-  publish = "dist"
+  base = "."
+  command = "pnpm install && node netlify/functions/build.mjs && pnpm --filter @sq/web build"
+  publish = "apps/web/dist"
   functions = "netlify/functions"
-  base = "apps/web"
 
 [functions]
   node_bundler = "esbuild"
+  included_files = ["netlify/functions/**/*"]
 
 [[redirects]]
   from = "/api/*"

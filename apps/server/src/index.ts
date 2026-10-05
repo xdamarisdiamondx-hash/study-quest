@@ -5,6 +5,14 @@
  * DATABASE_URL is set, otherwise PGlite in-process — so the app runs before Docker is
  * configured.
  */
+import { config } from "dotenv";
+import { join, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+import { createReadStream } from "node:fs";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+config({ path: join(__dirname, "..", "..", "..", ".env") });
+
 import { serve } from "@hono/node-server";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
@@ -17,6 +25,9 @@ import { getSession } from "./auth/session.ts";
 import { db } from "./db.ts";
 import { onboarding } from "./routes/onboarding.ts";
 import { subjectsRouter } from "./routes/subjects.ts";
+import { notesRouter } from "./routes/notes.ts";
+import { aiRouter } from "./routes/ai.ts";
+import { fileStore } from "./files/store.ts";
 
 const { users } = dbSchema;
 
@@ -82,6 +93,32 @@ app.get("/api/me", async (c) => {
 /* --- subjects and topics (P4) ------------------------------------------- */
 app.route("/api/subjects", subjectsRouter);
 
+/* --- notes and attachments (P5) ------------------------------------------ */
+app.route("/api/notes", notesRouter);
+
+/* --- AI actions (P5 action bar) ------------------------------------------ */
+app.route("/api/ai", aiRouter);
+
+/* --- local file serving (ADR-027 fallback) ------------------------------- */
+app.get("/api/files/*", async (c) => {
+  const key = c.req.path.replace("/api/files/", "");
+  try {
+    const url = await fileStore.getUrl(key);
+    if (url.startsWith("http")) {
+      return c.redirect(url);
+    }
+    // __dirname, dirname, join, createReadStream are imported at the top of the file
+    const DATA_ROOT = join(__dirname, "..", "..", "..", "data", "files");
+    const fullPath = join(DATA_ROOT, key);
+    const fileStream = createReadStream(fullPath);
+    return new Response(fileStream as unknown as ReadableStream, {
+      headers: { "Content-Type": "application/octet-stream" },
+    });
+  } catch {
+    return c.json({ error: "not_found" }, 404);
+  }
+});
+
 app.route("/api/onboarding", onboarding);
 
 /* --- health ------------------------------------------------------------- */
@@ -94,8 +131,8 @@ app.get("/api/health", (c) =>
       database: { driver: db.driver, reachable: true },
       auth: { provider: "better-auth", ready: true },
       ai: {
-        provider: process.env.AI_DEFAULT_PROVIDER ?? null,
-        configured: Boolean(process.env.OLLAMA_BASE_URL || process.env.GEMINI_API_KEY),
+        provider: process.env.AI_DEFAULT_PROVIDER ?? "groq",
+        configured: Boolean(process.env.OLLAMA_BASE_URL || process.env.GEMINI_API_KEY || process.env.GROQ_API_KEY),
       },
       storage: {
         provider: process.env.R2_ACCOUNT_ID ? "r2" : "local",
@@ -113,8 +150,12 @@ app.onError((err, c) => {
   return c.json({ error: "internal_error", message: err.message }, 500);
 });
 
-serve({ fetch: app.fetch, port: PORT, hostname: HOST }, (info) => {
-  console.log(`Study Quest API listening on http://${HOST}:${info.port}`);
-  console.log(`  health: http://${HOST}:${info.port}/api/health`);
-  console.log(`  sign in: http://localhost:5173`);
-});
+export { app };
+
+if (process.env.NETLIFY !== "true") {
+  serve({ fetch: app.fetch, port: PORT, hostname: HOST }, (info) => {
+    console.log(`Study Quest API listening on http://${HOST}:${info.port}`);
+    console.log(`  health: http://${HOST}:${info.port}/api/health`);
+    console.log(`  sign in: http://localhost:5173`);
+  });
+}
