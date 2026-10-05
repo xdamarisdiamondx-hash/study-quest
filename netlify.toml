@@ -1,7 +1,8 @@
 [build]
   command = "pnpm install && pnpm --filter @sq/web build"
-  publish = "apps/web/dist"
-  functions = "apps/web/netlify/functions"
+  publish = "dist"
+  functions = "netlify/functions"
+  base = "apps/web"
 
 [functions]
   node_bundler = "esbuild"
