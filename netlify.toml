@@ -1,11 +1,10 @@
 [build]
   command = "pnpm install && pnpm --filter @sq/web build"
   publish = "apps/web/dist"
-  functions = "netlify/functions"
+  functions = "apps/web/netlify/functions"
 
 [functions]
   node_bundler = "esbuild"
-  external_node_modules = ["@neondatabase/serverless", "better-auth", "drizzle-orm", "hono", "zod"]
 
 [[redirects]]
   from = "/api/*"
