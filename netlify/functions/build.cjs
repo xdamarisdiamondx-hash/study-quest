@@ -20,7 +20,7 @@ async function buildFunction() {
     // Clean output directory (but keep package.json)
     if (existsSync(outDir)) {
       // Remove everything except package.json
-      const files = require("fs").readdirSync(outDir);
+      const files = readdirSync(outDir);
       for (const file of files) {
         if (file !== "package.json") {
           rmSync(join(outDir, file), { recursive: true, force: true });
