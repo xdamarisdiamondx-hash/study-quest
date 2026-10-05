@@ -114,6 +114,19 @@ export const notes = pgTable(
   (t) => [index("notes_topic_idx").on(t.topicId), index("notes_user_idx").on(t.userId)],
 );
 
+export const noteRevisions = pgTable(
+  "note_revisions",
+  {
+    id: id(),
+    noteId: uuid("note_id")
+      .notNull()
+      .references(() => notes.id, { onDelete: "cascade" }),
+    bodyMd: text("body_md").notNull(),
+    savedAt: createdAt(),
+  },
+  (t) => [index("note_revisions_note_idx").on(t.noteId)],
+);
+
 export const aiArtifacts = pgTable(
   "ai_artifacts",
   {

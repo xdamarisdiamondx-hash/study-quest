@@ -100,3 +100,25 @@ describe("nudge", () => {
     expect(nudge(["a", "b", "c"], 2, 1)).toEqual(["a", "b", "c"]);
   });
 });
+
+describe("reordering active subjects with archived subjects", () => {
+  it("preserves relative order of archived subjects while reordering active ones", () => {
+    const all = [
+      { id: "active-1", orderIndex: 0, archived: false },
+      { id: "archived-1", orderIndex: 1, archived: true },
+      { id: "active-2", orderIndex: 2, archived: false },
+    ];
+    const live = all.filter((s) => !s.archived);
+    const archived = all.filter((s) => s.archived);
+
+    // Move active-2 before active-1 (from index 1 to 0 in live)
+    const nextLive = move(live, 1, 0);
+    const nextOrder = [...nextLive, ...archived].map((s) => s.id);
+
+    const reordered = applyReorder(all, nextOrder);
+    expect(reordered.get("active-2")).toBe(0);
+    expect(reordered.get("active-1")).toBe(1);
+    expect(reordered.get("archived-1")).toBe(2);
+  });
+});
+

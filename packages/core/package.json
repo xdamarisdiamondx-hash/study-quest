@@ -6,9 +6,12 @@
   "description": "Study Quest domain logic: XP, levels, streaks, progress, ordering, contracts.",
   "exports": {
     "./gamification": "./src/gamification/index.ts",
+    "./markdown": "./src/markdown/index.ts",
     "./progress": "./src/progress/index.ts",
     "./starter": "./src/starter/index.ts",
     "./subjects": "./src/subjects/index.ts",
+    "./schemas/ai": "./src/schemas/ai.ts",
+    "./schemas/notes": "./src/schemas/notes.ts",
     "./schemas/subjects": "./src/schemas/subjects.ts"
   },
   "scripts": {
