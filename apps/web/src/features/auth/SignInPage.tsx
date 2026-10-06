@@ -92,7 +92,6 @@ export function SignInPage() {
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Praise"
               />
             </div>
           ) : null}

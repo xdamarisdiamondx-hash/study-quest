@@ -6,6 +6,17 @@
    ============================================================ */
 
 /* --- page shell ---------------------------------------------------- */
+
+/* Border-box for everything inside the app: without it, every `width: 100%`
+   input with padding and a border is wider than its field and pushes the
+   layout a pixel or three out of true. `*` is a reset, not a component —
+   scoped to .sq-body (the <body> element) so the app owns its own box model. */
+.sq-body *,
+.sq-body *::before,
+.sq-body *::after {
+  box-sizing: border-box;
+}
+
 .sq-body {
   margin: 0;
   background: var(--page);
