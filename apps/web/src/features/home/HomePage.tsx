@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Card, CheckItem, LevelBadge, Monogram, Streak, Track } from "@sq/ui";
 
 import { level, profile, recommendation, todayQuest } from "../../data/mock";
+import { useAuth } from "../../lib/useAuth";
 import { useHealth } from "../../lib/useHealth";
 import { useSubjects } from "../../lib/useSubjects";
 
@@ -128,6 +129,8 @@ function Row({ label, ok, note }: { label: string; ok: boolean; note: string }) 
 }
 
 export function HomePage() {
+  // The account's real name — never the mock profile's placeholder.
+  const { profile: account } = useAuth();
   const [done, setDone] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(todayQuest.map((i) => [i.id, i.done])),
   );
@@ -142,7 +145,7 @@ export function HomePage() {
       <section className="sq-greeting sq-relative" style={{ marginTop: "var(--s6)" }}>
         <div className="sq-ambient" aria-hidden="true" />
         <h1>
-          {greeting()}, {profile.displayName}
+          {account?.displayName ? `${greeting()}, ${account.displayName}` : greeting()}
         </h1>
         <p>
           {new Date().toLocaleDateString(undefined, {

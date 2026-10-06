@@ -14,7 +14,6 @@ import { levelProgress, levelTitle, XP } from "@sq/core/gamification";
 export const TOTAL_XP = 1_240;
 
 export const profile = {
-  displayName: "Praise",
   totalXp: TOTAL_XP,
   streakDays: 7,
 };
