@@ -1577,21 +1577,42 @@ which model it called.
 - [x] `ai_artifacts` cache keyed by `input_hash` (ADR-008) with hit/miss logging
 - [x] Structured-output validation with Zod + one repair retry (ADR-009)
 - [x] Token/cost recording and daily call cap (ADR-025)
-- [ ] Settings UI: provider picker, model field, API key (write-only), "Test connection",
+      — the cap was counting almost nothing: `startOfDay` read the hour, minute and second as
+      well as the date, so it rebuilt _now_ instead of midnight, and on a UTC machine it
+      counted nothing at all (Settings read "0 of 40" with generations listed below it). The
+      boundary now lives in `ai/dates.ts`, computed from the account timezone by offset
+      arithmetic — looked up twice, because a daylight-saving change can sit between midnight
+      and now — and kept free of any database import so `dates.test.ts` can pin it.
+- [x] Settings UI: provider picker, model field, API key (write-only), "Test connection",
       monthly estimate, "no provider configured" guided setup
-      — the server side is complete (`GET`/`PATCH /api/ai/settings`, `POST /api/ai/settings/test`
-      returning provider, model, `hasApiKey`, `envHasApiKey`, cap and usage, monthly estimate,
-      recent artifacts and per-provider health); **no `/settings` route exists in the web app**.
-      The key stays read-only: `.env` is the source of truth for every user, so the UI reports
-      "server key configured" rather than collecting a key per account.
+      — `/settings`, linked from the account menu rather than the section rail. The key stays
+      read-only (ADR-023): `.env` is the source of truth for every account, so the UI reports
+      "server key configured" instead of collecting a key per user. `PATCH /api/ai/settings`
+      now validates the merged result through `aiSettingsSchema` and answers 400 with the Zod
+      messages — it used to copy fields straight through, so an over-long model name was
+      stored and then failed every later read, silently resetting the provider choice to the
+      defaults. Usage comes from `usedToday`/`monthlyUsage`, not the capped 10-row recent log.
 - [x] Streaming endpoint (SSE) for long text, with a stop button — delivered with P7, ADR-030
-- [ ] Offline mode: every AI action shows cached result or a clear setup prompt
-      — cached results are labelled (`Cached` chip, "· from cache") and failures surface in the
-      panel, but the no-provider message points at the not-yet-built Settings page and the AI
-      panels do not consume `useHealth`'s offline signal.
-- [ ] Tests: mock provider golden files for every prompt; contract test suite for all adapters
-      — **no test file exists under `apps/server`**; `vitest.config.ts` already includes
-      `apps/server/**/*.test.ts`, so only the tests themselves are missing.
+- [x] Offline mode: every AI action shows cached result or a clear setup prompt
+      — cached results were already labelled (`Cached` chip, "· from cache"); both AI panels
+      now consume `useHealth` through `useAiAvailability()` and state the reason beside the run
+      button: "Offline" when `/api/health` does not answer, "No model connected" with a link
+      to Settings when nothing on the machine is configured. The gate clears itself on the
+      next fifteen-second poll, so recovering needs no reload, and Enter is gated with the
+      button so there is no second way past it. `/api/health`'s `configured` flag moved to
+      `anyEnvConfigured()` in the settings module: it kept its own copy of the environment
+      variable names and had already drifted, reporting "no provider" for an
+      OpenAI-compatible-only setup the chain was calling fine.
+- [x] Tests: mock provider golden files for every prompt; contract test suite for all adapters
+      — `apps/server/src/ai/{dates,prompts,providers/contract}.test.ts`: 97 tests, taking the
+      suite from 76 to 173. The contract suite runs all five adapters against a stubbed
+      `fetch`: the `AiResult` shape, `not_configured` before any round trip, `provider_failed`
+      on a rejecting or unreachable endpoint, `aborted`, health configured _and_ bare, a stream
+      present exactly where the adapter implements one — plus `chat.ts` specifics (the
+      endpoint's own error words, the JSON instruction, a frame split mid-read). The prompt
+      suite builds every prompt from its own input and checks each golden answer against the
+      schema it declares. Two real defects fell out: the explain prompt sent "step_by_step"
+      because only the first underscore was replaced, and `startOfDay` (above) counted nothing.
 
 **Exit:** `summary.v1` works through Ollama and through a cloud provider without changing
 feature code; switching providers changes no UI.

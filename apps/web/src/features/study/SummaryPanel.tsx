@@ -14,6 +14,7 @@ import type { SummaryFormat, SummaryLength } from "@sq/core/schemas/ai";
 
 import { useAiStream, useFlash } from "../../lib/useAiStream";
 import { useNoteActions } from "../../lib/useNotes";
+import { AiAvailabilityNotice, useAiAvailability } from "./AiAvailability";
 
 /**
  * These labels and descriptions mirror `LENGTH_WORDS` and `FORMAT_RULES` in
@@ -52,12 +53,19 @@ export interface SummaryPanelProps {
   onClose: () => void;
 }
 
-export function SummaryPanel({ noteId, noteTitle, sourceWords, topicId, onClose }: SummaryPanelProps) {
+export function SummaryPanel({
+  noteId,
+  noteTitle,
+  sourceWords,
+  topicId,
+  onClose,
+}: SummaryPanelProps) {
   const [length, setLength] = useState<SummaryLength>("standard");
   const [format, setFormat] = useState<SummaryFormat>("bullets");
   const [flash, setFlash] = useFlash();
   const ai = useAiStream();
   const notes = useNoteActions();
+  const availability = useAiAvailability();
 
   const lengthChoice = LENGTHS.find((l) => l.value === length)!;
   const formatChoice = FORMATS.find((f) => f.value === format)!;
@@ -140,14 +148,23 @@ export function SummaryPanel({ noteId, noteTitle, sourceWords, topicId, onClose 
           disabled={running}
         />
         <div className="sq-ai-composer-run">
-          <Button size="sm" onClick={() => (running ? ai.stop() : generate(hasResult))} disabled={ai.status === "error" && !hasResult}>
+          {/* Deliberately *not* disabled after a failed attempt: `run` clears the error on
+              the next press, and a student whose first try hit a transient provider error
+              needs this button to still be there. An unavailable API is the only block —
+              Stop always works, so a run in progress can always be ended. */}
+          <Button
+            size="sm"
+            onClick={() => (running ? ai.stop() : generate(hasResult))}
+            disabled={!running && availability !== "ready"}
+          >
             {running ? "Stop" : hasResult ? "Regenerate" : "Generate"}
           </Button>
         </div>
         <p className="sq-ai-composer-preview">
-          <strong>{lengthChoice.label}</strong> · <strong>{formatChoice.label}</strong> — {lengthChoice.note},{" "}
-          {formatChoice.note}.
+          <strong>{lengthChoice.label}</strong> · <strong>{formatChoice.label}</strong> —{" "}
+          {lengthChoice.note}, {formatChoice.note}.
         </p>
+        <AiAvailabilityNotice availability={availability} />
       </div>
 
       <div className="sq-ai-source">
@@ -169,11 +186,18 @@ export function SummaryPanel({ noteId, noteTitle, sourceWords, topicId, onClose 
 
       <footer className="sq-ai-foot">
         <span className="sq-ai-foot-meta">
-          {hasResult || ai.partial ? `${wordCount(ai.text)} of ${sourceWords} words` : "Nothing generated yet"}
+          {hasResult || ai.partial
+            ? `${wordCount(ai.text)} of ${sourceWords} words`
+            : "Nothing generated yet"}
           {topicId ? "" : " · no topic to file a copy under"}
         </span>
         <div className="sq-ai-actions">
-          <Button variant="secondary" size="sm" onClick={() => void saveToNote()} disabled={!hasResult || !topicId}>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => void saveToNote()}
+            disabled={!hasResult || !topicId}
+          >
             Save to note
           </Button>
           <Button variant="secondary" size="sm" onClick={() => void copy()} disabled={!hasResult}>

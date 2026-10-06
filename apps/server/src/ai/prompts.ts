@@ -88,11 +88,13 @@ const FORMAT_RULES: Record<SummaryFormat, string> = {
   paragraph: "Write one flowing paragraph.",
   bullets: "Write bullet points, one idea per line, each line starting with a hyphen.",
   key_points: "Write short labelled lines in the form 'Point — explanation'.",
-  exam_style: "Write exam-style notes: brief fragments under short ALL-CAPS sub-headings, no full sentences.",
+  exam_style:
+    "Write exam-style notes: brief fragments under short ALL-CAPS sub-headings, no full sentences.",
 };
 
 const STYLE_RULES: Record<ExplainStyle, string> = {
-  simple: "Use plain language and one idea at a time. No jargon unless you define it in the same sentence.",
+  simple:
+    "Use plain language and one idea at a time. No jargon unless you define it in the same sentence.",
   step_by_step: "Build up in numbered steps, each step resting on the one before it.",
   example: "Work through one concrete example from start to finish, naming each step.",
   real_life: "Anchor it in something from everyday life first, then connect back to the idea.",
@@ -149,10 +151,14 @@ const summary: PromptEntry<"summary.v1"> = {
     },
   ],
   mock: (input) => {
-    const lines = concepts(input.bodyMd, input.length === "quick" ? 3 : input.length === "standard" ? 5 : 8);
+    const lines = concepts(
+      input.bodyMd,
+      input.length === "quick" ? 3 : input.length === "standard" ? 5 : 8,
+    );
     const facts = lines.length > 0 ? lines : [`${input.title || "These notes"} — reviewed.`];
     if (input.format === "paragraph") return facts.join(". ").replace(/\.$/, "");
-    if (input.format === "key_points") return facts.map((f) => `${f} — the idea to remember.`).join("\n");
+    if (input.format === "key_points")
+      return facts.map((f) => `${f} — the idea to remember.`).join("\n");
     if (input.format === "exam_style") {
       return [`KEY POINTS`, ...facts.map((f) => `- ${f}`)].join("\n");
     }
@@ -173,10 +179,12 @@ const explain: PromptEntry<"explain.v1"> = {
     {
       role: "user",
       content: [
-        `Explain this in a ${input.style.replace("_", "-")} way. ${STYLE_RULES[input.style]}`,
+        `Explain this in a ${input.style.replace(/_/g, "-")} way. ${STYLE_RULES[input.style]}`,
         "",
         `What the student does not understand: ${input.text}`,
-        input.context ? `\nTheir notes for context:\n${plainText(input.context).slice(0, 6_000)}` : "",
+        input.context
+          ? `\nTheir notes for context:\n${plainText(input.context).slice(0, 6_000)}`
+          : "",
       ]
         .filter(Boolean)
         .join("\n"),
@@ -203,7 +211,7 @@ const quiz: PromptEntry<"quiz.v1"> = {
         "Every question must be answerable from the notes alone.",
         "For multiple choice, exactly one option equals correctAnswer verbatim.",
         "Give each question a two or three word conceptTag, and a one-sentence explanation of the answer.",
-        "Return a JSON object: { \"title\": string, \"questions\": [{ \"type\", \"prompt\", \"options\", \"correctAnswer\", \"explanation\", \"difficulty\", \"conceptTag\" }] }.",
+        'Return a JSON object: { "title": string, "questions": [{ "type", "prompt", "options", "correctAnswer", "explanation", "difficulty", "conceptTag" }] }.',
       ].join(" "),
     },
     {
@@ -223,7 +231,10 @@ const quiz: PromptEntry<"quiz.v1"> = {
     const questions = Array.from({ length: input.questionCount }, (_, i) => {
       const type = input.types[i % input.types.length] ?? "mcq";
       const seed = seeds[i % Math.max(seeds.length, 1)] ?? `${input.title} point ${i + 1}`;
-      const difficulty = input.difficulty === "mixed" ? (["easy", "medium", "hard"] as const)[i % 3] : input.difficulty;
+      const difficulty =
+        input.difficulty === "mixed"
+          ? (["easy", "medium", "hard"] as const)[i % 3]
+          : input.difficulty;
 
       if (type === "true_false") {
         return {
@@ -273,7 +284,7 @@ const flashcards: PromptEntry<"flashcards.v1"> = {
       content: [
         "You turn a student's notes into flashcards: one fact per card, question on the front, the answer on the back.",
         "Fronts are short (under 12 words), backs are one or two sentences drawn from the notes.",
-        "Return a JSON object: { \"title\": string, \"cards\": [{ \"front\", \"back\" }] }.",
+        'Return a JSON object: { "title": string, "cards": [{ "front", "back" }] }.',
       ].join(" "),
     },
     {

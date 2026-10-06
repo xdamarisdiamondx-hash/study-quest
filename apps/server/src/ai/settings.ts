@@ -19,11 +19,16 @@ import type { ModelTier } from "./types.ts";
  * ADR-007 fallback order. The chosen provider is tried first at runtime and the rest of this
  * list follows, so a student who picks Ollama still works when Ollama is not running and a
  * key is available.
- * 
+ *
  * Groq is first since it's the default provider with a free tier and the user's API key
  * is configured in the environment.
  */
-export const DEFAULT_CHAIN: readonly AiProviderName[] = ["groq", "ollama", "gemini", "openaiCompat"];
+export const DEFAULT_CHAIN: readonly AiProviderName[] = [
+  "groq",
+  "ollama",
+  "gemini",
+  "openaiCompat",
+];
 
 /** How long a single provider call may take before the chain moves on. */
 export const PROVIDER_TIMEOUT_MS = 45_000;
@@ -95,11 +100,18 @@ export async function readAiSettings(profileId: string): Promise<AiSettings> {
 }
 
 /** Shallow merge of one patch into the stored AI settings. */
-export async function writeAiSettings(profileId: string, patch: Partial<AiSettings>): Promise<AiSettings> {
+export async function writeAiSettings(
+  profileId: string,
+  patch: Partial<AiSettings>,
+): Promise<AiSettings> {
   const current = await readAiSettings(profileId);
   const next: AiSettings = { ...current, ...patch };
 
-  const [row] = await db.orm.select({ settings: users.settings }).from(users).where(eq(users.id, profileId)).limit(1);
+  const [row] = await db.orm
+    .select({ settings: users.settings })
+    .from(users)
+    .where(eq(users.id, profileId))
+    .limit(1);
   const settings = (row?.settings as Record<string, unknown> | undefined) ?? {};
 
   await db.orm
@@ -118,6 +130,24 @@ export function isConfigured(name: AiProviderName, settings: AiSettings): boolea
   if (name === "ollama") return Boolean(env.baseUrl);
   if (name === "openaiCompat") return Boolean(env.baseUrl && (storedFirst || env.apiKey));
   return Boolean(storedFirst || env.apiKey);
+}
+
+/**
+ * Whether anything on this machine could answer — read from the environment alone.
+ *
+ * `/api/health` runs before authentication, so it has no profile to read and asks this
+ * instead of keeping its own list of environment variables. That list is exactly how
+ * `openaiCompat` came to be missing from it: a student with only an OpenAI-compatible
+ * endpoint configured was reported as having no provider while the chain called it fine.
+ * The per-profile version, which also knows about the stored key and the off switch, is
+ * `anyConfigured` in `registry.ts`.
+ *
+ * Reads `process.env` at call time, not at import time: ES imports hoist above the
+ * `dotenv` config call in `index.ts`.
+ */
+export function anyEnvConfigured(): boolean {
+  const defaults = aiSettingsSchema.parse({});
+  return DEFAULT_CHAIN.some((name) => isConfigured(name, defaults));
 }
 
 /** Resolve credentials and model for one adapter, stored values winning over the environment. */

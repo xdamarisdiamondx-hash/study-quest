@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import { Link, NavLink, Outlet } from "react-router-dom";
 import { Monogram, Wordmark } from "@sq/ui";
 
 import { useAuth } from "../lib/useAuth";
@@ -126,6 +126,14 @@ function AccountMenu() {
             <b>{user.name}</b>
             <span>{user.email}</span>
           </div>
+          <Link
+            to="/settings"
+            role="menuitem"
+            className="sq-btn sq-btn-secondary sq-btn-block sq-btn-sm"
+            onClick={() => setOpen(false)}
+          >
+            Settings
+          </Link>
           <button
             type="button"
             className="sq-btn sq-btn-danger sq-btn-block sq-btn-sm"

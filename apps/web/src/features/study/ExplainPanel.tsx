@@ -17,6 +17,7 @@ import type { ExplainStyle } from "@sq/core/schemas/ai";
 
 import { useAiStream, useFlash } from "../../lib/useAiStream";
 import { useNoteActions } from "../../lib/useNotes";
+import { AiAvailabilityNotice, useAiAvailability } from "./AiAvailability";
 
 const STYLES: { value: ExplainStyle; label: string }[] = [
   { value: "simple", label: "Simple" },
@@ -47,13 +48,20 @@ export interface ExplainPanelProps {
   onClose: () => void;
 }
 
-export function ExplainPanel({ noteId, noteTitle, selection, topicId, onClose }: ExplainPanelProps) {
+export function ExplainPanel({
+  noteId,
+  noteTitle,
+  selection,
+  topicId,
+  onClose,
+}: ExplainPanelProps) {
   const [question, setQuestion] = useState(selection);
   const [style, setStyle] = useState<ExplainStyle>("simple");
   const [attempts, setAttempts] = useState<Attempt[]>([]);
   const [flash, setFlash] = useFlash();
   const ai = useAiStream();
   const notes = useNoteActions();
+  const availability = useAiAvailability();
 
   const running = ai.status === "running";
   const styleLabel = STYLES.find((s) => s.value === style)?.label ?? "Simple";
@@ -63,11 +71,16 @@ export function ExplainPanel({ noteId, noteTitle, selection, topicId, onClose }:
 
   const ask = async () => {
     const trimmed = question.trim();
-    if (!trimmed) return;
+    // Enter reaches here even while the button is disabled, so the availability check lives
+    // here too: one gate, whichever way the question was sent.
+    if (!trimmed || availability !== "ready") return;
     const outcome = await ai.run("/api/ai/explain", { noteId, text: trimmed, style });
     if (!outcome?.text) return; // failed or stopped — nothing worth keeping
     setAttempts((prev) =>
-      [{ id: crypto.randomUUID(), style, text: outcome.text, cached: outcome.cached }, ...prev].slice(0, 8),
+      [
+        { id: crypto.randomUUID(), style, text: outcome.text, cached: outcome.cached },
+        ...prev,
+      ].slice(0, 8),
     );
   };
 
@@ -141,10 +154,17 @@ export function ExplainPanel({ noteId, noteTitle, selection, topicId, onClose }:
           />
         </div>
         <div className="sq-ai-composer-run">
-          <Button size="sm" onClick={() => (running ? ai.stop() : void ask())} disabled={!question.trim() && !running}>
+          {/* An unavailable API blocks asking, but never stopping — see the same reasoning
+              in SummaryPanel: a failure must leave the button there for the retry. */}
+          <Button
+            size="sm"
+            onClick={() => (running ? ai.stop() : void ask())}
+            disabled={!running && (availability !== "ready" || !question.trim())}
+          >
             {running ? "Stop" : attempts.length ? "Explain another way" : "Explain"}
           </Button>
         </div>
+        <AiAvailabilityNotice availability={availability} />
       </div>
 
       <div className="sq-ai-body" aria-live="polite">
@@ -152,8 +172,8 @@ export function ExplainPanel({ noteId, noteTitle, selection, topicId, onClose }:
 
         {!attempts.length && ai.partial === null && ai.status !== "error" && (
           <p className="sq-ai-empty">
-            Select a line in your note — or just type what is not landing — and ask. Then ask again in a
-            different style: every attempt stays here so you can compare them.
+            Select a line in your note — or just type what is not landing — and ask. Then ask again
+            in a different style: every attempt stays here so you can compare them.
           </p>
         )}
 
@@ -169,7 +189,11 @@ export function ExplainPanel({ noteId, noteTitle, selection, topicId, onClose }:
         {attempts.map((attempt, index) => (
           <div
             key={attempt.id}
-            className={index === 0 && ai.partial === null ? "sq-ai-attempt" : "sq-ai-attempt sq-ai-attempt-older"}
+            className={
+              index === 0 && ai.partial === null
+                ? "sq-ai-attempt"
+                : "sq-ai-attempt sq-ai-attempt-older"
+            }
           >
             <div className="sq-ai-attempt-label">
               {STYLES.find((s) => s.value === attempt.style)?.label ?? attempt.style}

@@ -979,7 +979,9 @@
   padding: 0;
   border-radius: var(--r-sm);
   color: var(--muted);
-  transition: color var(--fast), background var(--fast);
+  transition:
+    color var(--fast),
+    background var(--fast);
 }
 .sq-icon-btn svg {
   width: 16px;
@@ -1096,6 +1098,31 @@
 }
 .sq-ai-composer-run {
   flex: 0 0 auto;
+}
+
+/* Why the run button will not press, stated in the composer beside it: an offline API or
+   an unconnected model is a condition to fix, not an error to read. Full width like the
+   preview line, so it never squeezes the pickers. */
+.sq-ai-notice {
+  flex: 1 1 100%;
+  display: flex;
+  align-items: baseline;
+  gap: var(--s3);
+  padding: var(--s3) var(--s4);
+  background: var(--track);
+  border-radius: var(--r-md);
+  font: var(--t-body-sm);
+}
+.sq-ai-notice strong {
+  font: 500 var(--t-caption);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.sq-ai-notice a {
+  color: var(--accent);
+  font-weight: 500;
 }
 
 /* Names the material the result was built from, before any generated text appears. */

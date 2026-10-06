@@ -23,6 +23,7 @@ import { createAuth, ensureProfile } from "./auth.ts";
 import type { AuthedEnv } from "./auth/session.ts";
 import { getSession } from "./auth/session.ts";
 import { db } from "./db.ts";
+import { anyEnvConfigured } from "./ai/settings.ts";
 import { onboarding } from "./routes/onboarding.ts";
 import { subjectsRouter } from "./routes/subjects.ts";
 import { notesRouter } from "./routes/notes.ts";
@@ -132,7 +133,9 @@ app.get("/api/health", (c) =>
       auth: { provider: "better-auth", ready: true },
       ai: {
         provider: process.env.AI_DEFAULT_PROVIDER ?? "groq",
-        configured: Boolean(process.env.OLLAMA_BASE_URL || process.env.GEMINI_API_KEY || process.env.GROQ_API_KEY),
+        // Delegated to the settings module, which owns the list of environment variables —
+        // the health route used to keep its own copy and drift away from it.
+        configured: anyEnvConfigured(),
       },
       storage: {
         provider: process.env.R2_ACCOUNT_ID ? "r2" : "local",

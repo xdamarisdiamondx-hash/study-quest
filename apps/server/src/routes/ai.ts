@@ -6,6 +6,7 @@
 import { Hono } from "hono";
 
 import {
+  aiSettingsSchema,
   generateExplainSchema,
   generateFlashcardsSchema,
   generateQuizSchema,
@@ -81,7 +82,11 @@ aiRouter.use("*", async (c, next) => {
 
 /** Verify note ownership */
 async function ownsNote(profileId: string, noteId: string) {
-  const [note] = await db.orm.select().from(notes).where(and(eq(notes.id, noteId), eq(notes.userId, profileId))).limit(1);
+  const [note] = await db.orm
+    .select()
+    .from(notes)
+    .where(and(eq(notes.id, noteId), eq(notes.userId, profileId)))
+    .limit(1);
   return note ?? null;
 }
 
@@ -91,7 +96,11 @@ aiRouter.post("/summarise", async (c) => {
   const profileId = c.get("profileId");
   const body = await c.req.json().catch(() => ({}));
   const parsed = generateSummarySchema.safeParse(body);
-  if (!parsed.success) return c.json({ error: "invalid", issues: parsed.error.issues.map((i: { message: string }) => i.message) }, 400);
+  if (!parsed.success)
+    return c.json(
+      { error: "invalid", issues: parsed.error.issues.map((i: { message: string }) => i.message) },
+      400,
+    );
 
   const note = await ownsNote(profileId, parsed.data.noteId);
   if (!note) return c.json({ error: "not_found" }, 404);
@@ -125,7 +134,11 @@ aiRouter.post("/explain", async (c) => {
   const profileId = c.get("profileId");
   const body = await c.req.json().catch(() => ({}));
   const parsed = generateExplainSchema.safeParse(body);
-  if (!parsed.success) return c.json({ error: "invalid", issues: parsed.error.issues.map((i: { message: string }) => i.message) }, 400);
+  if (!parsed.success)
+    return c.json(
+      { error: "invalid", issues: parsed.error.issues.map((i: { message: string }) => i.message) },
+      400,
+    );
 
   const noteId = body.noteId as string;
   const note = await ownsNote(profileId, noteId);
@@ -157,7 +170,11 @@ aiRouter.post("/explain", async (c) => {
 aiRouter.post("/quiz", async (c) => {
   const profileId = c.get("profileId");
   const parsed = generateQuizSchema.safeParse(await c.req.json().catch(() => ({})));
-  if (!parsed.success) return c.json({ error: "invalid", issues: parsed.error.issues.map((i: { message: string }) => i.message) }, 400);
+  if (!parsed.success)
+    return c.json(
+      { error: "invalid", issues: parsed.error.issues.map((i: { message: string }) => i.message) },
+      400,
+    );
 
   const note = await ownsNote(profileId, parsed.data.noteId);
   if (!note) return c.json({ error: "not_found" }, 404);
@@ -174,7 +191,11 @@ aiRouter.post("/quiz", async (c) => {
     },
     sourceId: note.id,
     sourceType: "note",
-    options: { questionCount: parsed.data.questionCount, difficulty: parsed.data.difficulty, types: parsed.data.types },
+    options: {
+      questionCount: parsed.data.questionCount,
+      difficulty: parsed.data.difficulty,
+      types: parsed.data.types,
+    },
   });
 
   return c.json({ quiz: result.value, artifactId: result.artifactId, cached: result.cached });
@@ -185,7 +206,11 @@ aiRouter.post("/quiz", async (c) => {
 aiRouter.post("/flashcards", async (c) => {
   const profileId = c.get("profileId");
   const parsed = generateFlashcardsSchema.safeParse(await c.req.json().catch(() => ({})));
-  if (!parsed.success) return c.json({ error: "invalid", issues: parsed.error.issues.map((i: { message: string }) => i.message) }, 400);
+  if (!parsed.success)
+    return c.json(
+      { error: "invalid", issues: parsed.error.issues.map((i: { message: string }) => i.message) },
+      400,
+    );
 
   const note = await ownsNote(profileId, parsed.data.noteId);
   if (!note) return c.json({ error: "not_found" }, 404);
@@ -235,24 +260,28 @@ aiRouter.get("/settings", async (c) => {
   const chain = chainFor(settings);
   const health = await probeAll(settings);
   const recent = await recentArtifacts(profileId, 10);
-  const usedToday = recent.filter((r) => {
-    const date = new Date(r.createdAt);
-    const today = new Date();
-    return date.toDateString() === today.toDateString();
-  }).length;
+  // Counted over every artifact, not derived from `recent`: the log is capped at 10 rows, so
+  // both the day's total and the month's estimate were silently under-reported by it.
+  const { DAILY_AI_CAP, usedToday, monthlyUsage } = await import("../ai/usage.ts");
+  const usageToday = await usedToday(profileId);
+  const month = await monthlyUsage(profileId);
 
   return c.json({
     provider: settings.provider,
     model: settings.model,
     hasApiKey: Boolean(settings.apiKey),
-    envHasApiKey: ["groq", "gemini"].some((p) => Boolean(process.env[`${p.toUpperCase()}_API_KEY`])),
+    envHasApiKey: ["groq", "gemini"].some((p) =>
+      Boolean(process.env[`${p.toUpperCase()}_API_KEY`]),
+    ),
     enabled: settings.enabled,
     chain,
-    dailyCap: 40,
-    usedToday,
-    generationsThisMonth: recent.length,
-    estimatedCostCentsThisMonth: recent.reduce((sum, r) => sum + r.costCents, 0),
-    monthStart: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString(),
+    dailyCap: DAILY_AI_CAP,
+    usedToday: usageToday,
+    monthStart: month.monthStart,
+    generationsThisMonth: month.generations,
+    tokensInThisMonth: month.tokensIn,
+    tokensOutThisMonth: month.tokensOut,
+    estimatedCostUsdThisMonth: month.estimatedCostUsd,
     recent: recent.map((r) => ({
       id: r.id,
       kind: r.kind,
@@ -264,28 +293,48 @@ aiRouter.get("/settings", async (c) => {
       costCents: r.costCents,
       createdAt: r.createdAt.toISOString(),
     })),
-    health: health.map((h: { provider: string; ok: boolean; model?: string; detail?: string; latencyMs?: number }) => ({
-      provider: h.provider,
-      ok: h.ok,
-      model: h.model,
-      detail: h.detail,
-      latencyMs: h.latencyMs,
-    })),
+    health: health.map(
+      (h: {
+        provider: string;
+        ok: boolean;
+        model?: string;
+        detail?: string;
+        latencyMs?: number;
+      }) => ({
+        provider: h.provider,
+        ok: h.ok,
+        model: h.model,
+        detail: h.detail,
+        latencyMs: h.latencyMs,
+      }),
+    ),
   });
 });
 
 aiRouter.patch("/settings", async (c) => {
   const profileId = c.get("profileId");
   const body = await c.req.json().catch(() => ({}));
-  const { writeAiSettings } = await import("../ai/settings.ts");
+  const { readAiSettings, writeAiSettings } = await import("../ai/settings.ts");
 
   const patch: Partial<AiSettings> = {};
-  if (body.provider) patch.provider = body.provider;
+  if (body.provider !== undefined) patch.provider = body.provider;
   if (body.model !== undefined) patch.model = body.model;
   if (body.apiKey !== undefined) patch.apiKey = body.apiKey;
   if (body.enabled !== undefined) patch.enabled = body.enabled;
 
-  const updated = await writeAiSettings(profileId, patch);
+  // Every later read parses the stored blob, and one it cannot parse falls back to the
+  // defaults — so an over-long model name would have quietly reset the provider choice as
+  // well. Validate the merged result rather than the patch alone, so an untouched field can
+  // never be what fails.
+  const current = await readAiSettings(profileId);
+  const parsed = aiSettingsSchema.safeParse({ ...current, ...patch });
+  if (!parsed.success)
+    return c.json(
+      { error: "invalid", issues: parsed.error.issues.map((i: { message: string }) => i.message) },
+      400,
+    );
+
+  const updated = await writeAiSettings(profileId, parsed.data);
   return c.json({
     provider: updated.provider,
     model: updated.model,

@@ -7,6 +7,7 @@
  * provider or the storage bucket.
  */
 import { countSince, tokensSince } from "./cache.ts";
+import { startOfDay, startOfMonth } from "./dates.ts";
 import type { AiProviderName } from "@sq/core/schemas/ai";
 
 /** ADR-025 / plan section 19: 40 generations per user per day, cached results stay free. */
@@ -48,37 +49,7 @@ export function estimateCostUsd(
   return (tokensIn * price.input + tokensOut * price.output) / 1_000_000;
 }
 
-/** Midnight in the account's timezone, so "today" means the student's today. */
-export function startOfDay(timezone = "UTC"): Date {
-  const now = new Date();
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: timezone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  }).formatToParts(now);
-
-  const get = (type: string) => Number(parts.find((p) => p.type === type)?.value ?? 0);
-  const local = new Date(
-    get("year"),
-    get("month") - 1,
-    get("day"),
-    get("hour") % 24,
-    get("minute"),
-    get("second"),
-  );
-  return local;
-}
-
-export function startOfMonth(): Date {
-  const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), 1);
-}
-
+/** Generations since midnight in the account's timezone — the count ADR-025's cap uses. */
 export async function usedToday(userId: string, timezone = "UTC"): Promise<number> {
   return countSince(userId, startOfDay(timezone));
 }
@@ -96,7 +67,8 @@ export async function monthlyUsage(userId: string): Promise<MonthlyUsage> {
   const since = startOfMonth();
   const totals = await tokensSince(userId, since);
   const estimatedCostUsd = Object.entries(totals.byProvider).reduce(
-    (sum, [provider, t]) => sum + estimateCostUsd(provider as AiProviderName, t.tokensIn, t.tokensOut),
+    (sum, [provider, t]) =>
+      sum + estimateCostUsd(provider as AiProviderName, t.tokensIn, t.tokensOut),
     0,
   );
 
