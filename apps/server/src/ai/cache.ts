@@ -8,7 +8,7 @@
  */
 import { createHash } from "node:crypto";
 
-import { and, desc, eq, gte, sql } from "drizzle-orm";
+import { and, desc, eq, gte, isNotNull, or, sql } from "drizzle-orm";
 
 import { aiArtifacts } from "@sq/db/schema";
 
@@ -55,6 +55,11 @@ export interface CachedRow {
  * The unique index includes them, but a lookup that spans providers is what lets a student
  * switch from Ollama to Groq and immediately see the summary they already paid for —
  * "switching providers changes no UI" applies to the cache too.
+ *
+ * A row with nothing in it is not a result: a stream that completed without producing any
+ * text used to be stored, and because this returns the newest row, one such row answered
+ * every later request with an empty string. Filtering them out of the query means an
+ * unusable artifact can be shadowed by a good one instead of poisoning its own input hash.
  */
 export async function findCached(key: CacheKey): Promise<CachedRow | null> {
   const rows = await db.orm
@@ -67,6 +72,12 @@ export async function findCached(key: CacheKey): Promise<CachedRow | null> {
         eq(aiArtifacts.sourceId, key.sourceId),
         eq(aiArtifacts.inputHash, key.hash),
         eq(aiArtifacts.promptVersion, key.promptVersion),
+        // Structured prompts store JSON and leave outputText null; text prompts do the
+        // reverse. Either way the row has to actually hold an answer to be usable.
+        or(
+          isNotNull(aiArtifacts.outputJson),
+          and(isNotNull(aiArtifacts.outputText), sql`btrim(${aiArtifacts.outputText}) <> ''`),
+        ),
       ),
     )
     .orderBy(desc(aiArtifacts.createdAt))

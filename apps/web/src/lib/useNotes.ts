@@ -75,25 +75,6 @@ export function useNoteActions() {
   });
 
   // AI actions
-  const summarise = useMutation({
-    mutationFn: ({
-      noteId,
-      length = "standard",
-      format = "bullets",
-    }: { noteId: string; length?: "quick" | "standard" | "detailed"; format?: "paragraph" | "bullets" | "key_points" | "exam_style" }) =>
-      aiApi.summarise(noteId, length, format),
-  });
-
-  const explain = useMutation({
-    mutationFn: ({
-      noteId,
-      text,
-      context,
-      style = "simple",
-    }: { noteId: string; text: string; context?: string; style?: "simple" | "step_by_step" | "example" | "real_life" | "beginner" }) =>
-      aiApi.explain(noteId, text, context, style),
-  });
-
   const quiz = useMutation({
     mutationFn: ({
       noteId,
@@ -116,8 +97,6 @@ export function useNoteActions() {
     restoreRevision,
     uploadAttachment,
     deleteAttachment,
-    summarise,
-    explain,
     quiz,
     flashcards,
   };

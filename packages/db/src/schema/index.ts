@@ -150,7 +150,12 @@ export const aiArtifacts = pgTable(
     createdAt: createdAt(),
   },
   (t) => [
-    uniqueIndex("ai_artifacts_cache_idx").on(
+    // Deliberately a plain index, not unique. Regenerate (`fresh`) produces a second
+    // answer for the *same* key on purpose, the daily cap counts generations by counting
+    // rows, and a unique constraint here turned every Regenerate — and any two identical
+    // requests racing each other — into a 500 rather than a second row. `findCached`
+    // already reads the newest row, so more than one is what it is written for.
+    index("ai_artifacts_cache_idx").on(
       t.kind,
       t.sourceId,
       t.inputHash,

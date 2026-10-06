@@ -144,30 +144,6 @@ export const notesApi = {
 
 /** AI actions (P5 action bar) */
 export const aiApi = {
-  /** POST /api/ai/summarise */
-  summarise: (noteId: string, length: "quick" | "standard" | "detailed" = "standard", format: "paragraph" | "bullets" | "key_points" | "exam_style" = "bullets") =>
-    fetch("/api/ai/summarise", {
-      method: "POST",
-      credentials: "same-origin",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ noteId, length, format }),
-    }).then((r) => {
-      if (!r.ok) throw new ApiError("Summarise failed", r.status);
-      return r.json() as Promise<{ text: string; artifactId: string; cached: boolean }>;
-    }),
-
-  /** POST /api/ai/explain */
-  explain: (noteId: string, text: string, context?: string, style: "simple" | "step_by_step" | "example" | "real_life" | "beginner" = "simple") =>
-    fetch("/api/ai/explain", {
-      method: "POST",
-      credentials: "same-origin",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ noteId, text, context, style }),
-    }).then((r) => {
-      if (!r.ok) throw new ApiError("Explain failed", r.status);
-      return r.json() as Promise<{ text: string; artifactId: string; cached: boolean }>;
-    }),
-
   /** POST /api/ai/quiz */
   quiz: (noteId: string, questionCount: number = 10, difficulty: "easy" | "medium" | "hard" | "mixed" = "mixed", types: ("mcq" | "true_false")[] = ["mcq"]) =>
     fetch("/api/ai/quiz", {

@@ -980,6 +980,29 @@ container captures all the value (versioned Postgres, trivial teardown) without 
 **Cost.** The dev and production environments differ in how the server starts, so
 `scripts/start.ps1` must be kept honest; the trade is explicitly accepted.
 
+### ADR-030 — Streaming AI answers, and what counts as a result
+
+**Decision.** Long AI answers stream as server-sent events over a normal `POST`: the route
+writes `data: {"delta": …}` frames as the model produces them and closes with
+`data: {"done":true,"text":…,"cached":…,"artifactId":…}` — or `data: {"error":…}` — while the
+client reads the response body itself instead of using `EventSource`. Two invariants belong to
+it: a run that produced no text is a failed attempt, so it neither stores an artifact nor ends
+the stream cleanly; and a cache lookup skips artifact rows holding no usable answer, so one
+unusable row cannot answer for every later request against the same input hash.
+
+**Why.** `EventSource` cannot send a JSON body, and these prompts need the note id, the length
+and the format, so the alternative was smuggling them into query parameters; reading the body
+after a `POST` keeps the request a normal request. The invariants come from a failure that
+actually happened: one model call completed without emitting anything, was recorded as an
+artifact, and because the cache reads the newest row for an input hash, that single row then
+returned an empty summary for that note on every later request — silently, with a 200. A
+reader cannot tell an empty answer from a broken one, so the producer refuses to emit one.
+
+**Cost.** Hand-parsed SSE means the client owns framing details `EventSource` would have
+handled (torn frames, a trailing block with no blank line after it), and the "no text is a
+failure" rule will reject a legitimately empty answer should one ever be meaningful — a guard
+rail that costs a regeneration rather than a wrong result.
+
 ---
 
 ## 18. Data model
@@ -1548,17 +1571,27 @@ chemical/scientific notation.
 **Goal:** one provider layer that every AI feature then rides on. No feature code may know
 which model it called.
 
-- [ ] `AiProvider` interface + adapters: `ollama`, `gemini`, `groq`, `openaiCompat`, `mock`
-- [ ] Provider registry with fallback chain and `health()` probing (ADR-007)
-- [ ] Prompt registry structure with versioning, schemas, model tiers
-- [ ] `ai_artifacts` cache keyed by `input_hash` (ADR-008) with hit/miss logging
-- [ ] Structured-output validation with Zod + one repair retry (ADR-009)
-- [ ] Token/cost recording and daily call cap (ADR-025)
+- [x] `AiProvider` interface + adapters: `ollama`, `gemini`, `groq`, `openaiCompat`, `mock`
+- [x] Provider registry with fallback chain and `health()` probing (ADR-007)
+- [x] Prompt registry structure with versioning, schemas, model tiers
+- [x] `ai_artifacts` cache keyed by `input_hash` (ADR-008) with hit/miss logging
+- [x] Structured-output validation with Zod + one repair retry (ADR-009)
+- [x] Token/cost recording and daily call cap (ADR-025)
 - [ ] Settings UI: provider picker, model field, API key (write-only), "Test connection",
       monthly estimate, "no provider configured" guided setup
-- [ ] Streaming endpoint (SSE) for long text, with a stop button
+      — the server side is complete (`GET`/`PATCH /api/ai/settings`, `POST /api/ai/settings/test`
+      returning provider, model, `hasApiKey`, `envHasApiKey`, cap and usage, monthly estimate,
+      recent artifacts and per-provider health); **no `/settings` route exists in the web app**.
+      The key stays read-only: `.env` is the source of truth for every user, so the UI reports
+      "server key configured" rather than collecting a key per account.
+- [x] Streaming endpoint (SSE) for long text, with a stop button — delivered with P7, ADR-030
 - [ ] Offline mode: every AI action shows cached result or a clear setup prompt
+      — cached results are labelled (`Cached` chip, "· from cache") and failures surface in the
+      panel, but the no-provider message points at the not-yet-built Settings page and the AI
+      panels do not consume `useHealth`'s offline signal.
 - [ ] Tests: mock provider golden files for every prompt; contract test suite for all adapters
+      — **no test file exists under `apps/server`**; `vitest.config.ts` already includes
+      `apps/server/**/*.test.ts`, so only the tests themselves are missing.
 
 **Exit:** `summary.v1` works through Ollama and through a cloud provider without changing
 feature code; switching providers changes no UI.
@@ -1572,16 +1605,23 @@ feature code; switching providers changes no UI.
 
 **Goal:** turn a wall of notes into something a student can actually learn from.
 
-- [ ] Summary composer: length (quick/standard/detailed) × format (paragraph/bullets/key
+- [x] Summary composer: length (quick/standard/detailed) × format (paragraph/bullets/key
       points/exam-style), with a preview of the chosen combination
-- [ ] Summary panel: rendered result, word count vs original, "regenerate", "save to note",
+- [x] Summary panel: rendered result, word count vs original, "regenerate", "save to note",
       "copy", print
-- [ ] Grounding guardrail visible in the UI: content drawn from the notes vs extra explanation
+- [x] Grounding guardrail visible in the UI: content drawn from the notes vs extra explanation
       are visually distinguished
-- [ ] Explain: select text in a note (or ask from a topic) → style picker (simple,
+- [x] Explain: select text in a note (or ask from a topic) → style picker (simple,
       step-by-step, example, real-life, beginner) → streamed explanation
-- [ ] "Explain again / try a different way" loop with the previous attempt kept visible
-- [ ] Save explanation as a note or attach it to the topic as a study aid
+- [x] "Explain again / try a different way" loop with the previous attempt kept visible
+- [x] Save explanation as a note or attach it to the topic as a study aid
+
+**Delivered in** `SummaryPanel.tsx` and `ExplainPanel.tsx`, both driven by one stream hook
+(`useAiStream` → `aiStream.ts`). Reasoning for the streaming contract and the rule that an
+empty answer is a failure is in ADR-030; the product-level consequences are in PRD A.8.
+Grounding is shown by printing the source rather than asserting it: the summary carries a
+"Grounded in" row with the note's title and word count, and Explain prints the selected
+passage in its own block above the generated text.
 
 **Exit:** from any note, one tap produces a grounded summary and a re-askable explanation; both
 are cached and regenerable.

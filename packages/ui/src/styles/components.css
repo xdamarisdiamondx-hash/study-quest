@@ -1033,3 +1033,224 @@
 .sq-ai-bar {
   padding: var(--s3);
 }
+
+/* --- AI panels (P7) ---------------------------------------------------- */
+/* The panel takes over the editor's main area, so it occupies the same flex slot as the
+   textarea: a column whose scrolling body sits between a fixed head/composer and footer. */
+.sq-ai-panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+.sq-ai-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  padding: var(--s3) var(--s4);
+  border-bottom: 1px solid var(--border);
+}
+.sq-ai-head h3 {
+  font: var(--t-h3);
+  margin: 0;
+}
+.sq-ai-head-meta {
+  font: var(--t-body-sm);
+  color: var(--muted);
+}
+.sq-ai-head-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+}
+
+/* Composer. The preview sits on its own line beneath the pickers so the chosen
+   combination reads as a sentence before anything is generated. */
+.sq-ai-composer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--s3);
+  padding: var(--s3) var(--s4);
+  border-bottom: 1px solid var(--border);
+}
+.sq-ai-composer .sq-field {
+  flex: 1 1 150px;
+  min-width: 140px;
+  margin: 0;
+}
+.sq-ai-composer-preview {
+  flex: 1 1 100%;
+  font: var(--t-body-sm);
+  color: var(--muted);
+}
+.sq-ai-composer-preview strong {
+  font-weight: 500;
+  color: var(--text);
+}
+.sq-ai-composer-run {
+  flex: 0 0 auto;
+}
+
+/* Names the material the result was built from, before any generated text appears. */
+.sq-ai-source {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s2);
+  padding: var(--s3) var(--s4);
+  border-bottom: 1px solid var(--border);
+  font: var(--t-body-sm);
+  color: var(--muted);
+}
+.sq-ai-kicker {
+  font: var(--t-caption);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  flex: 0 0 auto;
+}
+
+/* The student's own material, quoted verbatim. This is the half of the grounding
+   guardrail that is a fact rather than a claim: the text is copied out of the note,
+   not produced, and it is deliberately styled unlike the generated text below it. */
+.sq-ai-from-notes {
+  margin: var(--s4) var(--s4) 0;
+  padding: var(--s3) var(--s4);
+  border-left: 3px solid var(--accent);
+  background: var(--page);
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+  font: var(--t-body);
+  color: var(--strong);
+  white-space: pre-wrap;
+}
+.sq-ai-from-notes + .sq-ai-body {
+  padding-top: var(--s3);
+}
+
+.sq-ai-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: var(--s4);
+  font: var(--t-body);
+  line-height: 1.7;
+}
+.sq-ai-empty {
+  color: var(--muted);
+  max-width: 52ch;
+}
+.sq-ai-body > :first-child {
+  margin-top: 0;
+}
+.sq-ai-body > :last-child {
+  margin-bottom: 0;
+}
+.sq-ai-body p {
+  margin: 0 0 var(--s3);
+}
+.sq-ai-body ul,
+.sq-ai-body ol {
+  margin: 0 0 var(--s3);
+  padding-left: 1.3em;
+}
+.sq-ai-body li {
+  margin-bottom: 0.3em;
+}
+.sq-ai-body h1,
+.sq-ai-body h2,
+.sq-ai-body h3 {
+  font: var(--t-h3);
+  margin: var(--s4) 0 var(--s2);
+}
+.sq-ai-body h4,
+.sq-ai-body h5,
+.sq-ai-body h6 {
+  font: var(--t-caption);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: var(--s4) 0 var(--s2);
+}
+.sq-ai-body blockquote {
+  margin: 0 0 var(--s3);
+  padding-left: var(--s3);
+  border-left: 3px solid var(--border);
+  color: var(--strong);
+}
+.sq-ai-body code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.92em;
+  background: var(--track);
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+.sq-ai-body pre {
+  background: var(--track);
+  padding: var(--s3);
+  border-radius: var(--r-sm);
+  overflow: auto;
+}
+.sq-ai-body hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: var(--s4) 0;
+}
+
+.sq-ai-foot {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  flex-wrap: wrap;
+  padding: var(--s3) var(--s4);
+  border-top: 1px solid var(--border);
+}
+.sq-ai-foot-meta {
+  font: var(--t-body-sm);
+  color: var(--muted);
+  margin-right: auto;
+}
+.sq-ai-actions {
+  display: flex;
+  gap: var(--s2);
+  flex-wrap: wrap;
+}
+
+/* Explain. Every attempt stays on screen so a different style can be read against
+   the last one rather than replacing it; the newest sits first. */
+.sq-ai-attempt + .sq-ai-attempt {
+  margin-top: var(--s5);
+  padding-top: var(--s5);
+  border-top: 1px solid var(--border);
+}
+.sq-ai-attempt-label {
+  font: var(--t-caption);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: var(--s2);
+}
+.sq-ai-attempt-older {
+  opacity: 0.7;
+}
+.sq-ai-ask {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--s3);
+  padding: var(--s3) var(--s4);
+  border-bottom: 1px solid var(--border);
+}
+.sq-ai-ask .sq-field {
+  flex: 1 1 240px;
+  min-width: 180px;
+  margin: 0;
+}
+.sq-ai-ask .sq-field-compact {
+  flex: 0 1 170px;
+}

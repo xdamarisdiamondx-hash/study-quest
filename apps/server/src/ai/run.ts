@@ -131,6 +131,14 @@ async function callChain(
   for (const provider of usable) {
     try {
       const result = await provider.complete(request);
+      // A call that completed without saying anything is a failure, not an answer.
+      // Storing it would make this input hash return an empty result on every later
+      // request, because the cache serves the newest row and this one would be it.
+      if (!result.text.trim()) {
+        attempts.push(`${provider.name}: returned no text`);
+        console.warn(`[ai] ${provider.name} returned no text, trying next`);
+        continue;
+      }
       return { result, provider, attempts };
     } catch (err) {
       if (err instanceof AiError && err.code === "aborted") throw err;
@@ -299,13 +307,15 @@ export async function* streamPrompt<K extends PromptKey>(
   const entry = getPrompt(opts.key) as PromptEntry;
   const hash = inputHash({ key: opts.key, input: opts.input, options: opts.options ?? {} });
 
-  const hit = await findCached({
-    userId: opts.profileId,
-    kind: entry.kind,
-    sourceId: opts.sourceId,
-    hash,
-    promptVersion: entry.key,
-  });
+  const hit = opts.fresh
+    ? null
+    : await findCached({
+        userId: opts.profileId,
+        kind: entry.kind,
+        sourceId: opts.sourceId,
+        hash,
+        promptVersion: entry.key,
+      });
 
   if (hit) {
     const text = hit.outputText ?? "";
@@ -353,6 +363,15 @@ export async function* streamPrompt<K extends PromptKey>(
       for await (const delta of provider.stream(request)) {
         assembled += delta;
         yield delta;
+      }
+      // A stream that ended without producing anything is a failed attempt, not a result —
+      // it would be stored with empty text and then out-rank every real answer for this
+      // input hash, since the cache reads the newest row first.
+      if (!assembled.trim()) {
+        attempts.push(`${provider.name}: streamed no text`);
+        console.warn(`[ai] ${provider.name} streamed no text, trying next`);
+        assembled = "";
+        continue;
       }
       usedProvider = provider;
       model = provider.model;

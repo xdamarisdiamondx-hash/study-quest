@@ -18,6 +18,8 @@ import { plainText, wordCount, splitSentences, titleFromBody, cleanPasted } from
 
 import { notesApi, type CreateNote } from "../../lib/notesApi";
 import { useNoteActions, useAutosave, useReadAloud } from "../../lib/useNotes";
+import { SummaryPanel } from "./SummaryPanel";
+import { ExplainPanel } from "./ExplainPanel";
 
 interface NoteEditorProps {
   /** Pre-selected topic ID (when creating from a topic page) */
@@ -41,6 +43,10 @@ export function NoteEditor({ topicId: propTopicId, noteId: propNoteId, onClose, 
   const [showVersions, setShowVersions] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
   const [selectedText, setSelectedText] = useState("");
+  /** Which AI panel, if any, has taken over the main area. */
+  const [panel, setPanel] = useState<"summary" | "explain" | null>(null);
+  /** The open note's topic — needed to file anything an AI panel saves. */
+  const [noteTopicId, setNoteTopicId] = useState<string | null>(null);
   const [aiBusy, setAiBusy] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const [aiResult, setAiResult] = useState<string | null>(null);
@@ -59,6 +65,7 @@ export function NoteEditor({ topicId: propTopicId, noteId: propNoteId, onClose, 
       notesApi.detail(propNoteId).then((data) => {
         setTitle(data.note.title);
         setBodyMd(data.note.bodyMd);
+        setNoteTopicId(data.note.topicId);
       });
     }
   }, [propNoteId, isNew]);
@@ -134,13 +141,11 @@ export function NoteEditor({ topicId: propTopicId, noteId: propNoteId, onClose, 
     }
   };
 
-  const handleSummarise = () => runAiAction(() => notes.summarise.mutateAsync({ noteId: propNoteId! }), "Summarise");
+  const handleSummarise = () => {
+    if (propNoteId) setPanel(panel === "summary" ? null : "summary");
+  };
   const handleExplain = () => {
-    if (!selectedText) {
-      setAiError("Select some text to explain");
-      return;
-    }
-    runAiAction(() => notes.explain.mutateAsync({ noteId: propNoteId!, text: selectedText }), "Explain");
+    if (propNoteId) setPanel(panel === "explain" ? null : "explain");
   };
   const handleQuiz = () => runAiAction(() => notes.quiz.mutateAsync({ noteId: propNoteId! }), "Quiz");
   const handleFlashcards = () => runAiAction(() => notes.flashcards.mutateAsync({ noteId: propNoteId! }), "Flashcards");
@@ -218,39 +223,64 @@ export function NoteEditor({ topicId: propTopicId, noteId: propNoteId, onClose, 
       {/* AI Action Bar */}
       <Card className="sq-ai-bar" style={{ flexShrink: 0, marginTop: "var(--s3)" }}>
         <div style={{ display: "flex", gap: "var(--s2)", flexWrap: "wrap", alignItems: "center" }}>
-          <span className="sq-label" style={{ color: "var(--muted)" }}>AI Actions:</span>
-          <Button size="sm" onClick={handleSummarise} disabled={aiBusy || !propNoteId}>
-            {aiBusy ? "⏳" : "📝"} Summarise
+          <span className="sq-label" style={{ color: "var(--muted)" }}>AI</span>
+          <Button size="sm" variant={panel === "summary" ? "primary" : "secondary"} onClick={handleSummarise} disabled={aiBusy || !propNoteId}>
+            Summarise
           </Button>
-          <Button size="sm" onClick={handleExplain} disabled={aiBusy || !propNoteId || !selectedText}>
-            {aiBusy ? "⏳" : "💡"} Explain
+          <Button size="sm" variant={panel === "explain" ? "primary" : "secondary"} onClick={handleExplain} disabled={aiBusy || !propNoteId}>
+            Explain
           </Button>
-          <Button size="sm" onClick={handleQuiz} disabled={aiBusy || !propNoteId}>
-            {aiBusy ? "⏳" : "❓"} Quiz
+          <Button size="sm" variant="secondary" onClick={handleQuiz} disabled={aiBusy || !propNoteId}>
+            Quiz
           </Button>
-          <Button size="sm" onClick={handleFlashcards} disabled={aiBusy || !propNoteId}>
-            {aiBusy ? "⏳" : "🗂"} Flashcards
+          <Button size="sm" variant="secondary" onClick={handleFlashcards} disabled={aiBusy || !propNoteId}>
+            Flashcards
           </Button>
-          <Button size="sm" onClick={handleReadAloud} disabled={aiBusy || !sentences.length}>
-            {isPlaying ? "⏸" : "🔊"} Read Aloud
+          <Button size="sm" variant="secondary" onClick={handleReadAloud} disabled={aiBusy || !sentences.length}>
+            {isPlaying ? "Pause" : "Read aloud"}
           </Button>
+          {!propNoteId && (
+            <span className="sq-help" style={{ margin: 0 }}>
+              Save this note first — AI actions work on notes that exist.
+            </span>
+          )}
           {aiError && <span className="sq-error" style={{ font: "var(--t-body-sm)" }}>{aiError}</span>}
         </div>
         {aiResult && (
           <details style={{ marginTop: "var(--s2)" }}>
             <summary className="sq-label" style={{ cursor: "pointer" }}>AI Result (click to expand)</summary>
-            <pre style={{ marginTop: "var(--s2)", padding: "var(--s3)", background: "var(--surface)", borderRadius: "var(--r2)", overflow: "auto", fontSize: "var(--t-body-sm)" }}>
+            <pre style={{ marginTop: "var(--s2)", padding: "var(--s3)", background: "var(--track)", borderRadius: "var(--r-sm)", overflow: "auto", fontSize: "var(--t-body-sm)" }}>
               {aiResult}
             </pre>
           </details>
         )}
       </Card>
 
-      {/* Editor / Preview */}
+      {/* Editor / Preview / AI panel */}
       {/* alignItems: stretch, not the .sq-row default of center — a textarea sizes to its
-          `rows` attribute, so centring it leaves a two-line box inside a tall row. */}
+          `rows` attribute, so centring it leaves a two-line box inside a tall row.
+          An AI panel occupies this same slot: a summary or explanation is read, not
+          referenced, so it gets the full reading height rather than a strip above the note. */}
       <div className="sq-row" style={{ flex: 1, minHeight: 0, marginTop: "var(--s3)", alignItems: "stretch" }}>
-        {!preview ? (
+        {panel && propNoteId ? (
+          panel === "summary" ? (
+            <SummaryPanel
+              noteId={propNoteId}
+              noteTitle={title}
+              sourceWords={wc}
+              topicId={noteTopicId}
+              onClose={() => setPanel(null)}
+            />
+          ) : (
+            <ExplainPanel
+              noteId={propNoteId}
+              noteTitle={title}
+              selection={selectedText}
+              topicId={noteTopicId}
+              onClose={() => setPanel(null)}
+            />
+          )
+        ) : !preview ? (
           <textarea
             ref={textareaRef}
             value={bodyMd}
@@ -273,7 +303,7 @@ export function NoteEditor({ topicId: propTopicId, noteId: propNoteId, onClose, 
               fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
               padding: "var(--s4)",
               border: "1px solid var(--border)",
-              borderRadius: "var(--r2)",
+              borderRadius: "var(--r-md)",
               resize: "none",
               outline: "none",
               lineHeight: 1.6,
@@ -286,9 +316,9 @@ export function NoteEditor({ topicId: propTopicId, noteId: propNoteId, onClose, 
               minHeight: 0,
               padding: "var(--s4)",
               border: "1px solid var(--border)",
-              borderRadius: "var(--r2)",
+              borderRadius: "var(--r-md)",
               overflow: "auto",
-              background: "var(--surface)",
+              background: "var(--page)",
               lineHeight: 1.6,
               whiteSpace: "pre-wrap",
             }}

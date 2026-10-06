@@ -32,15 +32,19 @@ export const PROVIDER_TIMEOUT_MS = 45_000;
  * Default model per adapter per tier. Explicit in Settings always wins; otherwise a `fast`
  * prompt (summaries, explanations) uses the cheaper model and a `capable` one (quizzes,
  * flashcards) uses the larger. Free-tier availability changes often, so these are the only
- * place a model name is hard-coded.
+ * place a model name is hard-coded — and they can be overridden without a code change by
+ * setting `<PROVIDER>_<TIER>_MODEL` or `<PROVIDER>_MODEL` in `.env` (resolved in
+ * `resolveProvider`, not here: ES imports are hoisted above the `dotenv` config call in
+ * `index.ts`, so a module-level `process.env` read would miss the file entirely).
+ *
+ * Groq's catalogue rotates hard — both Llama defaults below were withdrawn while the app
+ * was being built, which turned every AI call into a `provider_failed` error. These are
+ * the models verified to answer on this account.
  */
 export const TIER_MODEL: Record<AiProviderName, Record<ModelTier, string>> = {
-  groq: { fast: "llama-3.1-8b-instant", capable: "llama-3.3-70b-versatile" },
+  groq: { fast: "openai/gpt-oss-20b", capable: "openai/gpt-oss-120b" },
   gemini: { fast: "gemini-2.0-flash-lite", capable: "gemini-2.0-flash" },
-  ollama: {
-    fast: process.env.OLLAMA_MODEL || "qwen2.5:7b-instruct",
-    capable: process.env.OLLAMA_MODEL || "qwen2.5:7b-instruct",
-  },
+  ollama: { fast: "qwen2.5:7b-instruct", capable: "qwen2.5:7b-instruct" },
   openaiCompat: { fast: "", capable: "" },
   mock: { fast: "mock-1", capable: "mock-1" },
 };
@@ -127,12 +131,18 @@ export function resolveProvider(
   // An explicit model in Settings is a deliberate choice and applies to the chosen provider;
   // every other provider (and any prompt of a lower tier) falls back to the tier default.
   const explicit = name === settings.provider ? settings.model.trim() : "";
+  // `.env` can rotate a withdrawn model without touching this file. Read at call time —
+  // module scope runs before dotenv has loaded.
+  const fromEnv =
+    process.env[`${name.toUpperCase()}_${tier.toUpperCase()}_MODEL`] ||
+    process.env[`${name.toUpperCase()}_MODEL`] ||
+    "";
 
   return {
     name,
     apiKey: storedKey ?? env.apiKey,
     baseUrl: env.baseUrl,
-    model: explicit || TIER_MODEL[name][tier] || "",
+    model: explicit || fromEnv || TIER_MODEL[name][tier] || "",
   };
 }
 

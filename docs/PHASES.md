@@ -92,13 +92,16 @@ Current machine state as of 3 October 2026:
 
 ### Milestone status
 
-| Phase                  | State                                                                 |
-| ---------------------- | --------------------------------------------------------------------- |
-| **P0** Toolchain       | Done — including the Docker engine and a live PostgreSQL 17 container |
-| **P1** Design system   | Done — tokens, components, Storybook, dark mode, self-hosted fonts    |
-| **P2** Data foundation | Done — 30-table schema, generated migrations, seed, storage interface |
-| **P3** Auth and shell  | Done — Better Auth, route guards, five sections, onboarding           |
-| **P4** Subjects        | Done — subject/topic CRUD, reorder, archive, templates, detail page   |
+| Phase                        | State                                                                                                                                                                   |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **P0** Toolchain             | Done — including the Docker engine and a live PostgreSQL 17 container                                                                                                   |
+| **P1** Design system         | Done — tokens, components, Storybook, dark mode, self-hosted fonts                                                                                                      |
+| **P2** Data foundation       | Done — 30-table schema, generated migrations, seed, storage interface                                                                                                   |
+| **P3** Auth and shell        | Done — Better Auth, route guards, five sections, onboarding                                                                                                             |
+| **P4** Subjects              | Done — subject/topic CRUD, reorder, archive, templates, detail page                                                                                                     |
+| **P5** Notes                 | Done — editor, autosave, revisions, attachments, import, AI action bar                                                                                                  |
+| **P6** AI platform           | **3 items open** — adapters, registry, cache, cost caps and SSE streaming are done; the Settings UI, the AI test suite and AI-specific offline states are not (see §P6) |
+| **P7** Summaries and Explain | Done — composer with preview, grounded summary, re-askable Explain, save / copy / print                                                                                 |
 
 **The database is PostgreSQL in Docker.** `packages/db/src/client.ts` still supports the
 PGlite fallback for when `DATABASE_URL` is unset, but the live database is now the container:
