@@ -166,6 +166,26 @@ describe("quiz.v1", () => {
       expect(FACTS).toContain(question.correctAnswer);
     }
   });
+
+  it("names the concepts a retry must concentrate on", () => {
+    const user =
+      entry.build({ ...SAMPLE["quiz.v1"], focusTags: ["Friction", "Mass"] })[1]?.content ?? "";
+
+    expect(user).toContain("Most questions must be about these concepts: Friction, Mass");
+  });
+
+  it("golden: a retry's focused concepts are drilled first", () => {
+    const golden = entry.mock({
+      ...SAMPLE["quiz.v1"],
+      questionCount: 2,
+      types: ["mcq"],
+      focusTags: ["Friction"],
+    }) as QuizOutput;
+
+    // The focused line is drawn from the note before any other — determinism is
+    // unchanged, only the order the mock drills in moves, as the prompt asks.
+    expect(golden.questions[0]?.correctAnswer).toContain("Friction");
+  });
 });
 
 describe("flashcards.v1", () => {

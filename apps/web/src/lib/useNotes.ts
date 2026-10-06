@@ -15,7 +15,8 @@ export type { Note, Attachment, NotesScope };
  *  unfiltered lists cache independently and invalidate together under `all`. */
 export const notesKeys = {
   all: ["notes"] as const,
-  list: (scope: NotesScope) => ["notes", "list", scope.subjectId ?? null, scope.topicId ?? null] as const,
+  list: (scope: NotesScope) =>
+    ["notes", "list", scope.subjectId ?? null, scope.topicId ?? null] as const,
   detail: (id: string) => ["notes", "detail", id] as const,
 };
 
@@ -59,8 +60,15 @@ export function useNoteActions() {
   });
 
   const uploadAttachment = useMutation({
-    mutationFn: ({ noteId, file, onProgress }: { noteId: string; file: File; onProgress?: (pct: number) => void }) =>
-      notesApi.uploadAttachment(noteId, file, onProgress),
+    mutationFn: ({
+      noteId,
+      file,
+      onProgress,
+    }: {
+      noteId: string;
+      file: File;
+      onProgress?: (pct: number) => void;
+    }) => notesApi.uploadAttachment(noteId, file, onProgress),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: notesKeys.all });
     },
@@ -75,16 +83,6 @@ export function useNoteActions() {
   });
 
   // AI actions
-  const quiz = useMutation({
-    mutationFn: ({
-      noteId,
-      questionCount = 10,
-      difficulty = "mixed",
-      types = ["mcq"],
-    }: { noteId: string; questionCount?: number; difficulty?: "easy" | "medium" | "hard" | "mixed"; types?: ("mcq" | "true_false")[] }) =>
-      aiApi.quiz(noteId, questionCount, difficulty, types),
-  });
-
   const flashcards = useMutation({
     mutationFn: ({ noteId, cardCount = 15 }: { noteId: string; cardCount?: number }) =>
       aiApi.flashcards(noteId, cardCount),
@@ -97,7 +95,6 @@ export function useNoteActions() {
     restoreRevision,
     uploadAttachment,
     deleteAttachment,
-    quiz,
     flashcards,
   };
 }
@@ -162,7 +159,11 @@ export function useAutosave(
     (title: string, bodyMd: string) => {
       if (!enabled) return;
       const _key = `${title}|${bodyMd}`;
-      if (lastSavedRef.current && lastSavedRef.current.title === title && lastSavedRef.current.bodyMd === bodyMd) {
+      if (
+        lastSavedRef.current &&
+        lastSavedRef.current.title === title &&
+        lastSavedRef.current.bodyMd === bodyMd
+      ) {
         return; // no changes
       }
       if (timeoutRef.current != null) clearTimeout(timeoutRef.current);
@@ -182,9 +183,12 @@ export function useAutosave(
   );
 
   // Cancel pending autosave on unmount
-  useEffect(() => () => {
-    if (timeoutRef.current != null) clearTimeout(timeoutRef.current);
-  }, []);
+  useEffect(
+    () => () => {
+      if (timeoutRef.current != null) clearTimeout(timeoutRef.current);
+    },
+    [],
+  );
 
   return { status, save };
 }

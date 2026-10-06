@@ -13,12 +13,13 @@ import type { TopicStatus } from "@sq/core/schemas/subjects";
 import { useSubjectTopics } from "../../lib/useSubjects";
 import { TopicComposer, TopicRow } from "./TopicRow";
 import { NotesPanel } from "./NotesPanel";
+import { QuizzesPanel } from "../quiz/QuizzesPanel";
 
 const TABS: TabItem[] = [
   { id: "overview", label: "Overview" },
   { id: "topics", label: "Topics" },
   { id: "notes", label: "Notes" },
-  { id: "quizzes", label: "Quizzes", soon: true },
+  { id: "quizzes", label: "Quizzes" },
   { id: "flashcards", label: "Flashcards", soon: true },
   { id: "tasks", label: "Tasks", soon: true },
 ];
@@ -26,7 +27,6 @@ const TABS: TabItem[] = [
 /** Which phase delivers each tab, so the empty state can be specific. */
 const PHASE: Record<string, string> = {
   notes: "P5",
-  quizzes: "P8",
   flashcards: "P9",
   tasks: "P11",
 };
@@ -190,6 +190,10 @@ export function SubjectDetailPage() {
 
       <TabPanel id="notes" active={tab}>
         <NotesPanel subjectId={subject.id} topics={store.topics} />
+      </TabPanel>
+
+      <TabPanel id="quizzes" active={tab}>
+        <QuizzesPanel subjectId={subject.id} topics={store.topics} />
       </TabPanel>
 
       {TABS.filter((t) => t.soon).map((t) => (

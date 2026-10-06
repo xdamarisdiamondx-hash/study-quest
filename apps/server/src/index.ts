@@ -23,11 +23,13 @@ import { createAuth, ensureProfile } from "./auth.ts";
 import type { AuthedEnv } from "./auth/session.ts";
 import { getSession } from "./auth/session.ts";
 import { db } from "./db.ts";
+import { aiErrorStatus, AiError } from "./ai/types.ts";
 import { anyEnvConfigured } from "./ai/settings.ts";
 import { onboarding } from "./routes/onboarding.ts";
 import { subjectsRouter } from "./routes/subjects.ts";
 import { notesRouter } from "./routes/notes.ts";
 import { aiRouter } from "./routes/ai.ts";
+import { quizzesRouter } from "./routes/quizzes.ts";
 import { fileStore } from "./files/store.ts";
 
 const { users } = dbSchema;
@@ -100,6 +102,9 @@ app.route("/api/notes", notesRouter);
 /* --- AI actions (P5 action bar) ------------------------------------------ */
 app.route("/api/ai", aiRouter);
 
+/* --- quizzes: generate, take, grade, retry (P8) --------------------------- */
+app.route("/api/quizzes", quizzesRouter);
+
 /* --- local file serving (ADR-027 fallback) ------------------------------- */
 app.get("/api/files/*", async (c) => {
   const key = c.req.path.replace("/api/files/", "");
@@ -149,6 +154,11 @@ app.get("/api/health", (c) =>
 app.notFound((c) => c.json({ error: "not_found", path: c.req.path }, 404));
 
 app.onError((err, c) => {
+  // An AiError already knows what it is: not_configured is a 403 the UI answers with
+  // setup, cap_reached a 402 the UI answers with tomorrow. aiErrorStatus has always
+  // been the defined mapping for this — it just was not wired into the path.
+  if (err instanceof AiError)
+    return c.json({ error: err.code, message: err.message }, aiErrorStatus(err.code));
   console.error("[api]", err);
   return c.json({ error: "internal_error", message: err.message }, 500);
 });

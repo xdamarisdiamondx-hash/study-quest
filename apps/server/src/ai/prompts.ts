@@ -42,6 +42,8 @@ export interface QuizInput {
   difficulty: "easy" | "medium" | "hard" | "mixed";
   types: ("mcq" | "true_false" | "short_answer")[];
   topicName?: string;
+  /** Concepts a retry concentrates on — the concepts the student just missed (PRD §13). */
+  focusTags?: string[];
 }
 
 export interface FlashcardInput {
@@ -221,13 +223,26 @@ const quiz: PromptEntry<"quiz.v1"> = {
         `Difficulty: ${input.difficulty}.`,
         `Types to use: ${input.types.join(", ")}.`,
         `For true/false, options are ["True", "False"]. For short answer, options is [].`,
+        ...(input.focusTags?.length
+          ? [`Most questions must be about these concepts: ${input.focusTags.join(", ")}.`]
+          : []),
         "",
         noteBlock(input),
       ].join("\n"),
     },
   ],
   mock: (input) => {
-    const seeds = concepts(input.bodyMd, Math.min(input.questionCount, 20));
+    // The whole note supplies seeds, not just as many lines as there are questions: a
+    // retry's focus can name any concept in the source, and a count-sized cap made that
+    // only true of the first few lines. Without focusTags the order is unchanged —
+    // questions still take the note's first lines in document order.
+    const pool = concepts(input.bodyMd, 20);
+    // A retry's focused concepts come first, so the mock drills them the way the
+    // prompt asks the model to — determinism is unchanged either way.
+    const focused = (input.focusTags ?? [])
+      .filter(Boolean)
+      .flatMap((tag) => pool.filter((line) => line.toLowerCase().includes(tag.toLowerCase())));
+    const seeds = [...new Set([...focused, ...pool])];
     const questions = Array.from({ length: input.questionCount }, (_, i) => {
       const type = input.types[i % input.types.length] ?? "mcq";
       const seed = seeds[i % Math.max(seeds.length, 1)] ?? `${input.title} point ${i + 1}`;

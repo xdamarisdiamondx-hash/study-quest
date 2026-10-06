@@ -1003,6 +1003,34 @@ handled (torn frames, a trailing block with no blank line after it), and the "no
 failure" rule will reject a legitimately empty answer should one ever be meaningful — a guard
 rail that costs a regeneration rather than a wrong result.
 
+### ADR-031 — Two-phase submit: the server grades, the student settles the undecided
+
+**Decision.** Every submission is graded server-side in one pass, but nothing is stored until
+each answer has a final verdict. Objective answers settle immediately; a short answer whose
+keyword overlap cannot decide — some reference words present, not all — comes back as
+`{pending: [...]}` with the reference answer beside what the student wrote, and with no
+attempt row and no mastery change written. The student then marks each undecided answer and
+resubmits the same run with `selfMarks`; only that post persists the attempt, the score and
+the `question_mastery` updates, exactly once. Two invariants belong to it: the runner never
+receives the answer key (`questionView()` strips `correctAnswer` and `explanation`), and
+`finalVerdict()` consults a self-mark only in the undecided band — counting an unmarked
+`needs_review` as wrong and ignoring a mark on an automatically settled answer — so neither
+an abandoned marking screen nor a forged mark can raise a score.
+
+**Why.** Short answers have many right phrasings, so exact match would fail honest answers,
+while client-side grading would ship the key to the person being graded. The alternatives
+each stored something untrue: a provisional attempt patched later leaves history and mastery
+showing a number that was never final, and grading everything at the end hides the run behind
+one slow call. One grade, one student verdict where grading could not decide, one write keeps
+every stored row final — and it makes recovery free: until the second post, the run is
+exactly the draft in `sessionStorage`, so abandoning the marking screen (or the whole page)
+loses nothing but the keystrokes since the last draft save.
+
+**Cost.** Short answers cost two round trips and insert a marking screen between submit and
+results — a deliberate interruption instead of an instant score. Grading runs twice over the
+same answers, and the student grades themselves generously on band questions, which is the
+honest trade for never showing them the key before they answer.
+
 ---
 
 ## 18. Data model
@@ -1652,18 +1680,29 @@ are cached and regenerable.
 
 **Goal:** the practice loop, including the retry that makes it a loop.
 
-- [ ] Quiz composer: source note or topic, 5/10/15/20 questions, types (MCQ / true-false /
+- [x] Quiz composer: source note or topic, 5/10/15/20 questions, types (MCQ / true-false /
       short answer), difficulty (easy→hard or slider)
-- [ ] Generation with progress feedback; validation failures retried once, then surfaced
-- [ ] Quiz runner (theatre mode): one question per screen, keyboard shortcuts, progress bar,
+- [x] Generation with progress feedback; validation failures retried once, then surfaced
+- [x] Quiz runner (theatre mode): one question per screen, keyboard shortcuts, progress bar,
       flag-for-review, pause/exit with state preserved
-- [ ] Grading: MCQ, true/false, short answer with keyword matching and "self-mark correct"
-- [ ] Results screen: score donut, per-question review with explanations, time spent,
+- [x] Grading: MCQ, true/false, short answer with keyword matching and "self-mark correct"
+- [x] Results screen: score donut, per-question review with explanations, time spent,
       **weak topics list** (PRD §12)
-- [ ] Retry quiz: from wrong answers → group by concept tag → 5-question focused retry
+- [x] Retry quiz: from wrong answers → group by concept tag → 5-question focused retry
       (§18.3), with its own results and an improvement comparison
-- [ ] `question_mastery` updates on every answer, feeding progress and recommendations
-- [ ] Quiz history per topic with trend sparkline
+- [x] `question_mastery` updates on every answer, feeding progress and recommendations
+- [x] Quiz history per topic with trend sparkline
+
+**Delivered in** `packages/core/src/quiz` — grading, verdicts, mastery and retry focus in the
+one module server and tests both read — over four endpoints in `routes/quizzes.ts`, with the
+P6 orchestrator supplying the single repair retry (ADR-009) and the cache bypassed per press.
+Both surfaces, the note editor's quiz panel and the subject's Quizzes tab, drive one
+`useQuizRun` state machine (idle → taking → marking → results), so "what happens after
+submit" cannot drift between them; the runner is a portal theatre whose draft in
+`sessionStorage` survives a pause, an exit, a reload and an abandoned marking screen. The
+two-phase submit — server grades, student settles what keyword overlap cannot, one write — is
+ADR-031; the product-level consequences (no answer key on screen, the 30-word floor, a
+Generate press that always means a new quiz) are recorded in PRD A.8.
 
 **Exit:** generate → take → results → weak topics → retry → measurably better. The full
 cycle of PRD §13 works end to end.

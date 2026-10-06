@@ -1292,3 +1292,538 @@
 .sq-ai-ask .sq-field-compact {
   flex: 0 1 170px;
 }
+
+/* --- quizzes (P8) -------------------------------------------------------- */
+/* Two halves: the composer's controls — shared by the note editor's panel and the
+   subject's Quizzes tab — and the run itself, which takes the viewport as a theatre:
+   dim backdrop, one question on screen, the keyboard doing the work. */
+
+/* Type toggles read as pressed chips rather than a multi-select, so the choice in
+   front of the student is visible without opening anything. Full-width row inside
+   the composer, label above the buttons, matching the pickers beside it. */
+.sq-quiz-types {
+  flex: 1 1 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2);
+}
+.sq-quiz-types .sq-label {
+  flex: 0 0 100%;
+}
+.sq-quiz-type {
+  font: 500 13px/1 var(--font-sans);
+  padding: 9px var(--s4);
+  border-radius: var(--r-full);
+  background: var(--track);
+  /* The token, not an attribute selector: an attribute rule here would outrank the
+     tinted state below and drain it in dark theme — the trap the chips already note. */
+  color: var(--chip-ink);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition:
+    background var(--fast),
+    color var(--fast),
+    border-color var(--fast);
+}
+.sq-quiz-type:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+.sq-quiz-type:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--page),
+    0 0 0 4px var(--accent);
+}
+.sq-quiz-type:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.sq-quiz-type-on {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-color: var(--accent);
+}
+
+/* Generation feedback: a position, not a percentage — the model call is the only wait,
+   and the only honest number is "still going". */
+.sq-quiz-progress {
+  flex: 1 1 100%;
+  position: relative;
+  height: 4px;
+  background: var(--track);
+  border-radius: var(--r-full);
+  overflow: hidden;
+}
+.sq-quiz-progress span {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 35%;
+  border-radius: var(--r-full);
+  background: var(--accent);
+  animation: sq-quiz-sweep 1.1s ease-in-out infinite;
+}
+@keyframes sq-quiz-sweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(285%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sq-quiz-progress span {
+    animation: none;
+    width: 100%;
+    opacity: 0.55;
+  }
+}
+
+/* The compose stage's note that a run survived an exit. */
+.sq-quiz-resume {
+  font: var(--t-body-sm);
+  color: var(--strong);
+  background: var(--track);
+  border-radius: var(--r-md);
+  padding: var(--s3) var(--s4);
+}
+
+/* --- the theatre --------------------------------------------------------- */
+/* Full-viewport portal. Near-black in both themes on purpose: taking a quiz should not
+   compete with the rest of the page, and the dim backdrop is what says so. */
+.sq-quiz-stage {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s5);
+  background: var(--sand-950);
+}
+.sq-quiz-frame {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(720px, 100%);
+  max-height: 100%;
+  background: var(--card);
+  color: var(--text);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+.sq-quiz-top {
+  padding: var(--s4) var(--s5) var(--s3);
+  border-bottom: 1px solid var(--border);
+}
+.sq-quiz-bar {
+  height: 6px;
+  background: var(--track);
+  border-radius: var(--r-full);
+  overflow: hidden;
+}
+.sq-quiz-bar span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: var(--r-full);
+  transition: width var(--fast);
+}
+.sq-quiz-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  flex-wrap: wrap;
+  margin-top: var(--s3);
+  font: var(--t-body-sm);
+  color: var(--muted);
+}
+.sq-quiz-count {
+  color: var(--strong);
+  font-weight: 500;
+}
+.sq-quiz-clock {
+  font-variant-numeric: tabular-nums;
+  margin-right: auto;
+}
+.sq-quiz-question {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: var(--s5);
+}
+.sq-quiz-tags {
+  display: flex;
+  gap: var(--s2);
+  flex-wrap: wrap;
+  margin-bottom: var(--s4);
+}
+.sq-quiz-question h2 {
+  font: var(--t-h2);
+  color: var(--strong);
+  margin: 0 0 var(--s5);
+}
+.sq-quiz-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  margin-bottom: var(--s4);
+}
+.sq-quiz-option {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  width: 100%;
+  text-align: left;
+  padding: var(--s3) var(--s4);
+  background: var(--page);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  font: var(--t-body);
+  color: var(--text);
+  cursor: pointer;
+  transition:
+    border-color var(--fast),
+    background var(--fast);
+}
+.sq-quiz-option:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+/* Inner ring is the frame's card, not the page: the shadow sits on card ground here. */
+.sq-quiz-option:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--card),
+    0 0 0 4px var(--accent);
+}
+.sq-quiz-option:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.sq-quiz-option-on {
+  border-color: var(--accent);
+  background: var(--track);
+  font-weight: 500;
+}
+.sq-quiz-letter {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--r-sm);
+  background: var(--card);
+  border: 1px solid var(--border);
+  font: 500 13px/1 var(--font-sans);
+  color: var(--muted);
+}
+.sq-quiz-option-on .sq-quiz-letter {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+.sq-quiz-textarea {
+  width: 100%;
+  min-height: 110px;
+  resize: vertical;
+  font: var(--t-body);
+}
+/* The flag button sits under the answers, not stretched across them. */
+.sq-quiz-question > .sq-btn {
+  margin-top: var(--s2);
+}
+.sq-quiz-foot {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  flex-wrap: wrap;
+  padding: var(--s3) var(--s5);
+  border-top: 1px solid var(--border);
+}
+.sq-quiz-hint {
+  font: var(--t-caption);
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin-right: auto;
+}
+.sq-quiz-nav {
+  display: flex;
+  gap: var(--s2);
+}
+.sq-quiz-error {
+  margin: 0;
+  padding: var(--s2) var(--s5) var(--s3);
+}
+/* Pause is scoped to the frame: the quiz stays on screen behind the veil, visibly
+   exactly where it was left. */
+.sq-quiz-pause {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s5);
+  background: color-mix(in srgb, var(--sand-950) 72%, transparent);
+}
+.sq-quiz-pause-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: var(--s5);
+}
+.sq-quiz-pause-card h3 {
+  font: var(--t-h3);
+  margin: 0 0 var(--s2);
+}
+.sq-quiz-pause-card p {
+  font: var(--t-body-sm);
+  color: var(--muted);
+  margin: 0 0 var(--s4);
+}
+.sq-quiz-actions {
+  display: flex;
+  gap: var(--s2);
+  flex-wrap: wrap;
+}
+
+/* --- results ------------------------------------------------------------- */
+.sq-quiz-score {
+  display: flex;
+  align-items: center;
+  gap: var(--s4);
+  padding-bottom: var(--s4);
+  border-bottom: 1px solid var(--border);
+}
+.sq-quiz-score-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.sq-quiz-score-line {
+  font: var(--t-h2);
+  color: var(--strong);
+}
+.sq-quiz-score-meta {
+  font: var(--t-body-sm);
+  color: var(--muted);
+}
+.sq-quiz-compare {
+  font: var(--t-body-sm);
+  font-weight: 500;
+  color: var(--strong);
+}
+.sq-quiz-weak {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s3);
+  flex-wrap: wrap;
+  background: var(--track);
+  border-radius: var(--r-md);
+  padding: var(--s3) var(--s4);
+  font: var(--t-body-sm);
+  margin-top: var(--s4);
+}
+.sq-quiz-weak-clear {
+  background: var(--ok-100);
+  color: var(--ok-700);
+}
+.sq-quiz-weak-clear .sq-ai-kicker {
+  color: var(--ok-700);
+}
+.sq-quiz-mastery {
+  font: var(--t-body-sm);
+  color: var(--muted);
+}
+/* Prefixed with the body: `.sq-ai-body p` and `.sq-ai-body ol` would otherwise outrank
+   these — same trap as `.sq-card > p` vs `.sq-error` noted in NotesPanel. */
+.sq-ai-body .sq-quiz-review {
+  list-style: none;
+  margin: var(--s4) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+}
+.sq-ai-body .sq-quiz-review-item {
+  background: var(--page);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: var(--s3) var(--s4);
+}
+.sq-quiz-review-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  flex-wrap: wrap;
+  margin-bottom: var(--s2);
+}
+.sq-quiz-review-no {
+  font: var(--t-caption);
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+.sq-ai-body .sq-quiz-review-prompt {
+  font: var(--t-body);
+  font-weight: 500;
+  color: var(--strong);
+  margin-bottom: var(--s2);
+}
+.sq-quiz-review-given,
+.sq-quiz-review-answer {
+  font: var(--t-body-sm);
+}
+.sq-quiz-review-given strong,
+.sq-quiz-review-answer strong {
+  font-weight: 500;
+  color: var(--strong);
+}
+.sq-quiz-review-answer {
+  color: var(--strong);
+}
+.sq-ai-body .sq-quiz-review-why {
+  margin-top: var(--s3);
+  padding-top: var(--s2);
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font: var(--t-body-sm);
+}
+
+/* The self-mark stage: reference and the student's words face each other, because
+   comparing them honestly is the whole task at that point. */
+.sq-ai-body .sq-quiz-marks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+}
+.sq-quiz-mark {
+  display: flex;
+  gap: var(--s3);
+  background: var(--page);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: var(--s3) var(--s4);
+}
+.sq-quiz-mark-no {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  margin-top: 2px;
+  background: var(--track);
+  border-radius: var(--r-sm);
+  font: var(--t-caption);
+  color: var(--muted);
+}
+.sq-ai-body .sq-quiz-mark-prompt {
+  font: var(--t-body);
+  font-weight: 500;
+  color: var(--strong);
+  margin-bottom: var(--s2);
+}
+.sq-ai-body .sq-quiz-mark-ref,
+.sq-ai-body .sq-quiz-mark-yours {
+  font: var(--t-body-sm);
+  margin-bottom: var(--s2);
+}
+.sq-ai-body .sq-quiz-mark-ref {
+  color: var(--strong);
+}
+.sq-ai-body .sq-quiz-mark-yours {
+  color: var(--muted);
+}
+.sq-ai-body .sq-quiz-mark .sq-quiz-actions {
+  margin-top: var(--s1, 6px);
+}
+
+/* --- history (subject's Quizzes tab) ------------------------------------- */
+.sq-quiz-history {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s5);
+  margin-top: var(--s4);
+}
+.sq-quiz-group + .sq-quiz-group {
+  border-top: 1px solid var(--border);
+  padding-top: var(--s4);
+}
+.sq-quiz-group-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s3);
+  flex-wrap: wrap;
+  margin-bottom: var(--s3);
+}
+.sq-quiz-group-head h4 {
+  font: 600 15px/1.3 var(--font-display);
+  color: var(--strong);
+  margin: 0;
+}
+.sq-quiz-group-meta {
+  font: var(--t-body-sm);
+  color: var(--muted);
+}
+.sq-spark {
+  margin-left: auto;
+  color: var(--muted);
+  flex: 0 0 auto;
+}
+.sq-card .sq-quiz-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.sq-quiz-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: var(--s3) 0;
+  border-top: 1px solid var(--border);
+}
+.sq-quiz-list .sq-quiz-row:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+.sq-quiz-row-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+}
+.sq-quiz-row-main b {
+  font: 600 var(--t-body);
+  color: var(--strong);
+}
+.sq-quiz-row-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  flex-wrap: wrap;
+}
+/* Dense rows wear compact chips: the full-size chip is sized for a headline, and a
+   history line of four of them would out-shout the quiz titles. */
+.sq-quiz-row-meta .sq-chip {
+  padding: 5px var(--s3);
+  font: 500 12px/1 var(--font-sans);
+}
+.sq-quiz-row-when {
+  font: var(--t-body-sm);
+  color: var(--muted);
+}
+.sq-quiz-row-side {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  flex: 0 0 auto;
+}

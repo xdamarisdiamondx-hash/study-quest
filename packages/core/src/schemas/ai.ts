@@ -8,17 +8,45 @@ import { z } from "zod";
 
 /* --- quiz generation --------------------------------------------------- */
 
-export const quizQuestionSchema = z.object({
-  /** Multiple-choice question. */
-  type: z.enum(["mcq", "true_false"]),
+/** Fields every generated question carries, regardless of type. */
+const questionMeta = {
   prompt: z.string().min(5).max(600),
-  options: z.array(z.string().min(1).max(300)).min(2).max(4),
-  correctAnswer: z.string().min(1).max(300),
   explanation: z.string().max(500).optional(),
   difficulty: z.enum(["easy", "medium", "hard"]).optional(),
   conceptTag: z.string().max(80).optional(),
-});
+};
+
+/**
+ * One generated question, as a discriminated union: a choice question needs 2–4
+ * options, while a short answer has none (the prompt asks the model for `[]`). One
+ * flat shape could not say both without pretending every question offers a choice.
+ */
+export const quizQuestionSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("mcq"),
+    ...questionMeta,
+    options: z.array(z.string().min(1).max(300)).min(2).max(4),
+    correctAnswer: z.string().min(1).max(300),
+  }),
+  z.object({
+    type: z.literal("true_false"),
+    ...questionMeta,
+    options: z.array(z.string().min(1).max(300)).min(2).max(4),
+    correctAnswer: z.string().min(1).max(300),
+  }),
+  z.object({
+    type: z.literal("short_answer"),
+    ...questionMeta,
+    /** Display-only here; the prompt tells the model to return none. */
+    options: z.array(z.string().max(300)).max(4).default([]),
+    correctAnswer: z.string().min(1).max(300),
+  }),
+]);
 export type QuizQuestion = z.infer<typeof quizQuestionSchema>;
+
+/** The question types a composer can ask for (PRD section 11). */
+export const quizTypeSchema = z.enum(["mcq", "true_false", "short_answer"]);
+export type QuizType = z.infer<typeof quizTypeSchema>;
 
 export const quizOutputSchema = z.object({
   title: z.string().min(1).max(120),
@@ -26,14 +54,47 @@ export const quizOutputSchema = z.object({
 });
 export type QuizOutput = z.infer<typeof quizOutputSchema>;
 
-/** Request body for quiz generation. */
-export const generateQuizSchema = z.object({
-  noteId: z.string().uuid(),
-  questionCount: z.number().int().min(3).max(20).default(10),
-  difficulty: z.enum(["easy", "medium", "hard", "mixed"]).default("mixed"),
-  types: z.array(z.enum(["mcq", "true_false"])).min(1).default(["mcq"]),
-});
+/**
+ * Request body for quiz generation (P8, POST /api/quizzes).
+ *
+ * The source is exactly one of a note, a topic, or another quiz: `retryOf` names the
+ * quiz whose mistakes produced this one, and the server derives both the source
+ * material and the focus concepts from it (PRD section 13).
+ */
+export const generateQuizSchema = z
+  .object({
+    noteId: z.string().uuid().optional(),
+    topicId: z.string().uuid().optional(),
+    retryOf: z.string().uuid().optional(),
+    questionCount: z.number().int().min(3).max(20).default(10),
+    difficulty: z.enum(["easy", "medium", "hard", "mixed"]).default("mixed"),
+    types: z.array(quizTypeSchema).min(1).default(["mcq"]),
+    /** Concepts to concentrate on; a retry sets this from the concepts it missed. */
+    focusTags: z.array(z.string().min(1).max(80)).max(6).optional(),
+  })
+  .refine((d) => Boolean(d.noteId ?? d.topicId ?? d.retryOf), {
+    message: "noteId, topicId or retryOf is required",
+  });
 export type GenerateQuiz = z.infer<typeof generateQuizSchema>;
+
+/* --- quiz attempts (P8) ------------------------------------------------ */
+
+export const quizAnswerSubmissionSchema = z.object({
+  questionId: z.string().uuid(),
+  /** The chosen option's text, or the student's own wording for a short answer. */
+  answer: z.string().max(600).default(""),
+  /** Settles a `needs_review` short answer — see core/quiz's gradeAnswer. */
+  selfMark: z.enum(["correct", "incorrect"]).optional(),
+});
+export type QuizAnswerSubmission = z.infer<typeof quizAnswerSubmissionSchema>;
+
+export const submitQuizAttemptSchema = z.object({
+  /** May be empty: questions with no submitted answer grade as unanswered. */
+  answers: z.array(quizAnswerSubmissionSchema),
+  /** Wall-clock time on the runner, pauses excluded (P8 results screen). */
+  durationMs: z.number().int().min(0).max(86_400_000).default(0),
+});
+export type SubmitQuizAttempt = z.infer<typeof submitQuizAttemptSchema>;
 
 /* --- flashcard generation ---------------------------------------------- */
 
@@ -96,7 +157,7 @@ export type GenerateExplain = z.infer<typeof generateExplainSchema>;
 /** Every AI request carries these fields. */
 export const aiRequestSchema = z.object({
   messages: z.array(
-    z.object({ role: z.enum(["system", "user", "assistant"]), content: z.string() })
+    z.object({ role: z.enum(["system", "user", "assistant"]), content: z.string() }),
   ),
   json: z.boolean().default(false),
   temperature: z.number().default(0.5),

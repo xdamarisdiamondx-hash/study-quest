@@ -14,6 +14,7 @@ import {
   timestamp,
   uniqueIndex,
   uuid,
+  type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 
 // Better Auth's tables are re-exported so drizzle-kit sees them in one schema.
@@ -180,6 +181,12 @@ export const quizzes = pgTable(
     questionCount: integer("question_count").notNull().default(10),
     difficulty: text("difficulty").notNull().default("medium"),
     status: text("status").notNull().default("ready"),
+    /** A retry points at the quiz whose mistakes produced it (P8, PRD §13). */
+    retryOf: uuid("retry_of").references((): AnyPgColumn => quizzes.id, {
+      onDelete: "set null",
+    }),
+    /** The concepts a retry targets — "Retry: Momentum" on the results screen. */
+    focusTags: jsonb("focus_tags").$type<string[]>().notNull().default([]),
     createdAt: createdAt(),
   },
   (t) => [index("quizzes_user_idx").on(t.userId)],
@@ -205,6 +212,15 @@ export const quizQuestions = pgTable(
   (t) => [index("quiz_questions_quiz_idx").on(t.quizId)],
 );
 
+/** One submitted answer as attempts store it — graded at submit time, kept for review (P8). */
+export interface StoredQuizAnswer {
+  questionId: string;
+  answer: string;
+  verdict: "correct" | "incorrect" | "needs_review";
+  /** The verdict after any self-mark: what the score counted. */
+  correct: boolean;
+}
+
 export const quizAttempts = pgTable(
   "quiz_attempts",
   {
@@ -221,6 +237,8 @@ export const quizAttempts = pgTable(
     score: integer("score").notNull().default(0),
     total: integer("total").notNull().default(0),
     durationMs: integer("duration_ms").notNull().default(0),
+    /** Everything the student submitted, so any attempt can be re-reviewed later. */
+    answers: jsonb("answers").$type<StoredQuizAnswer[]>().notNull().default([]),
   },
   (t) => [index("quiz_attempts_user_idx").on(t.userId)],
 );

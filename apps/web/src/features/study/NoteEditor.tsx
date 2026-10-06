@@ -14,12 +14,19 @@ import {
   ToolbarGroup,
   ToolbarSeparator,
 } from "@sq/ui";
-import { plainText, wordCount, splitSentences, titleFromBody, cleanPasted } from "@sq/core/markdown";
+import {
+  plainText,
+  wordCount,
+  splitSentences,
+  titleFromBody,
+  cleanPasted,
+} from "@sq/core/markdown";
 
 import { notesApi, type CreateNote } from "../../lib/notesApi";
 import { useNoteActions, useAutosave, useReadAloud } from "../../lib/useNotes";
 import { SummaryPanel } from "./SummaryPanel";
 import { ExplainPanel } from "./ExplainPanel";
+import { QuizPanel } from "../quiz/QuizPanel";
 
 interface NoteEditorProps {
   /** Pre-selected topic ID (when creating from a topic page) */
@@ -33,7 +40,13 @@ interface NoteEditorProps {
   initialBody?: string;
 }
 
-export function NoteEditor({ topicId: propTopicId, noteId: propNoteId, onClose, initialTitle = "", initialBody = "" }: NoteEditorProps) {
+export function NoteEditor({
+  topicId: propTopicId,
+  noteId: propNoteId,
+  onClose,
+  initialTitle = "",
+  initialBody = "",
+}: NoteEditorProps) {
   const notes = useNoteActions();
   const [isNew] = useState(!propNoteId);
   const [title, setTitle] = useState(initialTitle);
@@ -44,7 +57,7 @@ export function NoteEditor({ topicId: propTopicId, noteId: propNoteId, onClose, 
   const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
   const [selectedText, setSelectedText] = useState("");
   /** Which AI panel, if any, has taken over the main area. */
-  const [panel, setPanel] = useState<"summary" | "explain" | null>(null);
+  const [panel, setPanel] = useState<"summary" | "explain" | "quiz" | null>(null);
   /** The open note's topic — needed to file anything an AI panel saves. */
   const [noteTopicId, setNoteTopicId] = useState<string | null>(null);
   const [aiBusy, setAiBusy] = useState(false);
@@ -147,8 +160,11 @@ export function NoteEditor({ topicId: propTopicId, noteId: propNoteId, onClose, 
   const handleExplain = () => {
     if (propNoteId) setPanel(panel === "explain" ? null : "explain");
   };
-  const handleQuiz = () => runAiAction(() => notes.quiz.mutateAsync({ noteId: propNoteId! }), "Quiz");
-  const handleFlashcards = () => runAiAction(() => notes.flashcards.mutateAsync({ noteId: propNoteId! }), "Flashcards");
+  const handleQuiz = () => {
+    if (propNoteId) setPanel(panel === "quiz" ? null : "quiz");
+  };
+  const handleFlashcards = () =>
+    runAiAction(() => notes.flashcards.mutateAsync({ noteId: propNoteId! }), "Flashcards");
 
   // Read aloud
   const sentences = splitSentences(bodyMd);
@@ -166,9 +182,17 @@ export function NoteEditor({ topicId: propTopicId, noteId: propNoteId, onClose, 
           file,
           onProgress: (pct) => setUploadProgress((p) => ({ ...p, [file.name]: pct })),
         });
-        setUploadProgress((p) => { const n = { ...p }; delete n[file.name]; return n; });
+        setUploadProgress((p) => {
+          const n = { ...p };
+          delete n[file.name];
+          return n;
+        });
       } catch {
-        setUploadProgress((p) => { const n = { ...p }; delete n[file.name]; return n; });
+        setUploadProgress((p) => {
+          const n = { ...p };
+          delete n[file.name];
+          return n;
+        });
       }
     });
     e.target.value = "";
@@ -177,7 +201,10 @@ export function NoteEditor({ topicId: propTopicId, noteId: propNoteId, onClose, 
   if (isNew && !propTopicId) {
     return (
       <Card>
-        <EmptyState title="Select a topic first" hint="Choose a topic from the left to start taking notes." />
+        <EmptyState
+          title="Select a topic first"
+          hint="Choose a topic from the left to start taking notes."
+        />
       </Card>
     );
   }
@@ -204,10 +231,18 @@ export function NoteEditor({ topicId: propTopicId, noteId: propNoteId, onClose, 
           <ToolbarButton onClick={() => setPreview(!preview)} pressed={preview} title="Preview">
             👁
           </ToolbarButton>
-          <ToolbarButton onClick={() => setShowVersions(!showVersions)} pressed={showVersions} title="Versions">
+          <ToolbarButton
+            onClick={() => setShowVersions(!showVersions)}
+            pressed={showVersions}
+            title="Versions"
+          >
             🕐
           </ToolbarButton>
-          <ToolbarButton onClick={() => setShowAttachments(!showAttachments)} pressed={showAttachments} title="Attachments">
+          <ToolbarButton
+            onClick={() => setShowAttachments(!showAttachments)}
+            pressed={showAttachments}
+            title="Attachments"
+          >
             📎
           </ToolbarButton>
         </ToolbarGroup>
@@ -223,20 +258,47 @@ export function NoteEditor({ topicId: propTopicId, noteId: propNoteId, onClose, 
       {/* AI Action Bar */}
       <Card className="sq-ai-bar" style={{ flexShrink: 0, marginTop: "var(--s3)" }}>
         <div style={{ display: "flex", gap: "var(--s2)", flexWrap: "wrap", alignItems: "center" }}>
-          <span className="sq-label" style={{ color: "var(--muted)" }}>AI</span>
-          <Button size="sm" variant={panel === "summary" ? "primary" : "secondary"} onClick={handleSummarise} disabled={aiBusy || !propNoteId}>
+          <span className="sq-label" style={{ color: "var(--muted)" }}>
+            AI
+          </span>
+          <Button
+            size="sm"
+            variant={panel === "summary" ? "primary" : "secondary"}
+            onClick={handleSummarise}
+            disabled={aiBusy || !propNoteId}
+          >
             Summarise
           </Button>
-          <Button size="sm" variant={panel === "explain" ? "primary" : "secondary"} onClick={handleExplain} disabled={aiBusy || !propNoteId}>
+          <Button
+            size="sm"
+            variant={panel === "explain" ? "primary" : "secondary"}
+            onClick={handleExplain}
+            disabled={aiBusy || !propNoteId}
+          >
             Explain
           </Button>
-          <Button size="sm" variant="secondary" onClick={handleQuiz} disabled={aiBusy || !propNoteId}>
+          <Button
+            size="sm"
+            variant={panel === "quiz" ? "primary" : "secondary"}
+            onClick={handleQuiz}
+            disabled={aiBusy || !propNoteId}
+          >
             Quiz
           </Button>
-          <Button size="sm" variant="secondary" onClick={handleFlashcards} disabled={aiBusy || !propNoteId}>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={handleFlashcards}
+            disabled={aiBusy || !propNoteId}
+          >
             Flashcards
           </Button>
-          <Button size="sm" variant="secondary" onClick={handleReadAloud} disabled={aiBusy || !sentences.length}>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={handleReadAloud}
+            disabled={aiBusy || !sentences.length}
+          >
             {isPlaying ? "Pause" : "Read aloud"}
           </Button>
           {!propNoteId && (
@@ -244,12 +306,27 @@ export function NoteEditor({ topicId: propTopicId, noteId: propNoteId, onClose, 
               Save this note first — AI actions work on notes that exist.
             </span>
           )}
-          {aiError && <span className="sq-error" style={{ font: "var(--t-body-sm)" }}>{aiError}</span>}
+          {aiError && (
+            <span className="sq-error" style={{ font: "var(--t-body-sm)" }}>
+              {aiError}
+            </span>
+          )}
         </div>
         {aiResult && (
           <details style={{ marginTop: "var(--s2)" }}>
-            <summary className="sq-label" style={{ cursor: "pointer" }}>AI Result (click to expand)</summary>
-            <pre style={{ marginTop: "var(--s2)", padding: "var(--s3)", background: "var(--track)", borderRadius: "var(--r-sm)", overflow: "auto", fontSize: "var(--t-body-sm)" }}>
+            <summary className="sq-label" style={{ cursor: "pointer" }}>
+              AI Result (click to expand)
+            </summary>
+            <pre
+              style={{
+                marginTop: "var(--s2)",
+                padding: "var(--s3)",
+                background: "var(--track)",
+                borderRadius: "var(--r-sm)",
+                overflow: "auto",
+                fontSize: "var(--t-body-sm)",
+              }}
+            >
               {aiResult}
             </pre>
           </details>
@@ -261,7 +338,10 @@ export function NoteEditor({ topicId: propTopicId, noteId: propNoteId, onClose, 
           `rows` attribute, so centring it leaves a two-line box inside a tall row.
           An AI panel occupies this same slot: a summary or explanation is read, not
           referenced, so it gets the full reading height rather than a strip above the note. */}
-      <div className="sq-row" style={{ flex: 1, minHeight: 0, marginTop: "var(--s3)", alignItems: "stretch" }}>
+      <div
+        className="sq-row"
+        style={{ flex: 1, minHeight: 0, marginTop: "var(--s3)", alignItems: "stretch" }}
+      >
         {panel && propNoteId ? (
           panel === "summary" ? (
             <SummaryPanel
@@ -271,12 +351,19 @@ export function NoteEditor({ topicId: propTopicId, noteId: propNoteId, onClose, 
               topicId={noteTopicId}
               onClose={() => setPanel(null)}
             />
-          ) : (
+          ) : panel === "explain" ? (
             <ExplainPanel
               noteId={propNoteId}
               noteTitle={title}
               selection={selectedText}
               topicId={noteTopicId}
+              onClose={() => setPanel(null)}
+            />
+          ) : (
+            <QuizPanel
+              noteId={propNoteId}
+              noteTitle={title}
+              sourceWords={wc}
               onClose={() => setPanel(null)}
             />
           )
@@ -329,7 +416,14 @@ export function NoteEditor({ topicId: propTopicId, noteId: propNoteId, onClose, 
 
         {/* Sidebar: Versions / Attachments */}
         {(showVersions || showAttachments) && (
-          <aside style={{ width: 320, borderLeft: "1px solid var(--border)", padding: "var(--s3)", overflow: "auto" }}>
+          <aside
+            style={{
+              width: 320,
+              borderLeft: "1px solid var(--border)",
+              padding: "var(--s3)",
+              overflow: "auto",
+            }}
+          >
             {showVersions && (
               <div>
                 <h4 style={{ margin: "0 0 var(--s3)", font: "var(--t-body)" }}>Versions</h4>
@@ -338,16 +432,32 @@ export function NoteEditor({ topicId: propTopicId, noteId: propNoteId, onClose, 
             )}
             {showAttachments && (
               <div>
-                <div className="sq-row" style={{ justifyContent: "space-between", marginBottom: "var(--s2)" }}>
+                <div
+                  className="sq-row"
+                  style={{ justifyContent: "space-between", marginBottom: "var(--s2)" }}
+                >
                   <h4 style={{ margin: 0, font: "var(--t-body)" }}>Attachments</h4>
-                  <IconButton onClick={() => fileInputRef.current?.click()} title="Attach file" aria-label="Attach file">
+                  <IconButton
+                    onClick={() => fileInputRef.current?.click()}
+                    title="Attach file"
+                    aria-label="Attach file"
+                  >
                     📎
                   </IconButton>
                 </div>
-                <input ref={fileInputRef} type="file" accept="image/*,application/pdf,text/*" onChange={handleFileSelect} style={{ display: "none" }} />
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*,application/pdf,text/*"
+                  onChange={handleFileSelect}
+                  style={{ display: "none" }}
+                />
                 {Object.entries(uploadProgress).map(([name, pct]) => (
                   <div key={name} style={{ marginBottom: "var(--s2)" }}>
-                    <div className="sq-row" style={{ justifyContent: "space-between", fontSize: "var(--t-body-sm)" }}>
+                    <div
+                      className="sq-row"
+                      style={{ justifyContent: "space-between", fontSize: "var(--t-body-sm)" }}
+                    >
                       <span>{name}</span>
                       <span>{pct}%</span>
                     </div>
@@ -362,16 +472,30 @@ export function NoteEditor({ topicId: propTopicId, noteId: propNoteId, onClose, 
       </div>
 
       {/* Footer actions */}
-      <div className="sq-row" style={{ justifyContent: "flex-end", gap: "var(--s2)", marginTop: "var(--s3)", flexShrink: 0 }}>
+      <div
+        className="sq-row"
+        style={{
+          justifyContent: "flex-end",
+          gap: "var(--s2)",
+          marginTop: "var(--s3)",
+          flexShrink: 0,
+        }}
+      >
         {isNew ? (
           <>
-            <Button variant="secondary" onClick={onClose}>Cancel</Button>
+            <Button variant="secondary" onClick={onClose}>
+              Cancel
+            </Button>
             <Button onClick={handleSave}>Create Note</Button>
           </>
         ) : (
           <>
-            <Button variant="ghost" onClick={handleDelete} style={{ color: "var(--bad)" }}>Delete</Button>
-            <Button variant="secondary" onClick={onClose}>Close</Button>
+            <Button variant="ghost" onClick={handleDelete} style={{ color: "var(--bad)" }}>
+              Delete
+            </Button>
+            <Button variant="secondary" onClick={onClose}>
+              Close
+            </Button>
             <Button onClick={handleSave}>Save</Button>
           </>
         )}

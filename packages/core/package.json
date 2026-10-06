@@ -8,6 +8,7 @@
     "./gamification": "./src/gamification/index.ts",
     "./markdown": "./src/markdown/index.ts",
     "./progress": "./src/progress/index.ts",
+    "./quiz": "./src/quiz/index.ts",
     "./starter": "./src/starter/index.ts",
     "./subjects": "./src/subjects/index.ts",
     "./schemas/ai": "./src/schemas/ai.ts",
