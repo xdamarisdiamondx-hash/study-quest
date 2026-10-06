@@ -8,7 +8,6 @@ import { Hono } from "hono";
 import {
   aiSettingsSchema,
   generateExplainSchema,
-  generateFlashcardsSchema,
   generateSummarySchema,
   type AiSettings,
 } from "@sq/core/schemas/ai";
@@ -162,36 +161,6 @@ aiRouter.post("/explain", async (c) => {
 
   const result = await runPrompt(opts);
   return c.json({ text: result.text, artifactId: result.artifactId, cached: result.cached });
-});
-
-/* --- Flashcards ---------------------------------------------------------- */
-
-aiRouter.post("/flashcards", async (c) => {
-  const profileId = c.get("profileId");
-  const parsed = generateFlashcardsSchema.safeParse(await c.req.json().catch(() => ({})));
-  if (!parsed.success)
-    return c.json(
-      { error: "invalid", issues: parsed.error.issues.map((i: { message: string }) => i.message) },
-      400,
-    );
-
-  const note = await ownsNote(profileId, parsed.data.noteId);
-  if (!note) return c.json({ error: "not_found" }, 404);
-
-  const result = await runPrompt({
-    profileId,
-    key: "flashcards.v1",
-    input: {
-      title: note.title,
-      bodyMd: note.bodyMd,
-      cardCount: parsed.data.cardCount,
-    },
-    sourceId: note.id,
-    sourceType: "note",
-    options: { cardCount: parsed.data.cardCount },
-  });
-
-  return c.json({ deck: result.value, artifactId: result.artifactId, cached: result.cached });
 });
 
 /* --- Read Aloud ---------------------------------------------------------- */

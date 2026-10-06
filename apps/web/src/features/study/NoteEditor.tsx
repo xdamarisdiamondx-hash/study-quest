@@ -27,6 +27,7 @@ import { useNoteActions, useAutosave, useReadAloud } from "../../lib/useNotes";
 import { SummaryPanel } from "./SummaryPanel";
 import { ExplainPanel } from "./ExplainPanel";
 import { QuizPanel } from "../quiz/QuizPanel";
+import { FlashcardPanel } from "../flashcards/FlashcardPanel";
 
 interface NoteEditorProps {
   /** Pre-selected topic ID (when creating from a topic page) */
@@ -57,12 +58,9 @@ export function NoteEditor({
   const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
   const [selectedText, setSelectedText] = useState("");
   /** Which AI panel, if any, has taken over the main area. */
-  const [panel, setPanel] = useState<"summary" | "explain" | "quiz" | null>(null);
+  const [panel, setPanel] = useState<"summary" | "explain" | "quiz" | "flashcards" | null>(null);
   /** The open note's topic — needed to file anything an AI panel saves. */
   const [noteTopicId, setNoteTopicId] = useState<string | null>(null);
-  const [aiBusy, setAiBusy] = useState(false);
-  const [aiError, setAiError] = useState<string | null>(null);
-  const [aiResult, setAiResult] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -134,26 +132,9 @@ export function NoteEditor({
     }
   };
 
-  // AI actions
-  const runAiAction = async (action: () => Promise<unknown>, _label: string) => {
-    if (!propNoteId) return;
-    setAiBusy(true);
-    setAiError(null);
-    setAiResult(null);
-    try {
-      const result = await action();
-      if (result && typeof result === "object" && "text" in result) {
-        setAiResult((result as { text?: string }).text || JSON.stringify(result, null, 2));
-      } else {
-        setAiResult(JSON.stringify(result, null, 2));
-      }
-    } catch (err: unknown) {
-      setAiError(err instanceof Error ? err.message : "AI action failed");
-    } finally {
-      setAiBusy(false);
-    }
-  };
-
+  // AI panels — each action opens its own panel, which owns its own requests
+  // and errors. The JSON-dump path that used to live here died with P9: a
+  // Flashcards result is cards to edit, not a blob to expand.
   const handleSummarise = () => {
     if (propNoteId) setPanel(panel === "summary" ? null : "summary");
   };
@@ -163,8 +144,9 @@ export function NoteEditor({
   const handleQuiz = () => {
     if (propNoteId) setPanel(panel === "quiz" ? null : "quiz");
   };
-  const handleFlashcards = () =>
-    runAiAction(() => notes.flashcards.mutateAsync({ noteId: propNoteId! }), "Flashcards");
+  const handleFlashcards = () => {
+    if (propNoteId) setPanel(panel === "flashcards" ? null : "flashcards");
+  };
 
   // Read aloud
   const sentences = splitSentences(bodyMd);
@@ -265,7 +247,7 @@ export function NoteEditor({
             size="sm"
             variant={panel === "summary" ? "primary" : "secondary"}
             onClick={handleSummarise}
-            disabled={aiBusy || !propNoteId}
+            disabled={!propNoteId}
           >
             Summarise
           </Button>
@@ -273,7 +255,7 @@ export function NoteEditor({
             size="sm"
             variant={panel === "explain" ? "primary" : "secondary"}
             onClick={handleExplain}
-            disabled={aiBusy || !propNoteId}
+            disabled={!propNoteId}
           >
             Explain
           </Button>
@@ -281,15 +263,15 @@ export function NoteEditor({
             size="sm"
             variant={panel === "quiz" ? "primary" : "secondary"}
             onClick={handleQuiz}
-            disabled={aiBusy || !propNoteId}
+            disabled={!propNoteId}
           >
             Quiz
           </Button>
           <Button
             size="sm"
-            variant="secondary"
+            variant={panel === "flashcards" ? "primary" : "secondary"}
             onClick={handleFlashcards}
-            disabled={aiBusy || !propNoteId}
+            disabled={!propNoteId}
           >
             Flashcards
           </Button>
@@ -297,7 +279,7 @@ export function NoteEditor({
             size="sm"
             variant="secondary"
             onClick={handleReadAloud}
-            disabled={aiBusy || !sentences.length}
+            disabled={!sentences.length}
           >
             {isPlaying ? "Pause" : "Read aloud"}
           </Button>
@@ -306,31 +288,7 @@ export function NoteEditor({
               Save this note first — AI actions work on notes that exist.
             </span>
           )}
-          {aiError && (
-            <span className="sq-error" style={{ font: "var(--t-body-sm)" }}>
-              {aiError}
-            </span>
-          )}
         </div>
-        {aiResult && (
-          <details style={{ marginTop: "var(--s2)" }}>
-            <summary className="sq-label" style={{ cursor: "pointer" }}>
-              AI Result (click to expand)
-            </summary>
-            <pre
-              style={{
-                marginTop: "var(--s2)",
-                padding: "var(--s3)",
-                background: "var(--track)",
-                borderRadius: "var(--r-sm)",
-                overflow: "auto",
-                fontSize: "var(--t-body-sm)",
-              }}
-            >
-              {aiResult}
-            </pre>
-          </details>
-        )}
       </Card>
 
       {/* Editor / Preview / AI panel */}
@@ -359,11 +317,19 @@ export function NoteEditor({
               topicId={noteTopicId}
               onClose={() => setPanel(null)}
             />
-          ) : (
+          ) : panel === "quiz" ? (
             <QuizPanel
               noteId={propNoteId}
               noteTitle={title}
               sourceWords={wc}
+              onClose={() => setPanel(null)}
+            />
+          ) : (
+            <FlashcardPanel
+              noteId={propNoteId}
+              noteTitle={title}
+              sourceWords={wc}
+              topicId={noteTopicId}
               onClose={() => setPanel(null)}
             />
           )

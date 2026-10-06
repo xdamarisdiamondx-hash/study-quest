@@ -96,7 +96,7 @@ export const submitQuizAttemptSchema = z.object({
 });
 export type SubmitQuizAttempt = z.infer<typeof submitQuizAttemptSchema>;
 
-/* --- flashcard generation ---------------------------------------------- */
+/* --- flashcard generation (P9) ------------------------------------------ */
 
 export const flashcardSchema = z.object({
   front: z.string().min(1).max(300),
@@ -110,12 +110,80 @@ export const flashcardOutputSchema = z.object({
 });
 export type FlashcardOutput = z.infer<typeof flashcardOutputSchema>;
 
-/** Request body for flashcard generation. */
-export const generateFlashcardsSchema = z.object({
-  noteId: z.string().uuid(),
-  cardCount: z.number().int().min(3).max(60).default(15),
+/**
+ * Request body for deck generation (P9, POST /api/flashcards/generate).
+ * Exactly one source — the open note, or every note under a topic — because a
+ * deck has one origin: PRD section 14's "connected to the relevant topic"
+ * starts being true at generation time.
+ */
+export const generateDeckSchema = z
+  .object({
+    noteId: z.string().uuid().optional(),
+    topicId: z.string().uuid().optional(),
+    cardCount: z.number().int().min(3).max(60).default(15),
+  })
+  .refine((d) => Boolean(d.noteId) !== Boolean(d.topicId), {
+    message: "exactly one of noteId or topicId is required",
+  });
+export type GenerateDeck = z.infer<typeof generateDeckSchema>;
+
+/* --- deck and card persistence (P9) ------------------------------------- */
+
+/** What a deck is saved as: generated cards, or a hand-built deck's first card. */
+export const createDeckSchema = z.object({
+  title: z.string().trim().min(1).max(120),
+  topicId: z.string().uuid().nullish(),
+  sourceNoteId: z.string().uuid().nullish(),
+  cards: z.array(flashcardSchema).min(1).max(200),
 });
-export type GenerateFlashcards = z.infer<typeof generateFlashcardsSchema>;
+export type CreateDeck = z.infer<typeof createDeckSchema>;
+
+export const cardWriteSchema = z.object({
+  front: z.string().trim().min(1).max(300),
+  back: z.string().trim().min(1).max(600),
+});
+export type CardWrite = z.infer<typeof cardWriteSchema>;
+
+/** Editing one card: at least one side must be sent, or the patch is a no-op. */
+export const patchCardSchema = cardWriteSchema
+  .partial()
+  .refine((d) => Boolean(d.front ?? d.back), { message: "front or back is required" });
+export type PatchCard = z.infer<typeof patchCardSchema>;
+
+export const importCardsSchema = z.object({
+  /** Pasted `front<TAB>back` (or `::`) lines — see core/flashcards parseImport. */
+  text: z.string().trim().min(1).max(200_000),
+});
+export type ImportCards = z.infer<typeof importCardsSchema>;
+
+/* --- reviews (P9) -------------------------------------------------------- */
+
+/** The stored rating vocabulary (plan section 18); button labels live in core. */
+export const ratingSchema = z.enum(["again", "hard", "good", "easy"]);
+export type CardRating = z.infer<typeof ratingSchema>;
+
+export const reviewSubmissionSchema = z.object({
+  cardId: z.string().uuid(),
+  rating: ratingSchema,
+  /** Seconds on the card, front shown to rating — kept with the rating. */
+  durationMs: z.number().int().min(0).max(3_600_000).default(0),
+});
+export type ReviewSubmission = z.infer<typeof reviewSubmissionSchema>;
+
+export const submitReviewsSchema = z.object({
+  /** One study session's id: re-posting the same batch cannot apply twice. */
+  batchId: z.string().uuid(),
+  reviews: z.array(reviewSubmissionSchema).min(1).max(200),
+});
+export type SubmitReviews = z.infer<typeof submitReviewsSchema>;
+
+/** GET /api/flashcards/due — the queue behind "review 20 now". */
+export const dueQuerySchema = z.object({
+  deckId: z.string().uuid().optional(),
+  subjectId: z.string().uuid().optional(),
+  limit: z.coerce.number().int().min(1).max(200).default(20),
+});
+export type DueQuery = z.infer<typeof dueQuerySchema>;
 
 /* --- summary ----------------------------------------------------------- */
 

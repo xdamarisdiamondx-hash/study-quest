@@ -1,8 +1,8 @@
 /**
  * One subject, with its topics (P4).
  *
- * The tab set is the shape the rest of the app will grow into: Overview and Topics are real
- * now, Notes/Quizzes/Flashcards/Tasks are wired to their future phases and say so rather
+ * The tab set is the shape the rest of the app will grow into: Overview through
+ * Flashcards are real now; Tasks is wired to its future phase and says so rather
  * than showing an empty page that looks broken.
  */
 import { useMemo, useState } from "react";
@@ -14,20 +14,19 @@ import { useSubjectTopics } from "../../lib/useSubjects";
 import { TopicComposer, TopicRow } from "./TopicRow";
 import { NotesPanel } from "./NotesPanel";
 import { QuizzesPanel } from "../quiz/QuizzesPanel";
+import { FlashcardsPanel } from "../flashcards/FlashcardsPanel";
 
 const TABS: TabItem[] = [
   { id: "overview", label: "Overview" },
   { id: "topics", label: "Topics" },
   { id: "notes", label: "Notes" },
   { id: "quizzes", label: "Quizzes" },
-  { id: "flashcards", label: "Flashcards", soon: true },
+  { id: "flashcards", label: "Flashcards" },
   { id: "tasks", label: "Tasks", soon: true },
 ];
 
 /** Which phase delivers each tab, so the empty state can be specific. */
 const PHASE: Record<string, string> = {
-  notes: "P5",
-  flashcards: "P9",
   tasks: "P11",
 };
 
@@ -194,6 +193,10 @@ export function SubjectDetailPage() {
 
       <TabPanel id="quizzes" active={tab}>
         <QuizzesPanel subjectId={subject.id} topics={store.topics} />
+      </TabPanel>
+
+      <TabPanel id="flashcards" active={tab}>
+        <FlashcardsPanel subjectId={subject.id} topics={store.topics} />
       </TabPanel>
 
       {TABS.filter((t) => t.soon).map((t) => (

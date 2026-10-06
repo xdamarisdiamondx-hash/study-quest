@@ -164,21 +164,6 @@ export const notesApi = {
 
 /** AI actions (P5 action bar) */
 export const aiApi = {
-  /** POST /api/ai/flashcards */
-  flashcards: (noteId: string, cardCount: number = 15) =>
-    fetch("/api/ai/flashcards", {
-      method: "POST",
-      credentials: "same-origin",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ noteId, cardCount }),
-    }).then((r) => {
-      if (!r.ok) throw new ApiError("Flashcard generation failed", r.status);
-      return r.json() as Promise<{
-        deck: { id: string; title: string; cards: Array<{ front: string; back: string }> };
-        artifactId: string;
-      }>;
-    }),
-
   /** SSE /api/ai/read-aloud — streaming TTS is handled by browser, this just gets the text */
   readAloud: (noteId: string) =>
     fetch("/api/ai/read-aloud", {

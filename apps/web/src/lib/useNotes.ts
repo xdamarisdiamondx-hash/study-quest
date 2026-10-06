@@ -6,7 +6,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { notesApi, aiApi, type CreateNote, type UpdateNote, type NotesScope } from "./notesApi";
+import { notesApi, type CreateNote, type UpdateNote, type NotesScope } from "./notesApi";
 import type { Note, Attachment } from "@sq/core/schemas/notes";
 
 export type { Note, Attachment, NotesScope };
@@ -82,12 +82,6 @@ export function useNoteActions() {
     },
   });
 
-  // AI actions
-  const flashcards = useMutation({
-    mutationFn: ({ noteId, cardCount = 15 }: { noteId: string; cardCount?: number }) =>
-      aiApi.flashcards(noteId, cardCount),
-  });
-
   return {
     createNote,
     updateNote,
@@ -95,7 +89,6 @@ export function useNoteActions() {
     restoreRevision,
     uploadAttachment,
     deleteAttachment,
-    flashcards,
   };
 }
 

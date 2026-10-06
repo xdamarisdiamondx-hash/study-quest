@@ -30,6 +30,7 @@ import { subjectsRouter } from "./routes/subjects.ts";
 import { notesRouter } from "./routes/notes.ts";
 import { aiRouter } from "./routes/ai.ts";
 import { quizzesRouter } from "./routes/quizzes.ts";
+import { flashcardsRouter } from "./routes/flashcards.ts";
 import { fileStore } from "./files/store.ts";
 
 const { users } = dbSchema;
@@ -104,6 +105,9 @@ app.route("/api/ai", aiRouter);
 
 /* --- quizzes: generate, take, grade, retry (P8) --------------------------- */
 app.route("/api/quizzes", quizzesRouter);
+
+/* --- flashcards: generate, edit, study, schedule (P9) --------------------- */
+app.route("/api/flashcards", flashcardsRouter);
 
 /* --- local file serving (ADR-027 fallback) ------------------------------- */
 app.get("/api/files/*", async (c) => {

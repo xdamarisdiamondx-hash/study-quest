@@ -1712,13 +1712,30 @@ cycle of PRD §13 works end to end.
 
 **Goal:** cheap, repeated review that feeds the same mastery data as quizzes.
 
-- [ ] Deck generation from a note or topic; editable cards before saving
-- [ ] Study mode: flip animation, Know / Review / Hard / Easy, keyboard and swipe
-- [ ] SM-2 scheduling (`ease`, `interval_days`, `repetitions`, `lapses`, `due_at`)
-- [ ] Due counts on Home and in the deck list; "review 20 now" quick action
-- [ ] Mastery view: cards by due date, hard cards, and per-topic coverage
-- [ ] Manual card CRUD, import/export as TSV or Anki-compatible text
-- [ ] XP awarded per reviewed batch (§18.3)
+- [x] Deck generation from a note or topic; editable cards before saving
+- [x] Study mode: flip animation, Know / Review / Hard / Easy, keyboard and swipe
+- [x] SM-2 scheduling (`ease`, `interval_days`, `repetitions`, `lapses`, `due_at`)
+- [x] Due counts on Home and in the deck list; "review 20 now" quick action
+- [x] Mastery view: cards by due date, hard cards, and per-topic coverage
+- [x] Manual card CRUD, import/export as TSV (Anki-compatible plain text)
+- [x] XP awarded per reviewed batch (§18.3)
+
+**Delivered in** `packages/core/src/flashcards` — the SM-2 `schedule()`, the four ratings and
+the TSV codec in the one module server and tests both read — over twelve endpoints in
+`routes/flashcards.ts`. Generation is two calls: `POST /generate` returns cards to edit and
+persists nothing, `POST /decks` stores what the student actually saw, and every generation is
+fresh (A.8). Ratings post as one batch per session under a session-scoped batch id, so every
+flush is idempotent server-side — re-posts skip already-recorded reviews and the XP ledger
+_sets_ the batch's absolute award rather than adding to it, which the 55-post stress the
+browser verification accidentally gave it confirmed. The queue the theatre plays is a
+snapshot keyed outside the phase's invalidation, so the session's own submit refreshes every
+due count and coverage track around the cards without moving them under the study screen; the
+unmount flush registers once and reads its props through refs, because keying it on an inline
+callback loops flush → invalidate → re-render → flush (caught in verification as a crashed
+tab, fixed by mounting it once). Recovery is deliberately thin — no session draft: a rating
+that never arrives leaves its card due, the only honest way to lose a session (A.8). The
+product-level consequences — the four rating names, the no-draft rule, the 30-word floor —
+are recorded in PRD A.8.
 
 **Exit:** generate a deck, study it, and see due counts and coverage update tomorrow.
 **Effort:** 4 d · **Depends on:** P6, P8 (mastery data)

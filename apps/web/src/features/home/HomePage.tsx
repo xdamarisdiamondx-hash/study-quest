@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Card, CheckItem, LevelBadge, Monogram, Streak, Track } from "@sq/ui";
 
 import { level, profile, recommendation, todayQuest } from "../../data/mock";
+import { DueReviewCard } from "../flashcards/DueReviewCard";
 import { useAuth } from "../../lib/useAuth";
 import { useHealth } from "../../lib/useHealth";
 import { useSubjects } from "../../lib/useSubjects";
@@ -144,9 +145,7 @@ export function HomePage() {
       {/* Ambient decoration sits behind the greeting only — never behind data. */}
       <section className="sq-greeting sq-relative" style={{ marginTop: "var(--s6)" }}>
         <div className="sq-ambient" aria-hidden="true" />
-        <h1>
-          {account?.displayName ? `${greeting()}, ${account.displayName}` : greeting()}
-        </h1>
+        <h1>{account?.displayName ? `${greeting()}, ${account.displayName}` : greeting()}</h1>
         <p>
           {new Date().toLocaleDateString(undefined, {
             weekday: "long",
@@ -176,6 +175,8 @@ export function HomePage() {
           </div>
         </div>
       </Card>
+
+      <DueReviewCard />
 
       <Card
         title="Today's Quest"

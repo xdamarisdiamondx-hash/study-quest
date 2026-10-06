@@ -286,19 +286,33 @@ export const flashcards = pgTable(
     lapses: integer("lapses").notNull().default(0),
     dueAt: timestamp("due_at", { withTimezone: true }),
     lastReviewedAt: timestamp("last_reviewed_at", { withTimezone: true }),
+    // Cards have no order column; creation order is the order they were saved in,
+    // and a bulk import stamps millisecond offsets so the pasted order survives.
+    createdAt: createdAt(),
   },
   (t) => [index("flashcards_due_idx").on(t.dueAt)],
 );
 
-export const flashcardReviews = pgTable("flashcard_reviews", {
-  id: id(),
-  flashcardId: uuid("flashcard_id")
-    .notNull()
-    .references(() => flashcards.id, { onDelete: "cascade" }),
-  rating: text("rating").notNull(),
-  reviewedAt: timestamp("reviewed_at", { withTimezone: true }).notNull().defaultNow(),
-  durationMs: integer("duration_ms").notNull().default(0),
-});
+export const flashcardReviews = pgTable(
+  "flashcard_reviews",
+  {
+    id: id(),
+    flashcardId: uuid("flashcard_id")
+      .notNull()
+      .references(() => flashcards.id, { onDelete: "cascade" }),
+    /** The study session this rating belonged to — see the unique index below. */
+    batchId: uuid("batch_id").notNull(),
+    rating: text("rating").notNull(),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }).notNull().defaultNow(),
+    durationMs: integer("duration_ms").notNull().default(0),
+  },
+  (t) => [
+    // One card rated once per batch: a re-posted batch (retry, double-click,
+    // flush after crash) skips the rows it already applied instead of running
+    // the schedule over them a second time.
+    uniqueIndex("flashcard_reviews_batch_card_idx").on(t.batchId, t.flashcardId),
+  ],
+);
 
 /* --- organisation -------------------------------------------------------- */
 export const tasks = pgTable(
