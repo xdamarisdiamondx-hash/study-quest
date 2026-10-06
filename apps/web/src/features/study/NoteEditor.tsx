@@ -23,11 +23,12 @@ import {
 } from "@sq/core/markdown";
 
 import { notesApi, type CreateNote } from "../../lib/notesApi";
-import { useNoteActions, useAutosave, useReadAloud } from "../../lib/useNotes";
+import { useNoteActions, useAutosave } from "../../lib/useNotes";
 import { SummaryPanel } from "./SummaryPanel";
 import { ExplainPanel } from "./ExplainPanel";
 import { QuizPanel } from "../quiz/QuizPanel";
 import { FlashcardPanel } from "../flashcards/FlashcardPanel";
+import { ReadingTheatre } from "../reading/ReadingTheatre";
 
 interface NoteEditorProps {
   /** Pre-selected topic ID (when creating from a topic page) */
@@ -58,7 +59,9 @@ export function NoteEditor({
   const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
   const [selectedText, setSelectedText] = useState("");
   /** Which AI panel, if any, has taken over the main area. */
-  const [panel, setPanel] = useState<"summary" | "explain" | "quiz" | "flashcards" | null>(null);
+  const [panel, setPanel] = useState<
+    "summary" | "explain" | "quiz" | "flashcards" | "reading" | null
+  >(null);
   /** The open note's topic — needed to file anything an AI panel saves. */
   const [noteTopicId, setNoteTopicId] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -148,10 +151,10 @@ export function NoteEditor({
     if (propNoteId) setPanel(panel === "flashcards" ? null : "flashcards");
   };
 
-  // Read aloud
+  // Read aloud opens the reading theatre (P10) — available on unsaved drafts too, since
+  // reading is local; only Explain inside it needs the note to exist.
   const sentences = splitSentences(bodyMd);
-  const { isPlaying, play } = useReadAloud(sentences);
-  const handleReadAloud = () => play();
+  const handleReadAloud = () => setPanel(panel === "reading" ? null : "reading");
 
   // Attachments
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -198,6 +201,17 @@ export function NoteEditor({
          the panel gives it none — without a floor the textarea collapses to two lines. */
       style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 480 }}
     >
+      {/* Reading theatre (P10) — portals to the body itself; conditioned here so it
+          opens and closes with the same Read aloud toggle as the other panels. */}
+      {panel === "reading" && (
+        <ReadingTheatre
+          noteId={propNoteId}
+          title={title.trim() || titleFromBody(bodyMd) || "Untitled note"}
+          bodyMd={bodyMd}
+          onClose={() => setPanel(null)}
+        />
+      )}
+
       {/* Toolbar */}
       <Toolbar style={{ flexShrink: 0 }}>
         <ToolbarGroup>
@@ -277,11 +291,11 @@ export function NoteEditor({
           </Button>
           <Button
             size="sm"
-            variant="secondary"
+            variant={panel === "reading" ? "primary" : "secondary"}
             onClick={handleReadAloud}
             disabled={!sentences.length}
           >
-            {isPlaying ? "Pause" : "Read aloud"}
+            Read aloud
           </Button>
           {!propNoteId && (
             <span className="sq-help" style={{ margin: 0 }}>
@@ -300,7 +314,8 @@ export function NoteEditor({
         className="sq-row"
         style={{ flex: 1, minHeight: 0, marginTop: "var(--s3)", alignItems: "stretch" }}
       >
-        {panel && propNoteId ? (
+        {/* `reading` is a portal, not a slot panel: the note stays visible behind it. */}
+        {panel && panel !== "reading" && propNoteId ? (
           panel === "summary" ? (
             <SummaryPanel
               noteId={propNoteId}

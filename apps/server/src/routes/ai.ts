@@ -163,23 +163,6 @@ aiRouter.post("/explain", async (c) => {
   return c.json({ text: result.text, artifactId: result.artifactId, cached: result.cached });
 });
 
-/* --- Read Aloud ---------------------------------------------------------- */
-
-aiRouter.post("/read-aloud", async (c) => {
-  const profileId = c.get("profileId");
-  const body = await c.req.json().catch(() => ({}));
-  const noteId = body.noteId as string;
-  if (!noteId) return c.json({ error: "invalid", issues: ["noteId required"] }, 400);
-
-  const note = await ownsNote(profileId, noteId);
-  if (!note) return c.json({ error: "not_found" }, 404);
-
-  const { splitSentences } = await import("@sq/core/markdown");
-  const sentences = splitSentences(note.bodyMd);
-
-  return c.json({ sentences });
-});
-
 /* --- AI Settings --------------------------------------------------------- */
 
 aiRouter.get("/settings", async (c) => {

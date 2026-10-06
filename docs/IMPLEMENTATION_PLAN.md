@@ -1744,15 +1744,25 @@ are recorded in PRD A.8.
 
 **Goal:** listening that is interactive rather than passive.
 
-- [ ] Reading mode: clean typography, comfortable measure, chapter scroll, progress
-- [ ] TTS via Web Speech API with voice/rate/pitch settings (§8 theatre template)
-- [ ] Follow-along: highlight the current sentence using boundary events, with a fallback to
+- [x] Reading mode: clean typography, comfortable measure, chapter scroll, progress
+- [x] TTS via Web Speech API with voice/rate/pitch settings (§8 theatre template)
+- [x] Follow-along: highlight the current sentence using boundary events, with a fallback to
       sentence timing where boundaries are unavailable
-- [ ] Playback controls: play/pause, skip sentence, ±10 s, speed, keyboard shortcuts
-- [ ] Pause and ask "Explain this" — the current sentence is sent with context to `explain.v1`
+- [x] Playback controls: play/pause, skip sentence, ±10 s, speed, keyboard shortcuts
+- [x] Pause and ask "Explain this" — the current sentence is sent with context to `explain.v1`
       and the answer appears inline under the highlighted text
-- [ ] TTS fallback: if the platform has no voice for the language, degrade to a
+- [x] TTS fallback: if the platform has no voice for the language, degrade to a
       read-along-with-highlight experience and say so
+
+**Delivered in** `apps/web/src/features/reading` — `useReading.ts` speaks one utterance per
+sentence (engines cut off long ones) over a virtual estimated timeline for the progress bar and
+±10 s, with a startup voice probe, a watchdog for stalled utterances and the silent read-along
+mode; `ReadingTheatre.tsx` is the portal theatre with the sentence spans, the keyboard suite
+(Space, ←/→, Shift+←→, Esc), click-to-jump and the Explain strip anchored under the sentence's
+block. Segmentation comes from `segmentForReading()` in `packages/core/src/markdown`. Reading
+works on unsaved drafts; Explain waits for a saved note so it stays grounded. The dead first
+cuts — `useReadAloud`, `notesApi.aiApi` and `POST /api/ai/read-along` — were removed rather
+than left unwired.
 
 **Exit:** notes can be read aloud with sentence-level highlighting, and a confusing sentence can
 be explained without leaving the screen.

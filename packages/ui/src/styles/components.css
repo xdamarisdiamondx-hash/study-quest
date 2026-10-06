@@ -2273,3 +2273,231 @@
     grid-template-columns: minmax(70px, 110px) 1fr auto;
   }
 }
+
+/* --- reading mode (P10) ------------------------------------------------- */
+/* The reading column is the one place the serif takes the body copy: a study note read
+   aloud wants a page's proportions, not the app's 16px interface sans. Column rules are
+   direct-child selectors so generated content inside a block (a code fence, a streamed
+   explanation) nests freely without inheriting the column's measure. */
+.sq-read-frame {
+  width: min(880px, 100%);
+}
+.sq-read-body {
+  font: 400 18px/1.8 var(--font-display);
+  color: var(--text);
+}
+.sq-read-body > p,
+.sq-read-body > ul,
+.sq-read-body > ol,
+.sq-read-body > blockquote,
+.sq-read-body > .sq-read-code,
+.sq-read-body > .sq-read-explain {
+  max-width: 68ch;
+  margin-inline: auto;
+}
+.sq-read-body > p {
+  margin-top: 0;
+  margin-bottom: 1em;
+}
+.sq-read-h {
+  max-width: 68ch;
+  margin: 1.6em auto 0.5em;
+  color: var(--strong);
+}
+.sq-read-body h1.sq-read-h {
+  font: var(--t-h1);
+}
+.sq-read-body h2.sq-read-h {
+  font: var(--t-h2);
+}
+.sq-read-body h3.sq-read-h,
+.sq-read-body h4.sq-read-h,
+.sq-read-body h5.sq-read-h,
+.sq-read-body h6.sq-read-h {
+  font: var(--t-h3);
+}
+.sq-read-body > .sq-read-h:first-child {
+  margin-top: 0;
+}
+.sq-read-body > ul,
+.sq-read-body > ol {
+  margin-top: 0;
+  margin-bottom: 1em;
+  padding-left: 1.5em;
+}
+.sq-read-body > ul > li,
+.sq-read-body > ol > li {
+  margin-bottom: 0.35em;
+}
+.sq-read-body > blockquote {
+  margin-top: 0;
+  margin-bottom: 1em;
+  padding: var(--s2) var(--s4);
+  background: var(--page);
+  border-left: 3px solid var(--iris-300);
+  border-radius: 0 var(--r-md) var(--r-md) 0;
+}
+.sq-read-body > blockquote > p {
+  margin: 0;
+}
+.sq-read-code pre {
+  background: var(--track);
+  padding: var(--s3);
+  border-radius: var(--r-sm);
+  overflow: auto;
+  font:
+    400 14px/1.6 ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    monospace;
+}
+/* One span per sentence. The current one carries --p (0..1) from the voice's boundary
+   events or the silent clock, painted as a growing underline-fill � progress you can
+   read without a number. Clicking any sentence moves the reading there. */
+.sq-read-sent {
+  cursor: pointer;
+  border-radius: 4px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  transition: background var(--fast);
+}
+.sq-read-sent:hover {
+  background: var(--iris-50);
+}
+.sq-read-sent-on {
+  background-color: var(--iris-50);
+  background-image: linear-gradient(
+    to right,
+    var(--iris-200) calc(var(--p, 0) * 100%),
+    transparent calc(var(--p, 0) * 100%)
+  );
+}
+/* Voice and pitch are rare settings, so they live under the meta row; speed stays in the
+   foot with the transport because it changes mid-read. */
+.sq-read-settings {
+  display: flex;
+  gap: var(--s3);
+  flex-wrap: wrap;
+  align-items: flex-end;
+  margin-top: var(--s3);
+  padding-top: var(--s3);
+  border-top: 1px solid var(--border);
+}
+.sq-read-settings .sq-field {
+  flex: 0 1 240px;
+  min-width: 0;
+}
+.sq-read-settings .sq-field > label {
+  margin-bottom: 4px;
+}
+.sq-read-settings .sq-select {
+  min-height: 38px;
+  padding: 7px var(--s3);
+  font-size: 14px;
+}
+.sq-read-transport {
+  align-items: center;
+  flex-wrap: wrap;
+}
+.sq-read-transport .sq-field {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+}
+.sq-read-transport .sq-field > label {
+  margin-bottom: 0;
+  white-space: nowrap;
+}
+.sq-read-transport .sq-select {
+  min-height: 34px;
+  padding: 5px var(--s3);
+  font-size: 14px;
+}
+/* Explain this: the answer sits under the block the sentence lives in, not in a panel
+   that takes the note away. */
+.sq-read-explain {
+  padding: var(--s3) var(--s4);
+  background: var(--iris-50);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 var(--r-md) var(--r-md) 0;
+  margin-bottom: 1.2em;
+}
+.sq-read-explain-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  flex-wrap: wrap;
+  margin-bottom: var(--s2);
+}
+.sq-read-explain-quote {
+  flex: 1;
+  min-width: 0;
+  font: var(--t-body-sm);
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sq-read-explain-body {
+  font: var(--t-body);
+}
+.sq-read-explain-body > :last-child {
+  margin-bottom: 0;
+}
+.sq-read-explain-body p {
+  margin: 0 0 0.6em;
+}
+.sq-read-explain-body ul,
+.sq-read-explain-body ol {
+  margin: 0 0 0.6em;
+  padding-left: 1.4em;
+}
+.sq-read-explain-body h1,
+.sq-read-explain-body h2,
+.sq-read-explain-body h3,
+.sq-read-explain-body h4,
+.sq-read-explain-body h5,
+.sq-read-explain-body h6 {
+  font: var(--t-h3);
+  margin: 0.8em 0 0.3em;
+}
+.sq-read-explain-body code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.92em;
+  background: var(--track);
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+.sq-read-explain-body pre {
+  background: var(--track);
+  padding: var(--s3);
+  border-radius: var(--r-sm);
+  overflow: auto;
+}
+.sq-read-explain-body blockquote {
+  margin: 0 0 0.6em;
+  padding-left: var(--s3);
+  border-left: 3px solid var(--border);
+  color: var(--strong);
+}
+.sq-read-explain-body hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: var(--s3) 0;
+}
+.sq-read-explain .sq-error,
+.sq-read-explain .sq-help {
+  margin: 0;
+}
+@media (max-width: 640px) {
+  .sq-read-body {
+    font-size: 17px;
+    line-height: 1.7;
+  }
+  .sq-quiz-question.sq-read-body {
+    padding: var(--s4);
+  }
+  .sq-read-settings .sq-field {
+    flex: 1 1 100%;
+  }
+}

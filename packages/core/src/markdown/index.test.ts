@@ -3,8 +3,10 @@ import { describe, expect, it } from "vitest";
 import {
   cleanPasted,
   plainText,
+  renderInline,
   renderMarkdown,
   safeHref,
+  segmentForReading,
   splitSentences,
   titleFromBody,
   wordCount,
@@ -49,7 +51,7 @@ describe("renderMarkdown", () => {
 
   it("keeps fenced code intact and apart from the paragraphs around it", () => {
     const html = renderMarkdown("before\n\n```js\nconst a = 1;\n# not a heading\n```\n\nafter");
-    expect(html).toContain("<pre class=\"sq-md-pre\"><code data-lang=\"js\">");
+    expect(html).toContain('<pre class="sq-md-pre"><code data-lang="js">');
     expect(html).toContain("const a = 1;\n# not a heading");
     expect(html).toContain("<p>before</p>");
     expect(html).toContain("<p>after</p>");
@@ -134,7 +136,9 @@ describe("cleanPasted", () => {
   });
 
   it("promotes an ALL CAPS line that stands alone", () => {
-    expect(cleanPasted("intro\n\nPHOTOSYNTHESIS\n\nrest")).toBe("intro\n\n## PHOTOSYNTHESIS\n\nrest");
+    expect(cleanPasted("intro\n\nPHOTOSYNTHESIS\n\nrest")).toBe(
+      "intro\n\n## PHOTOSYNTHESIS\n\nrest",
+    );
   });
 
   it("promotes a short label ending in a colon", () => {
@@ -150,7 +154,9 @@ describe("cleanPasted", () => {
   });
 
   it("leaves markdown headings and lists alone", () => {
-    expect(cleanPasted("## ALREADY A HEADING\n- ITEM ONE")).toBe("## ALREADY A HEADING\n- ITEM ONE");
+    expect(cleanPasted("## ALREADY A HEADING\n- ITEM ONE")).toBe(
+      "## ALREADY A HEADING\n- ITEM ONE",
+    );
   });
 
   it("collapses runs of blank lines to one", () => {
@@ -173,5 +179,90 @@ describe("splitSentences", () => {
     expect(parts.length).toBeGreaterThan(1);
     expect(parts.every((p) => p.length <= 100)).toBe(true);
     expect(parts.join(" ").replace(/\s+/g, " ")).toBe(long.replace(/\s+/g, " "));
+  });
+});
+
+describe("renderInline", () => {
+  it("renders inline markup without any block wrapper", () => {
+    expect(renderInline("**bold** and `code`")).toBe("<strong>bold</strong> and <code>code</code>");
+  });
+
+  it("escapes raw HTML exactly as the block renderer does", () => {
+    expect(renderInline('<script>alert("x")</script>')).not.toContain("<script>");
+    expect(renderInline("<sub>2</sub>")).toContain("<sub>2</sub>");
+  });
+});
+
+describe("segmentForReading", () => {
+  it("keeps block structure with sentences split inside paragraphs", () => {
+    const blocks = segmentForReading("# Motion\n\nNewton's first law. It needs a force to change.");
+    expect(blocks).toEqual([
+      { kind: "heading", level: 1, sentences: [{ source: "Motion", text: "Motion" }] },
+      {
+        kind: "paragraph",
+        sentences: [
+          { source: "Newton's first law.", text: "Newton's first law." },
+          { source: "It needs a force to change.", text: "It needs a force to change." },
+        ],
+      },
+    ]);
+  });
+
+  it("keeps inline formatting in the source and strips it from the spoken text", () => {
+    const [block] = segmentForReading("Uses **light** energy. Then it makes **glucose**.");
+    expect(block?.kind).toBe("paragraph");
+    if (block?.kind !== "paragraph") return;
+    expect(block.sentences[0]?.source).toBe("Uses **light** energy.");
+    expect(block.sentences[0]?.text).toBe("Uses light energy.");
+  });
+
+  it("splits list items, each item holding its own sentences", () => {
+    const blocks = segmentForReading("- one. still one.\n- two.");
+    expect(blocks).toEqual([
+      {
+        kind: "list",
+        ordered: false,
+        items: [
+          [
+            { source: "one.", text: "one." },
+            { source: "still one.", text: "still one." },
+          ],
+          [{ source: "two.", text: "two." }],
+        ],
+      },
+    ]);
+  });
+
+  it("recognises ordered lists and quotes as their own blocks", () => {
+    const blocks = segmentForReading("1. first\n2. second\n\n> remember this. always.");
+    expect(blocks.map((b) => b.kind)).toEqual(["list", "quote"]);
+    const [list, quote] = blocks;
+    if (list?.kind === "list") expect(list.ordered).toBe(true);
+    if (quote?.kind === "quote") expect(quote.sentences).toHaveLength(2);
+  });
+
+  it("keeps fenced code whole and out of the sentence stream", () => {
+    const blocks = segmentForReading(
+      "before.\n\n```js\nconst a = 1. // trailing dot\n```\n\nafter.",
+    );
+    expect(blocks.map((b) => b.kind)).toEqual(["paragraph", "code", "paragraph"]);
+    const code = blocks[1];
+    if (code?.kind === "code") expect(code.source).toContain("const a = 1");
+  });
+
+  it("skips rules and any block with nothing to say", () => {
+    expect(segmentForReading("")).toEqual([]);
+    expect(segmentForReading("---")).toEqual([]);
+    expect(segmentForReading("**")).toEqual([]);
+  });
+
+  it("chunks an over-long sentence at clause length, like splitSentences", () => {
+    const long = `${"word ".repeat(120).trim()}.`;
+    const [block] = segmentForReading(long);
+    expect(block?.kind).toBe("paragraph");
+    if (block?.kind !== "paragraph") return;
+    expect(block.sentences.length).toBeGreaterThan(1);
+    const rejoined = block.sentences.map((s) => s.source).join(" ");
+    expect(rejoined).toBe(long);
   });
 });

@@ -161,18 +161,3 @@ export const notesApi = {
       },
     ),
 };
-
-/** AI actions (P5 action bar) */
-export const aiApi = {
-  /** SSE /api/ai/read-aloud — streaming TTS is handled by browser, this just gets the text */
-  readAloud: (noteId: string) =>
-    fetch("/api/ai/read-aloud", {
-      method: "POST",
-      credentials: "same-origin",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ noteId }),
-    }).then((r) => {
-      if (!r.ok) throw new ApiError("Read aloud failed", r.status);
-      return r.json() as Promise<{ sentences: string[] }>;
-    }),
-};

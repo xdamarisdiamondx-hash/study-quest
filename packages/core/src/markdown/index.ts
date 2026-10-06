@@ -69,8 +69,13 @@ function extractFences(src: string): Fences {
 
 const FENCE_LINE = new RegExp(`^${MARK}(\\d+)${MARK}$`);
 
-/** Inline formatting. Escapes first, so it can only ever emit the tags we choose to emit. */
-function inline(raw: string): string {
+/**
+ * Inline formatting. Escapes first, so it can only ever emit the tags we choose to emit.
+ *
+ * Exported on its own (P10): the reading view renders one `<span>` per sentence inside a
+ * block, so it needs the inline pass without `renderMarkdown`'s block wrappers around it.
+ */
+export function renderInline(raw: string): string {
   let out = escapeHtml(raw);
 
   // Inline code first: its contents must not be re-interpreted.
@@ -99,7 +104,10 @@ function inline(raw: string): string {
   // A literal backslash escapes the next markdown character.
   out = out.replace(/\\([*_~[\]`#])/g, "$1");
 
-  out = out.replace(new RegExp(`${MARK}C(\\d+)${MARK}`, "g"), (_m, i: string) => codes[Number(i)] ?? "");
+  out = out.replace(
+    new RegExp(`${MARK}C(\\d+)${MARK}`, "g"),
+    (_m, i: string) => codes[Number(i)] ?? "",
+  );
   return out;
 }
 
@@ -128,7 +136,7 @@ export function renderMarkdown(src: string): string {
 
   const flushParagraph = () => {
     if (paragraph.length === 0) return;
-    out.push(`<p>${inline(paragraph.join(" "))}</p>`);
+    out.push(`<p>${renderInline(paragraph.join(" "))}</p>`);
     paragraph.length = 0;
   };
 
@@ -153,7 +161,7 @@ export function renderMarkdown(src: string): string {
     if (heading) {
       flushParagraph();
       const level = Math.min(6, (heading[1] ?? "#").length);
-      out.push(`<h${level}>${inline(heading[2] ?? "")}</h${level}>`);
+      out.push(`<h${level}>${renderInline(heading[2] ?? "")}</h${level}>`);
       i += 1;
       continue;
     }
@@ -180,7 +188,7 @@ export function renderMarkdown(src: string): string {
       flushParagraph();
       const items: string[] = [];
       while (i < lines.length && UL_ITEM.test(lines[i] ?? "")) {
-        items.push(`<li>${inline(UL_ITEM.exec(lines[i] ?? "")?.[1] ?? "")}</li>`);
+        items.push(`<li>${renderInline(UL_ITEM.exec(lines[i] ?? "")?.[1] ?? "")}</li>`);
         i += 1;
       }
       out.push(`<ul>${items.join("")}</ul>`);
@@ -191,7 +199,7 @@ export function renderMarkdown(src: string): string {
       flushParagraph();
       const items: string[] = [];
       while (i < lines.length && OL_ITEM.test(lines[i] ?? "")) {
-        items.push(`<li>${inline(OL_ITEM.exec(lines[i] ?? "")?.[1] ?? "")}</li>`);
+        items.push(`<li>${renderInline(OL_ITEM.exec(lines[i] ?? "")?.[1] ?? "")}</li>`);
         i += 1;
       }
       out.push(`<ol>${items.join("")}</ol>`);
@@ -233,7 +241,10 @@ export function plainText(src: string): string {
     .trim();
 
   // Code goes back in last, so none of the marker-stripping above can touch it.
-  return stripped.replace(new RegExp(`${MARK}(\\d+)${MARK}`, "g"), (_m, i: string) => bodies[Number(i)] ?? "");
+  return stripped.replace(
+    new RegExp(`${MARK}(\\d+)${MARK}`, "g"),
+    (_m, i: string) => bodies[Number(i)] ?? "",
+  );
 }
 
 export function wordCount(src: string): number {
@@ -306,7 +317,7 @@ function isHeadingLike(line: string): boolean {
   return /:$/.test(line) && line.split(/\s+/).length <= 8;
 }
 
-/* --- reading aloud (P5 action bar, P10 grows from it) ------------------- */
+/* --- reading aloud (P5 action bar) and reading mode (P10) --------------- */
 
 /**
  * Split text into speakable chunks, one utterance each, so the browser's speech API can
@@ -338,4 +349,151 @@ export function splitSentences(src: string, maxChars = 220): string[] {
   }
 
   return sentences;
+}
+
+/* --- reading mode (P10) ------------------------------------------------- */
+
+/** One sentence of reading mode, in both forms the theatre needs. */
+export interface ReadSentence {
+  /** Markdown source, formatting intact — what the reading view renders. */
+  source: string;
+  /** Plain text, syntax removed — what the voice speaks. */
+  text: string;
+}
+
+/**
+ * A block of the reading view. Mirrors `renderMarkdown`'s own block structure so the
+ * theatre can rebuild the note's layout while owning one `<span>` per sentence — the
+ * highlight has to live somewhere React renders, not inside a string of HTML.
+ */
+export type ReadBlock =
+  | { kind: "heading"; level: number; sentences: ReadSentence[] }
+  | { kind: "paragraph"; sentences: ReadSentence[] }
+  | { kind: "quote"; sentences: ReadSentence[] }
+  | { kind: "list"; ordered: boolean; items: ReadSentence[][] }
+  /** Fenced code: read as a block, never split into sentences or spoken. */
+  | { kind: "code"; source: string };
+
+/** Split one block's text into sentences, keeping source and plain forms together. */
+function splitSource(src: string, maxChars = 220): ReadSentence[] {
+  const trimmed = src.trim();
+  if (!trimmed) return [];
+
+  const rough = trimmed.match(/[^.!?]+[.!?]*["')\]]*\s*|.+$/g) ?? [trimmed];
+  const chunks: string[] = [];
+
+  for (const piece of rough) {
+    const t = piece.trim();
+    if (!t) continue;
+    if (t.length <= maxChars) {
+      chunks.push(t);
+      continue;
+    }
+    // A run with no punctuation: cut at clause length, as splitSentences does.
+    let remaining = t;
+    while (remaining.length > maxChars) {
+      const cut = remaining.lastIndexOf(" ", maxChars);
+      const at = cut > maxChars * 0.6 ? cut : maxChars;
+      chunks.push(remaining.slice(0, at).trim());
+      remaining = remaining.slice(at).trim();
+    }
+    if (remaining) chunks.push(remaining);
+  }
+
+  return chunks
+    .map((source) => ({ source, text: plainText(source) }))
+    .filter((s) => s.text.length > 0);
+}
+
+/**
+ * Segment markdown for reading mode (P10): the note's blocks with each block's sentences
+ * split out in reading order, so the theatre can highlight one sentence at a time without
+ * giving up headings, lists or inline formatting. Same block grammar as `renderMarkdown`
+ * (P5), including what it deliberately skips: horizontal rules are decoration, and a
+ * fenced block stays whole — you do not read code aloud word by word.
+ */
+export function segmentForReading(src: string): ReadBlock[] {
+  const lines = src.replace(/\r\n?/g, "\n").split("\n");
+  const blocks: ReadBlock[] = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i] ?? "";
+    if (line.trim() === "") {
+      i += 1;
+      continue;
+    }
+
+    if (/^ {0,3}```/.test(line)) {
+      const start = i;
+      i += 1;
+      while (i < lines.length && !/^ {0,3}```/.test(lines[i] ?? "")) i += 1;
+      if (i < lines.length) i += 1; // consume the closing fence
+      blocks.push({ kind: "code", source: lines.slice(start, i).join("\n") });
+      continue;
+    }
+
+    const heading = HEADING.exec(line);
+    if (heading) {
+      blocks.push({
+        kind: "heading",
+        level: Math.min(6, (heading[1] ?? "#").length),
+        sentences: splitSource(heading[2] ?? ""),
+      });
+      i += 1;
+      continue;
+    }
+
+    if (HR.test(line.trim())) {
+      i += 1; // decoration adds nothing to hear or highlight
+      continue;
+    }
+
+    if (QUOTE.test(line)) {
+      const quoted: string[] = [];
+      while (i < lines.length && QUOTE.test(lines[i] ?? "")) {
+        quoted.push(QUOTE.exec(lines[i] ?? "")?.[1] ?? "");
+        i += 1;
+      }
+      blocks.push({ kind: "quote", sentences: splitSource(quoted.join(" ")) });
+      continue;
+    }
+
+    if (UL_ITEM.test(line) || OL_ITEM.test(line)) {
+      const ordered = !UL_ITEM.test(line);
+      const re = ordered ? OL_ITEM : UL_ITEM;
+      const items: ReadSentence[][] = [];
+      while (i < lines.length && re.test(lines[i] ?? "")) {
+        items.push(splitSource(re.exec(lines[i] ?? "")?.[1] ?? ""));
+        i += 1;
+      }
+      blocks.push({ kind: "list", ordered, items });
+      continue;
+    }
+
+    const paragraph: string[] = [];
+    while (i < lines.length) {
+      const l = lines[i] ?? "";
+      const stops =
+        l.trim() === "" ||
+        /^ {0,3}```/.test(l) ||
+        HEADING.test(l) ||
+        HR.test(l.trim()) ||
+        QUOTE.test(l) ||
+        UL_ITEM.test(l) ||
+        OL_ITEM.test(l);
+      if (stops) break;
+      paragraph.push(l.trim());
+      i += 1;
+    }
+    blocks.push({ kind: "paragraph", sentences: splitSource(paragraph.join(" ")) });
+  }
+
+  // A stray marker ("**", "—") makes a block with nothing to say; it should vanish
+  // rather than render as an empty shell.
+  return blocks.filter((b) => {
+    if (b.kind === "code") return true;
+    if (b.kind === "list") return b.items.some((item) => item.length > 0);
+    return b.sentences.length > 0;
+  });
 }

@@ -491,8 +491,20 @@ export function Picker({
 /* --- toolbar (P5) ------------------------------------------------------ */
 
 /** A toolbar row with groups and separators. */
-export function Toolbar({ children, className, style }: { children: ReactNode; className?: string; style?: CSSProperties }) {
-  return <div className={`sq-toolbar ${className ?? ""}`} style={style} role="toolbar">{children}</div>;
+export function Toolbar({
+  children,
+  className,
+  style,
+}: {
+  children: ReactNode;
+  className?: string;
+  style?: CSSProperties;
+}) {
+  return (
+    <div className={`sq-toolbar ${className ?? ""}`} style={style} role="toolbar">
+      {children}
+    </div>
+  );
 }
 
 /** A group of toolbar buttons. */
@@ -546,6 +558,8 @@ export function Button({
   type = "button",
   className,
   style,
+  title,
+  "aria-label": ariaLabel,
 }: {
   children: ReactNode;
   onClick?: () => void;
@@ -555,6 +569,9 @@ export function Button({
   type?: "button" | "submit" | "reset";
   className?: string;
   style?: CSSProperties;
+  /** Hover hint — the house pattern for explaining *why* a control is disabled. */
+  title?: string;
+  "aria-label"?: string;
 }) {
   return (
     <button
@@ -563,6 +580,8 @@ export function Button({
       onClick={onClick}
       disabled={disabled}
       style={style}
+      title={title}
+      aria-label={ariaLabel}
     >
       {children}
     </button>
@@ -637,8 +656,18 @@ export function Dialog({
   if (!open) return null;
   return (
     <div className="sq-dialog-backdrop" onClick={onClose}>
-      <div className="sq-dialog" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby={title ? "dialog-title" : undefined}>
-        {title && <h3 id="dialog-title" style={{ margin: "0 0 var(--s3)" }}>{title}</h3>}
+      <div
+        className="sq-dialog"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? "dialog-title" : undefined}
+      >
+        {title && (
+          <h3 id="dialog-title" style={{ margin: "0 0 var(--s3)" }}>
+            {title}
+          </h3>
+        )}
         {children}
       </div>
     </div>
