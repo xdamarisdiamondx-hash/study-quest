@@ -532,3 +532,61 @@
   fill: var(--muted);
   font-size: 9px;
 }
+
+/* --- recommendations and the next-up strip (P17) --------------------------- */
+
+.sq-suggestions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+}
+.sq-suggestion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+}
+.sq-suggestion + .sq-suggestion {
+  border-top: 1px solid var(--border);
+  padding-top: var(--s4);
+}
+.sq-suggestion-text {
+  margin: 0;
+  color: var(--strong);
+  font: var(--t-body);
+}
+
+.sq-nextup {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  flex-wrap: wrap;
+  width: 100%;
+  padding: var(--s3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--track);
+  text-align: left;
+}
+.sq-nextup-label {
+  font: var(--t-caption);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.sq-nextup-text {
+  flex: 1;
+  min-width: 12rem;
+  color: var(--strong);
+  font: var(--t-body-sm);
+}
+
+/* ?quest=<id> (P17): the card a "continue" recommendation meant, outlined so
+   the deep link answers *which* quest rather than only scrolling the list. */
+[data-focus="true"] {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: var(--r-md);
+}

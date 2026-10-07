@@ -33,6 +33,7 @@ import type {
 import { useSessionActions, useSessions } from "../../lib/useSessions";
 import { useAllTopics } from "../../lib/useSubjects";
 import { useTaskList } from "../../lib/useTasks";
+import { NextUpStrip } from "../../lib/nextUp";
 
 const MODE_LABEL: Record<string, string> = {
   quick: "Quick focus",
@@ -587,6 +588,8 @@ export function SessionsPage() {
                 Next: {summary.next}
               </p>
             )}
+            {/* P17 — beyond this topic: the quest step, the day's remainder, a quiet subject. */}
+            <NextUpStrip />
             <div>
               <Button onClick={() => setSummary(null)}>Done</Button>
             </div>

@@ -8,12 +8,13 @@
  * the student stays in control (principle 4) while the list above them keeps
  * honest count.
  */
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button, Card, Chip, Dialog, EmptyState, QuestStepper } from "@sq/ui";
 
 import { ApiError } from "../../lib/subjectsApi";
 import type { Quest, QuestStep } from "../../lib/questsApi";
+import { NextUpStrip } from "../../lib/nextUp";
 import { useQuestActions, useQuests } from "../../lib/useQuests";
 import { QuestBuilderDialog } from "./QuestBuilderDialog";
 
@@ -60,6 +61,8 @@ export function QuestsPage() {
   const { data, isPending, error } = useQuests();
   const actions = useQuestActions();
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const focusQuest = params.get("quest");
 
   const [builder, setBuilder] = useState(false);
   const [celebration, setCelebration] = useState<{ title: string; xp: number } | null>(null);
@@ -133,6 +136,13 @@ export function QuestsPage() {
   const active = data?.active ?? [];
   const completed = data?.completed ?? [];
   const offer = data?.offer ?? null;
+
+  // `?quest=<id>` arrives from a "continue" recommendation (P17): land on the
+  // card and outline it, so the deep link answers *which* quest was meant.
+  useEffect(() => {
+    if (!focusQuest) return;
+    document.getElementById(`quest-${focusQuest}`)?.scrollIntoView({ block: "center" });
+  }, [focusQuest, active]);
 
   return (
     <div className="sq-col" style={{ marginTop: "var(--s6)" }}>
@@ -211,64 +221,69 @@ export function QuestsPage() {
         const due = dateOf(quest.dueAt);
 
         return (
-          <Card
+          <div
             key={quest.id}
-            title={quest.title}
-            action={
-              <span style={{ display: "flex", gap: "var(--s2)", alignItems: "center" }}>
-                <Chip>{KIND_LABEL[quest.kind] ?? quest.kind}</Chip>
-                <b style={{ font: "var(--t-body-sm)" }}>
-                  {quest.count
-                    ? `${quest.count.progress}/${quest.count.target}`
-                    : `${quest.progress.done}/${quest.progress.total}`}
-                </b>
-              </span>
-            }
+            id={`quest-${quest.id}`}
+            data-focus={focusQuest === quest.id || undefined}
           >
-            <QuestStepper
-              steps={quest.steps.map((s) => ({
-                id: s.id,
-                title: s.title,
-                state: s.state,
-              }))}
-              onSelect={(id) => {
-                const step = quest.steps.find((s) => s.id === id);
-                if (step) selectStep(quest, step);
-              }}
-            />
-
-            <div
-              style={{
-                display: "flex",
-                gap: "var(--s3)",
-                alignItems: "center",
-                marginTop: "var(--s4)",
-                flexWrap: "wrap",
-              }}
-            >
-              {firstPending && link && (
-                <Button size="sm" onClick={() => navigate(link)}>
-                  Continue quest
-                </Button>
-              )}
-              {firstPending && manual && (
-                <Button size="sm" onClick={() => complete(firstPending)}>
-                  Mark “{firstPending.title}” done
-                </Button>
-              )}
-              {firstPending && !link && !manual && (
-                <span style={{ color: "var(--muted)", font: "var(--t-body-sm)" }}>
-                  Counted as you study — no button to press.
+            <Card
+              title={quest.title}
+              action={
+                <span style={{ display: "flex", gap: "var(--s2)", alignItems: "center" }}>
+                  <Chip>{KIND_LABEL[quest.kind] ?? quest.kind}</Chip>
+                  <b style={{ font: "var(--t-body-sm)" }}>
+                    {quest.count
+                      ? `${quest.count.progress}/${quest.count.target}`
+                      : `${quest.progress.done}/${quest.progress.total}`}
+                  </b>
                 </span>
-              )}
-              <span style={{ flex: 1 }} />
-              {due && <Chip>Due {due}</Chip>}
-              <Chip tone="ok">+{quest.xpReward} XP</Chip>
-              <Button variant="ghost" size="sm" onClick={() => abandon(quest)}>
-                Abandon
-              </Button>
-            </div>
-          </Card>
+              }
+            >
+              <QuestStepper
+                steps={quest.steps.map((s) => ({
+                  id: s.id,
+                  title: s.title,
+                  state: s.state,
+                }))}
+                onSelect={(id) => {
+                  const step = quest.steps.find((s) => s.id === id);
+                  if (step) selectStep(quest, step);
+                }}
+              />
+
+              <div
+                style={{
+                  display: "flex",
+                  gap: "var(--s3)",
+                  alignItems: "center",
+                  marginTop: "var(--s4)",
+                  flexWrap: "wrap",
+                }}
+              >
+                {firstPending && link && (
+                  <Button size="sm" onClick={() => navigate(link)}>
+                    Continue quest
+                  </Button>
+                )}
+                {firstPending && manual && (
+                  <Button size="sm" onClick={() => complete(firstPending)}>
+                    Mark “{firstPending.title}” done
+                  </Button>
+                )}
+                {firstPending && !link && !manual && (
+                  <span style={{ color: "var(--muted)", font: "var(--t-body-sm)" }}>
+                    Counted as you study — no button to press.
+                  </span>
+                )}
+                <span style={{ flex: 1 }} />
+                {due && <Chip>Due {due}</Chip>}
+                <Chip tone="ok">+{quest.xpReward} XP</Chip>
+                <Button variant="ghost" size="sm" onClick={() => abandon(quest)}>
+                  Abandon
+                </Button>
+              </div>
+            </Card>
+          </div>
         );
       })}
 
@@ -318,6 +333,8 @@ export function QuestsPage() {
             <p style={{ margin: 0, color: "var(--muted)", font: "var(--t-body-sm)" }}>
               Every step launched real work, and the ledger has the reward.
             </p>
+            {/* P17 — one tap onward: the next quest step, or the rest of the day. */}
+            <NextUpStrip />
             <Button onClick={() => setCelebration(null)}>Close</Button>
           </div>
         </Dialog>

@@ -37,6 +37,7 @@ import { questsRouter } from "./routes/quests.ts";
 import { sessionsRouter } from "./routes/sessions.ts";
 import { gamificationRouter } from "./routes/gamification.ts";
 import { progressRouter } from "./routes/progress.ts";
+import { recommendationsRouter } from "./routes/recommendations.ts";
 import { fileStore } from "./files/store.ts";
 
 const { users } = dbSchema;
@@ -132,6 +133,9 @@ app.route("/api/gamification", gamificationRouter);
 
 /* --- progress: study time, quiz history, counts (P16) --------------------- */
 app.route("/api/progress", progressRouter);
+
+/* --- recommendations: what's next (P17) ----------------------------------- */
+app.route("/api/recommendations", recommendationsRouter);
 
 /* --- local file serving (ADR-027 fallback) ------------------------------- */
 app.get("/api/files/*", async (c) => {

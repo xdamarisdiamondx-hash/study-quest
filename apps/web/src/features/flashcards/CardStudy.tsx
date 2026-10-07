@@ -19,6 +19,7 @@ import { Button, Chip } from "@sq/ui";
 import { RATING_LABEL, schedule, type Rating } from "@sq/core/flashcards";
 
 import type { CardView, StudyOutcome } from "../../lib/flashcardsApi";
+import { NextUpStrip } from "../../lib/nextUp";
 
 /** Ascending quality, left to right — the number keys match their order. */
 const RATINGS: Rating[] = ["again", "hard", "good", "easy"];
@@ -290,6 +291,8 @@ export function CardStudy({ title, cards, submit, onExit }: CardStudyProps) {
             <p className="sq-ai-empty">
               Cards you rated Review are already due again — everything else waits out its interval.
             </p>
+            {/* P17 — past this deck: a quiet topic, the next quiz, the day's remainder. */}
+            <NextUpStrip />
             <Button onClick={onExit}>Done</Button>
           </main>
         ) : (

@@ -13,6 +13,7 @@ import { useState } from "react";
 import { Button, Chip, Ring } from "@sq/ui";
 
 import type { AttemptResult, PendingRow, QuizView } from "../../lib/quizApi";
+import { NextUpStrip } from "../../lib/nextUp";
 
 function duration(ms: number): string {
   const total = Math.floor(ms / 1000);
@@ -250,6 +251,10 @@ export function QuizResults({
           ))}
         </ol>
       </div>
+
+      {/* P17 — what to do after this run. The retry above already answers "quiz";
+          the strip names the next thing instead of repeating this one. */}
+      <NextUpStrip exclude={["weak_quiz", "next_quiz"]} />
 
       <footer className="sq-ai-foot">
         <span className="sq-ai-foot-meta">

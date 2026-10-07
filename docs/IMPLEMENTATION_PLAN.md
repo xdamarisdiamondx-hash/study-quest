@@ -1827,8 +1827,8 @@ days and can be skipped without deleting the series.
 **Delivered in** `packages/core/src/planning` — the whole engine as pure functions over
 snapshots (`suggestForTask`, `dayCandidates`, `generateBlocks`, `planLoad`, `groupQuest`,
 `blockTitle`), 36 tests, no I/O: generation is deterministic on purpose — instant, free and
-reviewable — and the AI recommendations of P17 will sit on top of these same signals
-(ADR-021). Wire contracts live in `packages/core/src/schemas/plan`. The server side is
+reviewable — and P17's recommendation rules rank these same signals rather than inventing new
+ones (ADR-021). Wire contracts live in `packages/core/src/schemas/plan`. The server side is
 `services/planning.ts` (snapshot assembly: open tasks, topics with attempt-weighted mastery
 and material counts, due cards) over `routes/plan.ts`: GET assembles the day (materialising
 recurring rows first, same on-read rule as the tasks list), POST ensure/mode, generate with
@@ -2056,13 +2056,38 @@ the events behind it.
 
 **Goal:** always answer what's next, helpfully (PRD §27, principle 5).
 
-- [ ] Rule engine in `packages/core/planning`: score overdue, weak mastery, due-soon,
+- [x] Rule engine in `packages/core/planning`: score overdue, weak mastery, due-soon,
       inactivity, streak protection; return max 3
-- [ ] Home recommendations section, dismissible, with reason text ("you scored 5/10 last time")
-- [ ] "Next up" strip after every completed activity: next quiz, review weak topics, next quest
+- [x] Home recommendations section, dismissible, with reason text ("you scored 5/10 last time")
+- [x] "Next up" strip after every completed activity: next quiz, review weak topics, next quest
       step, daily quest remainder
-- [ ] Deep links from every recommendation into the right screen with context prefilled
-- [ ] Anti-spam: max 3 shown, min 30 min between refreshes, never on a first-run empty account
+- [x] Deep links from every recommendation into the right screen with context prefilled
+- [x] Anti-spam: max 3 shown, min 30 min between refreshes, never on a first-run empty account
+
+**Delivered in** `packages/core/src/planning/recommend.ts` — eight scored rules over
+signals the server already keeps: `overdue` and `due_soon` (bundled task deadlines,
+one line for many tasks), `weak_quiz` (the latest graded attempt below 0.7 within
+14 days, quoted as PRD §27 quotes it), `stale_review` (a deck quiet for a week —
+"yet" when it was never reviewed), `next_quiz`, `next_step`, `day_remainder` and
+`streak_keep`. The engine is pure and deterministic — no randomness, no model, so
+17 tests pin every word and score — and it knows two contexts: `home` gets
+deadlines and streaks but not the day remainder (Today's Quest already shows it),
+`after` gets the four forward-looking answers but never deadlines or streaks, which
+are not what you want to read the moment you finish something. First-run silence is
+a rule input, not a filter: `everStudied` gates every nudge, and an account with
+nothing in it produces an empty list. The server side is `services/recommendations.ts`
+— one `recommendationsView(profileId, context)` read assembling task snapshots,
+topic snapshots, the streak, the day's blocks, an active quest and dismissed codes,
+capped at `MAX_SUGGESTIONS` _before_ today's `recommendation_dismissals` (migration
+`0011`) are subtracted, so "Not today" shows one fewer card and never summons a
+replacement. Web: `useRecommendations` holds one query key per surface with a
+30-minute `staleTime` and no mutation invalidates it — the card does not reshuffle
+while the student works — Home's What's next card replaced the last mock in
+`data/mock.ts` (file deleted; its own convention says an export dies when its phase
+ships), and `NextUpStrip` renders the top `after` suggestion as one linked line in
+four places: quiz results (excluding the quiz codes the Retry button already
+answers), the session summary, the deck-done panel and the quest celebration.
+Quest links carry `?quest=<id>`, which QuestsPage scrolls into view and outlines.
 
 **Exit:** after any completion, the user is shown exactly what to do next and can act in one tap.
 **Effort:** 2 d · **Depends on:** P16, P12

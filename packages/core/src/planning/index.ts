@@ -12,10 +12,12 @@
  * Everything here is a pure function over snapshots (tasks, topics with their mastery
  * and material, existing rows), so the whole engine tests without a database
  * (ADR-021). Generation is deterministic on purpose: instant, free, and reviewable —
- * the AI recommendations arrive in P17 on top of these same signals.
+ * and P17's recommendation rules rank these same signals rather than inventing new ones.
  */
 
 import { dueLabel, priorityRank, startOfDay } from "../tasks/index.ts";
+
+export * from "./recommend.ts";
 
 /* --- vocabulary ----------------------------------------------------------- */
 

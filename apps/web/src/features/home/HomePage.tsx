@@ -12,12 +12,12 @@ import {
 } from "@sq/ui";
 import { groupQuest, localDate, type QuestItem } from "@sq/core/planning";
 
-import { recommendation } from "../../data/mock";
 import { DueReviewCard } from "../flashcards/DueReviewCard";
 import { useAuth } from "../../lib/useAuth";
 import { useGamification } from "../../lib/useGamification";
 import { useHealth } from "../../lib/useHealth";
 import { usePlanActions, usePlanDay } from "../../lib/usePlan";
+import { useDismissSuggestion, useRecommendations } from "../../lib/useRecommendations";
 import { useSubjects } from "../../lib/useSubjects";
 
 function greeting(now = new Date()): string {
@@ -138,6 +138,46 @@ function Row({ label, ok, note }: { label: string; ok: boolean; note: string }) 
         <span style={{ color: "var(--muted)", fontSize: "14px" }}>— {note}</span>
       </span>
     </div>
+  );
+}
+
+/**
+ * What's next (P17): up to three suggestions ranked by the rule engine, each
+ * with the fact behind it, one link that acts on it, and "Not today" — which
+ * files a dismissal row for the plan day rather than hiding in local state
+ * (A.8), so the decline survives a refresh and expires at midnight. Pending,
+ * error or a quiet first-run account renders nothing: a card with no advice
+ * should not take the screen.
+ */
+function WhatsNext() {
+  const { data, isPending } = useRecommendations("home");
+  const dismiss = useDismissSuggestion("home");
+
+  if (isPending || !data || data.suggestions.length === 0) return null;
+
+  return (
+    <Card title="What's next">
+      <ul className="sq-suggestions">
+        {data.suggestions.map((s) => (
+          <li key={s.code} className="sq-suggestion">
+            <p className="sq-suggestion-text">{s.text}</p>
+            <div className="sq-row" style={{ gap: "var(--s3)" }}>
+              <Link to={s.href} className="sq-btn sq-btn-primary sq-btn-sm">
+                {s.action}
+              </Link>
+              <button
+                type="button"
+                className="sq-btn sq-btn-ghost sq-btn-sm"
+                disabled={dismiss.isPending && dismiss.variables === s.code}
+                onClick={() => dismiss.mutate(s.code)}
+              >
+                {dismiss.isPending && dismiss.variables === s.code ? "Dismissing…" : "Not today"}
+              </button>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </Card>
   );
 }
 
@@ -346,24 +386,15 @@ export function HomePage() {
 
       <ContinueLearning />
 
-      <Card title="What's next">
-        <div className="sq-callout sq-callout-accent">{recommendation.text}</div>
-        <div className="sq-row" style={{ marginTop: "var(--s4)" }}>
-          <button type="button" className="sq-btn sq-btn-primary">
-            {recommendation.cta}
-          </button>
-          <button type="button" className="sq-btn sq-btn-ghost">
-            Not now
-          </button>
-        </div>
-      </Card>
+      <WhatsNext />
 
       <ServiceStatus />
 
       <p style={{ color: "var(--muted)", fontSize: 13, margin: "0 0 var(--s4)" }}>
         Today's Quest reads your real plan (P12); XP, level and streak above are read from the
-        ledger as of P15 — they move the moment you earn them. Subjects, topics and subject progress
-        have been real since P4. See <code>docs/PHASES.md</code>.
+        ledger as of P15 — they move the moment you earn them. What's next is ranked by plain rules
+        over the same rows since P17. Subjects, topics and subject progress have been real since P4.
+        See <code>docs/PHASES.md</code>.
       </p>
     </div>
   );

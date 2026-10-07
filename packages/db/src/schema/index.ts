@@ -528,6 +528,27 @@ export const streaks = pgTable("streaks", {
   freezeCount: integer("freeze_count").notNull().default(0),
 });
 
+/**
+ * "Not today" on a recommendation (P17): one row per dismissed rule per day, so
+ * the decline survives a refresh and expires with the date instead of with the
+ * session — the same rule plan dismissals follow (A.8).
+ */
+export const recommendationDismissals = pgTable(
+  "recommendation_dismissals",
+  {
+    id: id(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    /** The rule's code — one row dismisses exactly that suggestion. */
+    code: text("code").notNull(),
+    /** The plan day key (localDate): a new day is a new card. */
+    day: text("day").notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("rec_dismiss_user_code_day_idx").on(t.userId, t.code, t.day)],
+);
+
 /* --- platform -------------------------------------------------------------- */
 export const reminders = pgTable("reminders", {
   id: id(),
