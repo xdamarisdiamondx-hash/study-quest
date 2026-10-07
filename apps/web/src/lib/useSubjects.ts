@@ -220,3 +220,46 @@ export function useSubjectTopics(subjectId: string | undefined): SubjectTopicsSt
     },
   };
 }
+
+/* --- every topic at once ------------------------------------------------- */
+
+export interface AllTopicsState {
+  status: SubjectsStatus;
+  topics: (Topic & { subjectName: string })[];
+  error: string | null;
+}
+
+/**
+ * Every topic across subjects, each tagged with its subject's name — the plan's
+ * manual-add picker is the one control that needs the whole pool in one place.
+ */
+export function useAllTopics(): AllTopicsState {
+  const [status, setStatus] = useState<SubjectsStatus>("loading");
+  const [topics, setTopics] = useState<(Topic & { subjectName: string })[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    subjectsApi
+      .list()
+      .then(async ({ subjects: rows }) => {
+        const live = rows.filter((s) => !s.archived);
+        const details = await Promise.all(live.map((s) => subjectsApi.detail(s.id)));
+        if (cancelled) return;
+        setTopics(
+          details.flatMap((d) => d.topics.map((t) => ({ ...t, subjectName: d.subject.name }))),
+        );
+        setStatus("ready");
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setStatus("error");
+        setError(message(err, "Could not load your topics."));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return { status, topics, error };
+}

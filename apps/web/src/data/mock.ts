@@ -3,8 +3,8 @@
  *
  * Subjects, topics and subject progress are real as of P4 — those come from
  * `lib/useSubjects` and are not mocked here any more. What remains below is everything
- * whose phase has not landed: XP and streaks (P15), and the daily quest (P12). Tasks
- * became real in P11 and their mock was deleted with it.
+ * whose phase has not landed: XP and streaks (P15). Tasks became real in P11 and the
+ * daily quest in P12; their mocks were deleted with them.
  *
  * Each export is removed the moment its phase ships, so a stale mock cannot masquerade
  * as a feature that works.
@@ -23,21 +23,6 @@ export const level = {
   title: levelTitle(levelProgress(profile.totalXp).level),
   next: XP.quizAttempt * 5,
 };
-
-export interface TodayItem {
-  id: string;
-  title: string;
-  subject: string;
-  minutes: number;
-  done: boolean;
-}
-
-export const todayQuest: TodayItem[] = [
-  { id: "q1", title: "Review Atomic Structure", subject: "Chemistry", minutes: 25, done: true },
-  { id: "q2", title: "Complete quiz", subject: "Chemistry", minutes: 10, done: true },
-  { id: "q3", title: "Complete assignment", subject: "Mathematics", minutes: 30, done: false },
-  { id: "q4", title: "Review Motion", subject: "Physics", minutes: 20, done: false },
-];
 
 export const recommendation = {
   text: "You scored 5/10 on Motion. Try a quick review?",

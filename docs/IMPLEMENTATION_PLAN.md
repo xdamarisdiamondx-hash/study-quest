@@ -1812,16 +1812,42 @@ days and can be skipped without deleting the series.
 
 **Goal:** tasks stop being a separate feature (PRD §17–19).
 
-- [ ] Task suggestions: "review Motion for 20 min, then a short quiz" generated from the task's
+- [x] Task suggestions: "review Motion for 20 min, then a short quiz" generated from the task's
       topic, its mastery, and the deadline
-- [ ] Accept / dismiss / edit suggestions; accepted ones become plan blocks
-- [ ] Three planning modes: **manual** (student builds the day), **suggested**, **automatic**
+- [x] Accept / dismiss / edit suggestions; accepted ones become plan blocks
+- [x] Three planning modes: **manual** (student builds the day), **suggested**, **automatic**
       (deadlines, tests, unfinished tasks, goals, available minutes)
-- [ ] Day view: timeline of blocks, capacity indicator, drag to reorder
-- [ ] **Today's Quest**: personalised list generated daily, ≤ 6 items, grouped by subject,
+- [x] Day view: timeline of blocks, capacity indicator, drag to reorder
+- [x] **Today's Quest**: personalised list generated daily, ≤ 6 items, grouped by subject,
       with progress (PRD §19)
-- [ ] Regenerate the daily quest with "keep what you've done"
-- [ ] Everything editable — the student is always in control (principle 4)
+- [x] Regenerate the daily quest with "keep what you've done"
+- [x] Everything editable — the student is always in control (principle 4)
+
+**Delivered in** `packages/core/src/planning` — the whole engine as pure functions over
+snapshots (`suggestForTask`, `dayCandidates`, `generateBlocks`, `planLoad`, `groupQuest`,
+`blockTitle`), 36 tests, no I/O: generation is deterministic on purpose — instant, free and
+reviewable — and the AI recommendations of P17 will sit on top of these same signals
+(ADR-021). Wire contracts live in `packages/core/src/schemas/plan`. The server side is
+`services/planning.ts` (snapshot assembly: open tasks, topics with attempt-weighted mastery
+and material counts, due cards) over `routes/plan.ts`: GET assembles the day (materialising
+recurring rows first, same on-read rule as the tasks list), POST ensure/mode, generate with
+keep-done, blocks CRUD, dismiss, reorder and capacity — every write joined back to
+`plans.userId` for ownership. No schema change was needed: `plans` + `plan_blocks` have
+existed since migration 0000, and dismissal is a `plan_blocks` row with
+`status: "dismissed"`, which is per-day by construction and survives a refresh (A.8).
+Completion of a task-kind block proxies through the new `services/taskActions.ts` — one
+writer that flips the task, syncs _all_ of the task's blocks, awards XP idempotently and
+registers the streak day, so the quest can never disagree with the task list; non-task
+blocks (review/quiz/fills) complete in the plan route and count a study day without minting
+a second XP award for one activity. `routes/tasks.ts` now runs through the same service for
+complete/uncomplete/delete (blocks are dropped with their tasks), and gained
+`GET /suggestions-for/:taskId` — PRD §17's prep line, computed by the same engine the tray
+uses. On the web, `features/plan/PlanPage.tsx` is the mode picker, capacity + Track,
+accept/dismiss tray and the drag-or-arrows timeline (optimistic reorder); the home screen's
+Today's Quest reads the same rows grouped by `groupQuest`, so one artifact serves both
+surfaces (A.8); Tasks rows with a linked topic gain a calendar button opening
+`PrepDialog.tsx` — §17's literal "before you finish this" surface with a one-click "Add
+prep to today". `todayQuest` left `data/mock.ts` with this phase.
 
 **Exit:** a student with five deadlines gets a sensible day plan they can edit, and today's
 quest reflects real progress as items are completed.

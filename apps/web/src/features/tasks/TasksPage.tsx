@@ -23,6 +23,7 @@ import {
 
 import { useSubjects } from "../../lib/useSubjects";
 import { useTaskActions, useTaskList } from "../../lib/useTasks";
+import { PrepDialog } from "./PrepDialog";
 import { TaskComposer } from "./TaskComposer";
 import { TaskRow } from "./TaskRow";
 
@@ -66,6 +67,8 @@ export function TasksPage() {
   const [priorityFilter, setPriorityFilter] = useState<string | null>(null);
   /** Which dialog is open: null = closed, a Task = edit, undefined-ish "new" = create. */
   const [composer, setComposer] = useState<{ task: Task | null } | null>(null);
+  /** PRD §17: the task whose prep suggestion is open right now. */
+  const [prep, setPrep] = useState<Task | null>(null);
   const [undo, setUndo] = useState<{ id: string; title: string; xp: number } | null>(null);
 
   const list = useTaskList();
@@ -270,6 +273,7 @@ export function TasksPage() {
                 busy={actions.complete.isPending || actions.uncomplete.isPending}
                 onToggle={() => void toggle(task)}
                 onEdit={() => setComposer({ task })}
+                onPlan={task.status === "open" && task.topicId ? () => setPrep(task) : undefined}
                 onMoveToday={() => void moveToday(task)}
               />
             ))
@@ -285,6 +289,8 @@ export function TasksPage() {
           onClose={() => setComposer(null)}
         />
       ) : null}
+
+      {prep ? <PrepDialog task={prep} onClose={() => setPrep(null)} /> : null}
     </div>
   );
 }

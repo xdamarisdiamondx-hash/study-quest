@@ -8,6 +8,7 @@
     "./gamification": "./src/gamification/index.ts",
     "./flashcards": "./src/flashcards/index.ts",
     "./markdown": "./src/markdown/index.ts",
+    "./planning": "./src/planning/index.ts",
     "./progress": "./src/progress/index.ts",
     "./quiz": "./src/quiz/index.ts",
     "./starter": "./src/starter/index.ts",
@@ -15,6 +16,7 @@
     "./tasks": "./src/tasks/index.ts",
     "./schemas/ai": "./src/schemas/ai.ts",
     "./schemas/notes": "./src/schemas/notes.ts",
+    "./schemas/plan": "./src/schemas/plan.ts",
     "./schemas/subjects": "./src/schemas/subjects.ts",
     "./schemas/tasks": "./src/schemas/tasks.ts"
   },

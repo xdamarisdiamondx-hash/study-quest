@@ -5,6 +5,7 @@ import { RedirectIfAuthed, RequireAuth } from "./app/guards";
 import { SignInPage } from "./features/auth/SignInPage";
 import { OnboardingPage } from "./features/onboarding/OnboardingPage";
 import { HomePage } from "./features/home/HomePage";
+import { PlanPage } from "./features/plan/PlanPage";
 import { TasksPage } from "./features/tasks/TasksPage";
 import { StudyPage } from "./features/study/StudyPage";
 import { SubjectDetailPage } from "./features/study/SubjectDetailPage";
@@ -31,6 +32,7 @@ export function App() {
 
         <Route element={<AppShell />}>
           <Route index element={<HomePage />} />
+          <Route path="plan" element={<PlanPage />} />
           <Route path="tasks" element={<TasksPage />} />
           <Route path="study" element={<StudyPage />} />
           <Route path="study/:subjectId" element={<SubjectDetailPage />} />

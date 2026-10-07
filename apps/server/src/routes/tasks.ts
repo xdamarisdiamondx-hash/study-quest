@@ -2,8 +2,9 @@
  * Tasks, views and recurring series (P11, PRD sections 15–16, ADR-017).
  *
  * Every query is scoped by the `profileId` that `requireProfile` puts on the context.
- * Completion flows through the one XP/streak writer in `services/xp.ts`, so awards are
- * idempotent and undo revokes exactly what completion granted.
+ * Completion flows through `services/taskActions.ts` — the one XP/streak writer, which
+ * also keeps the day plan's blocks in step with the task they point at (P12), so the
+ * quest can never disagree with the task list.
  *
  * Series semantics, in one place:
  * - The rule row owns the anchor date; each materialised row carries `recurrence_id`.
@@ -16,7 +17,7 @@
 import { Hono } from "hono";
 import { and, asc, desc, eq, gte, inArray, ne } from "drizzle-orm";
 
-import { XP } from "@sq/core/gamification";
+import { suggestForTask } from "@sq/core/planning";
 import {
   createTaskSchema,
   type Recurrence,
@@ -29,8 +30,10 @@ import { subjects, taskRecurrences, tasks, topics } from "@sq/db/schema";
 
 import { requireProfile, type ProfileEnv } from "../auth/currentProfile.ts";
 import { db } from "../db.ts";
+import { toTaskSnapshot, topicSnapshots } from "../services/planning.ts";
+import { dropBlocksForTasks, completeTask, uncompleteTask } from "../services/taskActions.ts";
 import { materialiseOccurrences } from "../services/taskRecurrence.ts";
-import { awardXp, recordActivity, revokeXp } from "../services/xp.ts";
+import { revokeXp } from "../services/xp.ts";
 
 export const tasksRouter = new Hono<ProfileEnv>();
 
@@ -186,6 +189,28 @@ tasksRouter.get("/", async (c) => {
     tasks: rows.map((row) =>
       serialise(row, row.recurrenceId ? (rules.get(row.recurrenceId) ?? null) : null),
     ),
+  });
+});
+
+/**
+ * GET /api/tasks/suggestions-for/:taskId — PRD section 17's prep line ("before you
+ * finish this, spend twenty minutes on Motion"), computed by the same pure engine the
+ * plan tray uses: the task's topic, its mastery and the deadline. `null` means there
+ * is nothing worth prepping — the task can stand on its own.
+ */
+tasksRouter.get("/suggestions-for/:taskId", async (c) => {
+  const profileId = c.get("profileId");
+  const taskId = c.req.param("taskId");
+
+  const task = await getTask(profileId, taskId);
+  if (!task) return notFound();
+
+  const snapshot = toTaskSnapshot(task);
+  if (!snapshot.topicId) return Response.json({ suggestion: null });
+
+  const topics = await topicSnapshots(profileId, [snapshot.topicId]);
+  return Response.json({
+    suggestion: suggestForTask(snapshot, topics.get(snapshot.topicId) ?? null, new Date()),
   });
 });
 
@@ -368,6 +393,7 @@ tasksRouter.delete("/:id", async (c) => {
     for (const row of rows) {
       if (row.status === "done") await revokeXp(xpSource(profileId, row.id));
     }
+    await dropBlocksForTasks(rows.map((r) => r.id));
     // Deleting the rule cascades every row that points at it — that *is* the series.
     await db.orm.delete(taskRecurrences).where(eq(taskRecurrences.id, task.recurrenceId));
     return Response.json({ ok: true, deleted: rows.length });
@@ -400,68 +426,42 @@ tasksRouter.delete("/:id", async (c) => {
   }
 
   await db.orm.delete(tasks).where(and(eq(tasks.id, id), eq(tasks.userId, profileId)));
+  await dropBlocksForTasks([task.id]);
   return Response.json({ ok: true });
 });
 
 /* --- completion ----------------------------------------------------------- */
 
 /**
- * POST /api/tasks/:id/complete — award XP (idempotent), count a streak day.
- *
- * Quest hooks arrive with P13; the streak hook lands here because it is the same
- * "real work happened" signal P15 will reuse across every feature.
+ * POST /api/tasks/:id/complete — award XP (idempotent), count a streak day, and mark
+ * any plan block holding this task done on the same call (P12).
  */
 tasksRouter.post("/:id/complete", async (c) => {
   const profileId = c.get("profileId");
   const id = c.req.param("id");
 
-  const task = await getTask(profileId, id);
-  if (!task) return notFound();
-  if (task.status === "done") {
-    return Response.json({ task: await serialiseOne(task), xpAwarded: 0, streak: null });
-  }
-
-  const [updated] = await db.orm
-    .update(tasks)
-    .set({ status: "done", completedAt: new Date() })
-    .where(and(eq(tasks.id, id), eq(tasks.userId, profileId)))
-    .returning();
-
-  const xpAwarded = await awardXp({
-    delta: XP.task,
-    ...xpSource(profileId, id),
-  });
-  const streak = await recordActivity(profileId);
+  const done = await completeTask(profileId, id);
+  if (!done) return notFound();
 
   return Response.json({
-    task: await serialiseOne(updated),
-    xpAwarded,
-    streak: streak.current,
+    task: await serialiseOne(done.task),
+    xpAwarded: done.xpAwarded,
+    streak: done.streak,
   });
 });
 
 /**
- * POST /api/tasks/:id/uncomplete — undo: back to open, and the award goes back too.
- * Also un-skips, since a skipped row never held XP to revoke.
+ * POST /api/tasks/:id/uncomplete — undo: back to open, plan blocks back to pending,
+ * and the award goes back too. Also un-skips, since a skipped row never held XP.
  */
 tasksRouter.post("/:id/uncomplete", async (c) => {
   const profileId = c.get("profileId");
   const id = c.req.param("id");
 
-  const task = await getTask(profileId, id);
-  if (!task) return notFound();
-  if (task.status === "open") {
-    return Response.json({ task: await serialiseOne(task) });
-  }
+  const reopened = await uncompleteTask(profileId, id);
+  if (!reopened) return notFound();
 
-  const [updated] = await db.orm
-    .update(tasks)
-    .set({ status: "open", completedAt: null })
-    .where(and(eq(tasks.id, id), eq(tasks.userId, profileId)))
-    .returning();
-  await revokeXp(xpSource(profileId, id));
-
-  return Response.json({ task: await serialiseOne(updated) });
+  return Response.json({ task: await serialiseOne(reopened.task) });
 });
 
 /**

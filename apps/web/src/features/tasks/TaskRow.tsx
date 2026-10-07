@@ -18,6 +18,8 @@ interface TaskRowProps {
   onToggle: () => void;
   /** Opens the edit dialog. Omitted by lists that only read. */
   onEdit?: () => void;
+  /** PRD §17: opens the prep suggestion dialog for a topic-linked open task. */
+  onPlan?: () => void;
   /** The overdue affordance — sets the deadline to today. */
   onMoveToday?: () => void;
   busy?: boolean;
@@ -34,6 +36,7 @@ export function TaskRow({
   subjectName,
   onToggle,
   onEdit,
+  onPlan,
   onMoveToday,
   busy,
 }: TaskRowProps) {
@@ -108,6 +111,28 @@ export function TaskRow({
           )}
         </span>
       </span>
+      {onPlan ? (
+        <IconButton
+          title="What should I do before this?"
+          aria-label={`Suggest prep for ${task.title}`}
+          onClick={onPlan}
+          disabled={busy}
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.7"
+            strokeLinecap="round"
+            aria-hidden="true"
+          >
+            <rect x="3.5" y="5" width="17" height="15" rx="2" />
+            <path d="M3.5 9.5h17M8 3v4M16 3v4" />
+          </svg>
+        </IconButton>
+      ) : null}
       {onEdit ? (
         <IconButton title="Edit task" aria-label={`Edit ${task.title}`} onClick={onEdit}>
           ✎

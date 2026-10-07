@@ -1,11 +1,21 @@
-import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Card, CheckItem, LevelBadge, Monogram, Streak, Track } from "@sq/ui";
+import {
+  Card,
+  CheckItem,
+  EmptyState,
+  IconButton,
+  LevelBadge,
+  Monogram,
+  Streak,
+  Track,
+} from "@sq/ui";
+import { groupQuest, localDate, type QuestItem } from "@sq/core/planning";
 
-import { level, profile, recommendation, todayQuest } from "../../data/mock";
+import { level, profile, recommendation } from "../../data/mock";
 import { DueReviewCard } from "../flashcards/DueReviewCard";
 import { useAuth } from "../../lib/useAuth";
 import { useHealth } from "../../lib/useHealth";
+import { usePlanActions, usePlanDay } from "../../lib/usePlan";
 import { useSubjects } from "../../lib/useSubjects";
 
 function greeting(now = new Date()): string {
@@ -129,16 +139,126 @@ function Row({ label, ok, note }: { label: string; ok: boolean; note: string }) 
   );
 }
 
+/**
+ * Today's Quest (P12): the day's plan grouped by subject — the same rows the Plan
+ * page edits, so the two can never disagree (A.8). Toggling a task-kind item goes
+ * through the shared completion service: the task closes with it, and its XP lands
+ * exactly once.
+ */
+function TodaysQuest() {
+  const date = localDate(new Date());
+  const day = usePlanDay(date);
+  const actions = usePlanActions();
+
+  const blocks = day.data?.blocks ?? [];
+  const items: QuestItem[] = blocks.map((b) => ({
+    blockId: b.id,
+    title: b.title,
+    kind: b.kind,
+    subjectId: b.subjectId,
+    subjectName: b.subjectName,
+    minutes: b.plannedMin,
+    done: b.status === "done",
+  }));
+  const groups = groupQuest(items);
+  const completed = items.filter((i) => i.done).length;
+  const total = items.length;
+  const todayPct = total === 0 ? 0 : (completed / total) * 100;
+  const busy = actions.patch.isPending || actions.generate.isPending;
+
+  if (day.isPending) {
+    return (
+      <Card title="Today's Quest">
+        <p style={{ margin: 0, color: "var(--muted)", font: "var(--t-body-sm)" }}>Loading…</p>
+      </Card>
+    );
+  }
+  if (!day.data) return null; // An unreachable API is already explained by ServiceStatus.
+
+  const manual = day.data.plan.mode === "manual";
+
+  return (
+    <Card
+      title="Today's Quest"
+      action={
+        <span className="sq-row" style={{ gap: "var(--s3)", alignItems: "center" }}>
+          <span className="sq-num" style={{ fontSize: 13, color: "var(--muted)" }}>
+            {completed}/{total}
+          </span>
+          {manual ? null : (
+            <IconButton
+              title="Regenerate the day — keeps what you've finished"
+              aria-label="Regenerate today's plan"
+              disabled={busy}
+              onClick={() => actions.generate.mutate({ date })}
+            >
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M20 12a8 8 0 1 1-2.3-5.6" />
+                <path d="M20 4v4h-4" />
+              </svg>
+            </IconButton>
+          )}
+        </span>
+      }
+    >
+      {total === 0 ? (
+        <EmptyState
+          title="Nothing planned yet"
+          hint="The Plan page turns your deadlines into a day you can actually finish."
+          action={
+            <Link to="/plan" className="sq-btn sq-btn-primary sq-btn-sm">
+              Open the Plan
+            </Link>
+          }
+        />
+      ) : (
+        <>
+          <div style={{ marginBottom: "var(--s2)" }}>
+            <Track label="Today's progress" value={todayPct} caption={`${completed}/${total}`} />
+          </div>
+          {groups.map((group) => (
+            <div key={group.subjectId ?? "none"} style={{ marginTop: "var(--s3)" }}>
+              <span className="sq-label" style={{ display: "block", marginBottom: 2 }}>
+                {group.subjectName}
+              </span>
+              {group.items.map((item) => (
+                <CheckItem
+                  key={item.blockId}
+                  done={item.done}
+                  onToggle={() =>
+                    actions.patch.mutate({
+                      id: item.blockId,
+                      patch: { status: item.done ? "pending" : "done" },
+                    })
+                  }
+                >
+                  {item.title}{" "}
+                  <span style={{ color: "var(--muted)", fontSize: "14px" }}>
+                    · {item.minutes} min
+                  </span>
+                </CheckItem>
+              ))}
+            </div>
+          ))}
+        </>
+      )}
+    </Card>
+  );
+}
+
 export function HomePage() {
   // The account's real name — never the mock profile's placeholder.
   const { profile: account } = useAuth();
-  const [done, setDone] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(todayQuest.map((i) => [i.id, i.done])),
-  );
-
-  const completed = useMemo(() => todayQuest.filter((i) => done[i.id]).length, [done]);
-  const total = todayQuest.length;
-  const todayPct = total === 0 ? 0 : (completed / total) * 100;
 
   return (
     <div className="sq-col">
@@ -178,30 +298,7 @@ export function HomePage() {
 
       <DueReviewCard />
 
-      <Card
-        title="Today's Quest"
-        action={
-          <span className="sq-num" style={{ fontSize: 13, color: "var(--muted)" }}>
-            {completed}/{total}
-          </span>
-        }
-      >
-        <div style={{ marginBottom: "var(--s2)" }}>
-          <Track label="Today's progress" value={todayPct} />
-        </div>
-        {todayQuest.map((item) => (
-          <CheckItem
-            key={item.id}
-            done={Boolean(done[item.id])}
-            onToggle={() => setDone((d) => ({ ...d, [item.id]: !d[item.id] }))}
-          >
-            {item.title}{" "}
-            <span style={{ color: "var(--muted)", fontSize: "14px" }}>
-              · {item.subject} · {item.minutes} min
-            </span>
-          </CheckItem>
-        ))}
-      </Card>
+      <TodaysQuest />
 
       <ContinueLearning />
 
@@ -220,9 +317,9 @@ export function HomePage() {
       <ServiceStatus />
 
       <p style={{ color: "var(--muted)", fontSize: 13, margin: "0 0 var(--s4)" }}>
-        Subjects, topics and subject progress are real as of P4. Today's Quest, XP and streaks are
-        still placeholder data — those arrive with quests (P13) and gamification (P15). See{" "}
-        <code>docs/PHASES.md</code>.
+        Today's Quest now reads your real plan (P12) — check things off here or on the Plan page.
+        Subjects, topics and subject progress are real as of P4; XP and streaks stay placeholder
+        until gamification (P15). See <code>docs/PHASES.md</code>.
       </p>
     </div>
   );
