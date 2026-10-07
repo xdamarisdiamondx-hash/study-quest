@@ -12,9 +12,11 @@
     "./quiz": "./src/quiz/index.ts",
     "./starter": "./src/starter/index.ts",
     "./subjects": "./src/subjects/index.ts",
+    "./tasks": "./src/tasks/index.ts",
     "./schemas/ai": "./src/schemas/ai.ts",
     "./schemas/notes": "./src/schemas/notes.ts",
-    "./schemas/subjects": "./src/schemas/subjects.ts"
+    "./schemas/subjects": "./src/schemas/subjects.ts",
+    "./schemas/tasks": "./src/schemas/tasks.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"

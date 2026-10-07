@@ -1,9 +1,9 @@
 /**
  * One subject, with its topics (P4).
  *
- * The tab set is the shape the rest of the app will grow into: Overview through
- * Flashcards are real now; Tasks is wired to its future phase and says so rather
- * than showing an empty page that looks broken.
+ * The tab set is the shape the rest of the app grows into: every tab is real — Overview
+ * through Flashcards as of P4–P9, Tasks as of P11 — each panel drawing only its own
+ * slice while this page owns the header and tab bar.
  */
 import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -15,6 +15,7 @@ import { TopicComposer, TopicRow } from "./TopicRow";
 import { NotesPanel } from "./NotesPanel";
 import { QuizzesPanel } from "../quiz/QuizzesPanel";
 import { FlashcardsPanel } from "../flashcards/FlashcardsPanel";
+import { TasksPanel } from "../tasks/TasksPanel";
 
 const TABS: TabItem[] = [
   { id: "overview", label: "Overview" },
@@ -22,13 +23,8 @@ const TABS: TabItem[] = [
   { id: "notes", label: "Notes" },
   { id: "quizzes", label: "Quizzes" },
   { id: "flashcards", label: "Flashcards" },
-  { id: "tasks", label: "Tasks", soon: true },
+  { id: "tasks", label: "Tasks" },
 ];
-
-/** Which phase delivers each tab, so the empty state can be specific. */
-const PHASE: Record<string, string> = {
-  tasks: "P11",
-};
 
 export function SubjectDetailPage() {
   const { subjectId } = useParams<{ subjectId: string }>();
@@ -199,16 +195,9 @@ export function SubjectDetailPage() {
         <FlashcardsPanel subjectId={subject.id} topics={store.topics} />
       </TabPanel>
 
-      {TABS.filter((t) => t.soon).map((t) => (
-        <TabPanel key={t.id} id={t.id} active={tab}>
-          <Card>
-            <EmptyState
-              title={`${t.label} arrive in ${PHASE[t.id]}`}
-              hint={`This tab is already wired up, so it will not move when ${t.label.toLowerCase()} land. Right now there is nothing to show.`}
-            />
-          </Card>
-        </TabPanel>
-      ))}
+      <TabPanel id="tasks" active={tab}>
+        <TasksPanel subjectId={subject.id} />
+      </TabPanel>
     </div>
   );
 }

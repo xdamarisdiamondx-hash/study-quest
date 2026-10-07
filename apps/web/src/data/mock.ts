@@ -3,8 +3,8 @@
  *
  * Subjects, topics and subject progress are real as of P4 — those come from
  * `lib/useSubjects` and are not mocked here any more. What remains below is everything
- * whose phase has not landed: tasks (P11), quests (P13), XP and streaks (P15), and
- * notes (P5).
+ * whose phase has not landed: XP and streaks (P15), and the daily quest (P12). Tasks
+ * became real in P11 and their mock was deleted with it.
  *
  * Each export is removed the moment its phase ships, so a stale mock cannot masquerade
  * as a feature that works.
@@ -43,23 +43,6 @@ export const recommendation = {
   text: "You scored 5/10 on Motion. Try a quick review?",
   cta: "Start review",
 };
-
-export interface TaskSummary {
-  id: string;
-  title: string;
-  subject: string;
-  due: string;
-  priority: "high" | "normal" | "low";
-  done: boolean;
-  recurring?: string;
-}
-
-export const tasks: TaskSummary[] = [
-  { id: "t1", title: "Complete Physics assignment", subject: "Physics", due: "Friday", priority: "high", done: false },
-  { id: "t2", title: "Review Chemistry", subject: "Chemistry", due: "Sunday", priority: "normal", done: false, recurring: "Every Sunday" },
-  { id: "t3", title: "Study Mathematics", subject: "Mathematics", due: "Today", priority: "normal", done: true, recurring: "Mon, Wed, Fri" },
-  { id: "t4", title: "Read Biology revision notes", subject: "Biology", due: "Tuesday", priority: "low", done: false },
-];
 
 export const activeQuest = {
   id: "q-photo",

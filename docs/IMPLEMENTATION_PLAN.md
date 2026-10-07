@@ -1776,14 +1776,33 @@ be explained without leaving the screen.
 
 **Goal:** assignments and revision, with repetition.
 
-- [ ] Task composer: title, kind (homework/assignment/revision/project/personal/goal),
+- [x] Task composer: title, kind (homework/assignment/revision/project/personal/goal),
       subject, topic, deadline, priority, estimate, notes
-- [ ] Views: Today, Upcoming, All, Done; filter by subject/priority/kind; sort by deadline,
+- [x] Views: Today, Upcoming, All, Done; filter by subject/priority/kind; sort by deadline,
       priority, estimate
-- [ ] Complete / uncomplete with undo, XP award, and effect on quests and streak
-- [ ] Overdue handling: no red shaming, offer reschedule or "move to today"
-- [ ] Recurring tasks: rrule-lite editor (daily, weekly by weekday, interval, until date) and
+- [x] Complete / uncomplete with undo, XP award, and effect on quests and streak
+- [x] Overdue handling: no red shaming, offer reschedule or "move to today"
+- [x] Recurring tasks: rrule-lite editor (daily, weekly by weekday, interval, until date) and
       occurrence materialisation 14 days ahead (ADR-017)
+
+**Delivered in** `packages/core/src/tasks` — the rrule-lite engine (`occurrencesBetween`,
+`nextOccurrence`, `ruleLabel`) plus the view, overdue and sort helpers that server and client
+both read — over `routes/tasks.ts`: a list that materialises recurring rows before it answers,
+series-aware PATCH and DELETE (edit-all, delete-this, delete-the-series), and
+complete/uncomplete/skip. `services/xp.ts` is the single award/revoke/activity writer P15 will
+inherit: completion sets `XP.task` under the ledger's idempotent key and registers a streak day;
+undo and delete revoke exactly that award. The schema change (migration 0007) is small but
+deliberate: `tasks.recurrence_id` links every row to its series, and the rule row carries its own
+`anchor_at`, because the anchor must outlive the head row — skipping the first occurrence would
+otherwise shift the phase of every later one. Skipping itself is a `skipped` status: reversible,
+shown in Done with its chip, and structurally unable to delete the series (A.8). The composer
+(`TaskComposer.tsx`) holds the repeat editor — frequency, interval, weekday toggles, until — and
+gains apply-to-whole-series, skip, delete-this and delete-series in edit mode; the deadline is
+never part of a series edit (A.8). The page slices one query into Today/Upcoming/All/Done with
+subject/kind/priority filters and three sorts, and overdue rows print "was due yesterday" in
+neutral ink beside Move-to-today and Reschedule (A.8). The subject page's Tasks tab is the same
+rows, filtered (`TasksPanel.tsx`). Quest hooks are the one deferred piece — "effect on quests"
+lands with P13's step machinery; the streak effect landed here.
 
 **Exit:** create, complete, repeat and reschedule tasks; recurring tasks appear on the right
 days and can be skipped without deleting the series.

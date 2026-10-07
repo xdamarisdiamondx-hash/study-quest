@@ -333,15 +333,32 @@ export const tasks = pgTable(
     status: text("status").notNull().default("open"),
     completedAt: timestamp("completed_at", { withTimezone: true }),
     createdAt: createdAt(),
+    /**
+     * Every row of a recurring series — head included — points at its rule. Deleting a
+     * single row skips that occurrence; deleting the rule row deletes the series (P11).
+     */
+    recurrenceId: uuid("recurrence_id").references((): AnyPgColumn => taskRecurrences.id, {
+      onDelete: "cascade",
+    }),
   },
-  (t) => [index("tasks_user_idx").on(t.userId), index("tasks_due_idx").on(t.dueAt)],
+  (t) => [
+    index("tasks_user_idx").on(t.userId),
+    index("tasks_due_idx").on(t.dueAt),
+    index("tasks_recurrence_idx").on(t.recurrenceId),
+  ],
 );
 
 export const taskRecurrences = pgTable("task_recurrences", {
   id: id(),
   taskId: uuid("task_id")
     .notNull()
-    .references(() => tasks.id, { onDelete: "cascade" }),
+    .references((): AnyPgColumn => tasks.id, { onDelete: "cascade" }),
+  /**
+   * The date the series was born on — the anchor occurrence math counts from. Kept on
+   * the rule (not read from `taskId`'s row) so skipping the first occurrence cannot
+   * shift the phase of every later one (P11, ADR-017).
+   */
+  anchorAt: timestamp("anchor_at", { withTimezone: true }).notNull(),
   freq: text("freq").notNull().default("weekly"),
   interval: integer("interval").notNull().default(1),
   byWeekday: text("by_weekday").notNull().default(""),
