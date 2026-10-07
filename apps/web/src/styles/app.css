@@ -430,3 +430,105 @@
   border-radius: var(--r-full);
   transition: width var(--slow);
 }
+
+/* --- progress charts (P16) ----------------------------------------------- */
+.sq-chart-empty {
+  margin: 0;
+  color: var(--muted);
+  font: var(--t-body-sm);
+}
+.sq-chart-table {
+  margin-top: var(--s2);
+  color: var(--muted);
+  font-size: 13px;
+}
+.sq-chart-table summary {
+  cursor: pointer;
+}
+.sq-chart-table table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: var(--s2);
+}
+.sq-chart-table caption {
+  text-align: left;
+  padding-bottom: var(--s2);
+}
+.sq-chart-table th,
+.sq-chart-table td {
+  text-align: left;
+  padding: 3px var(--s2);
+  border-bottom: 1px solid var(--border);
+}
+.sq-chart-table th[scope="row"] {
+  font-weight: 500;
+}
+
+.sq-heat-wrap {
+  margin-top: var(--s3);
+}
+.sq-heat {
+  display: flex;
+  gap: 3px;
+}
+.sq-heat-col {
+  display: grid;
+  grid-template-rows: repeat(7, 1fr);
+  gap: 3px;
+  width: 11px;
+}
+.sq-heat-cell {
+  aspect-ratio: 1;
+  border-radius: 3px;
+  background: var(--track);
+}
+.sq-heat-pad {
+  background: transparent;
+}
+/* One hue at four strengths — the heatmap never introduces a new colour. */
+.sq-heat-l1 {
+  background: var(--accent);
+  opacity: 0.3;
+}
+.sq-heat-l2 {
+  background: var(--accent);
+  opacity: 0.55;
+}
+.sq-heat-l3 {
+  background: var(--accent);
+  opacity: 0.78;
+}
+.sq-heat-l4 {
+  background: var(--accent);
+}
+.sq-heat-cell:not(.sq-heat-pad):hover {
+  outline: 1px solid var(--strong);
+  outline-offset: 1px;
+}
+
+.sq-trend-wrap {
+  margin-top: var(--s2);
+}
+.sq-trend {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.sq-trend-grid {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+.sq-trend-line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.sq-trend-dot {
+  fill: var(--accent);
+}
+.sq-trend-tick {
+  fill: var(--muted);
+  font-size: 9px;
+}

@@ -20,6 +20,7 @@ const TONE: Record<TopicStatus, "neutral" | "iris" | "ok"> = {
 
 export function TopicRow({
   topic,
+  progress,
   index,
   total,
   busy,
@@ -36,6 +37,8 @@ export function TopicRow({
   onDelete,
 }: {
   topic: Topic;
+  /** Measured percentage (0..1) from the shared formula — P16, PRD §25. */
+  progress?: number;
   index: number;
   total: number;
   busy: boolean;
@@ -129,6 +132,19 @@ export function TopicRow({
         <b>{topic.name}</b>
         {topic.description ? <small>{topic.description}</small> : null}
       </span>
+
+      {progress !== undefined ? (
+        <span
+          className="sq-topic-progress"
+          role="img"
+          aria-label={`${topic.name}: ${Math.round(progress * 100)} percent progress`}
+        >
+          <span className="sq-topic-bar" aria-hidden="true">
+            <span style={{ width: `${Math.round(progress * 100)}%` }} />
+          </span>
+          <span className="sq-num">{Math.round(progress * 100)}%</span>
+        </span>
+      ) : null}
 
       <button
         type="button"

@@ -2006,7 +2006,8 @@ invalidates `gamificationKeys.all` and posts its toast. Home's `LevelStrip` repl
 mock level data with the real view; Progress renders the level card with its title,
 `StreakCalendar` (35 days, `role="img"` plus a legend) and `AchievementGrid` (locked
 progress bars, claim buttons, claimed chips, inline claim errors) with `streakNote`'s four
-states. Study minutes and quiz average keep their placeholders until P16.
+states. Study minutes and quiz average were still placeholders there — P16 replaced
+them with the real view.
 
 **Exit:** every XP event in the ledger is traceable to a source row and cannot be double counted.
 **Effort:** 4 d · **Depends on:** P2 (ledger), P12–P14 (sources)
@@ -2015,14 +2016,37 @@ states. Study minutes and quiz average keep their placeholders until P16.
 
 **Goal:** make progress easy to understand visually (PRD §24–25).
 
-- [ ] Home progress strip: level, XP to next, streak, today's progress ring
-- [ ] Progress engine in `packages/core/progress`: mastery, review coverage, session coverage,
+- [x] Home progress strip: level, XP to next, streak, today's progress ring
+- [x] Progress engine in `packages/core/progress`: mastery, review coverage, session coverage,
       quest completion (§18.3)
-- [ ] Subject progress pages: overall %, per-topic bars, trend over 30/90 days
-- [ ] Study time: today, this week, per subject, heatmap calendar
-- [ ] Quiz history: scores over time, improvement per topic, retry impact
-- [ ] Charts: line, bar, ring, heatmap — theme-aware, accessible (table equivalent available)
-- [ ] Caching and recompute strategy per ADR-016
+- [x] Subject progress pages: overall %, per-topic bars, trend over 30/90 days
+- [x] Study time: today, this week, per subject, heatmap calendar
+- [x] Quiz history: scores over time, improvement per topic, retry impact
+- [x] Charts: line, bar, ring, heatmap — theme-aware, accessible (table equivalent available)
+- [x] Caching and recompute strategy per ADR-016
+
+**Delivered in** `packages/core/src/progress` — the §18.3 formula extended with the
+measurement helpers the page needs: `weekStartKey` (weeks start Monday, UTC),
+`heatmapColumns` (whole-week columns over any window, `day: null` padding outside it),
+`meanPercent` (null when nothing is graded — an empty average never reads 0) and
+`retryImpact` (one pair per quiz family: a retry's latest attempt against the original it
+was redoing), 19 tests. `apps/server/src/services/progress.ts` is the read: one
+`progressView(profileId)` computing study time from completed sessions (`focusMin`
+bucketed by the streak's own UTC `dayKey`), the quiz trend over a 90-day window,
+per-topic improvement (latest − first attempt), the §24 counts, and the formula's honest
+inputs — `reviewCoverageByTopic` (reviewed cards / cards, ownership through the deck),
+`questCompletionByTopic` (Σ min(progress, target) / Σ target over topic quest steps) and
+`completedSubjectQuests` for `subjectProgress`'s +0.1 bonus — so the subject routes pass
+real numbers instead of the placeholder zeros and status stand-ins. No migration and no
+cache: every aggregate recomputes from the rows that caused it on each read (ADR-016),
+because a stored chart is a second source of truth that can go stale while the rows
+still exist. The web side is `progressApi` + `useProgress` behind one query key,
+`features/progress/charts.tsx` (SVG trend line and DOM heatmap, both `role="img"` with a
+summary and a collapsed `View as table` carrying every plotted number), the rebuilt
+Progress page (This week / Study time / Quiz history / All time), topic percentage bars
+in `TopicRow` beside the student's status chip, the subject page's 30/90-day minutes
+trend reading the same window the heatmap does, and the Home strip's today ring reading
+the same plan day as Today's Quest.
 
 **Exit:** every number shown on screen can be explained by a documented formula and traced to
 the events behind it.

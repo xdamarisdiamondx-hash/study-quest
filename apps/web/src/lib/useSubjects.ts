@@ -13,7 +13,13 @@ import { useCallback, useEffect, useState } from "react";
 import { move } from "@sq/core/subjects";
 import type { Topic, UpdateTopic } from "@sq/core/schemas/subjects";
 
-import { ApiError, subjectsApi, topicsApi, type SubjectSummary } from "./subjectsApi";
+import {
+  ApiError,
+  subjectsApi,
+  topicsApi,
+  type SubjectSummary,
+  type TopicWithProgress,
+} from "./subjectsApi";
 
 export type SubjectsStatus = "loading" | "ready" | "error";
 
@@ -127,7 +133,8 @@ export function useSubjects(): SubjectsState {
 export interface SubjectTopicsState {
   status: SubjectsStatus;
   subject: SubjectSummary | null;
-  topics: Topic[];
+  /** Topics with their computed percentage — the detail route's P16 payload. */
+  topics: TopicWithProgress[];
   error: string | null;
   busy: boolean;
   refresh: () => Promise<void>;
@@ -141,7 +148,7 @@ export interface SubjectTopicsState {
 export function useSubjectTopics(subjectId: string | undefined): SubjectTopicsState {
   const [status, setStatus] = useState<SubjectsStatus>("loading");
   const [subject, setSubject] = useState<SubjectSummary | null>(null);
-  const [topics, setTopics] = useState<Topic[]>([]);
+  const [topics, setTopics] = useState<TopicWithProgress[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 

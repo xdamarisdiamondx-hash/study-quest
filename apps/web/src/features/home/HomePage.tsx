@@ -6,6 +6,7 @@ import {
   IconButton,
   LevelBadge,
   Monogram,
+  Ring,
   Streak,
   Track,
 } from "@sq/ui";
@@ -266,6 +267,11 @@ function TodaysQuest() {
  */
 function LevelStrip() {
   const { data, isPending } = useGamification();
+  // Today's progress ring (P16) reads the same plan day Today's Quest renders —
+  // one query key, so the strip and the list below it can never disagree.
+  const day = usePlanDay(localDate(new Date()));
+  const blocks = day.data?.blocks ?? [];
+  const doneToday = blocks.filter((b) => b.status === "done").length;
 
   if (isPending) {
     return (
@@ -291,6 +297,13 @@ function LevelStrip() {
             caption={`${data.level.into} / ${data.level.needed}`}
           />
         </div>
+        {day.data ? (
+          <Ring
+            small
+            value={blocks.length === 0 ? 0 : (doneToday / blocks.length) * 100}
+            label={`Today's progress: ${doneToday} of ${blocks.length} items`}
+          />
+        ) : null}
         <div style={{ textAlign: "right" }}>
           <Streak days={data.streak.current} />
           <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>

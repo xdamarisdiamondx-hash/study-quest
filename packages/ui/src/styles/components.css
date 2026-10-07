@@ -548,6 +548,35 @@
   color: var(--muted);
   font: var(--t-body-sm);
 }
+/* The measured percentage beside the status chip (P16, PRD §25): the chip is
+   the student's claim, this bar is what the activity actually says. */
+.sq-topic-progress {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  flex: none;
+}
+.sq-topic-bar {
+  display: block;
+  width: 56px;
+  height: 6px;
+  background: var(--track);
+  border-radius: var(--r-full);
+  overflow: hidden;
+}
+.sq-topic-bar > span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: var(--r-full);
+  transition: width var(--slow);
+}
+.sq-topic-progress .sq-num {
+  min-width: 32px;
+  text-align: right;
+  font-size: 12px;
+  color: var(--muted);
+}
 .sq-topic[data-editing="true"] {
   flex-wrap: nowrap;
 }

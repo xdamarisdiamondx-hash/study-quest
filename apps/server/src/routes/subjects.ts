@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
 
-import { subjectProgress } from "@sq/core/progress";
+import { subjectProgress, topicProgress } from "@sq/core/progress";
 import { applyReorder, monogramFor, resequence } from "@sq/core/subjects";
 import {
   TOPIC_STATUS_LABEL,
@@ -19,6 +19,11 @@ import { subjects, topics } from "@sq/db/schema";
 
 import { requireProfile, type ProfileEnv } from "../auth/currentProfile.ts";
 import { db } from "../db.ts";
+import {
+  completedSubjectQuests,
+  questCompletionByTopic,
+  reviewCoverageByTopic,
+} from "../services/progress.ts";
 import { sessionMinutesByTopic } from "../services/sessions.ts";
 
 /**
@@ -63,16 +68,23 @@ function serialiseTopic(row: typeof topics.$inferSelect) {
 /**
  * Map a topic row onto the inputs the shared progress formula expects (section 18.3).
  *
- * Mastery and quest completion read what exists today; `sessionMinutes` now comes
- * from the study_sessions log (P14). The remaining zeros are honest placeholders —
- * review coverage lands when P16 swaps the inputs, not the UI.
+ * All four inputs are real as of P16: mastery from the cached attempt weight,
+ * review coverage from the topic's reviewed cards, session minutes from the
+ * study_sessions log (P14) and quest completion from the topic's own quest
+ * steps — the zeros and status stand-ins this function used to carry were the
+ * placeholders P15's note promised P16 would replace.
  */
-function topicProgressInput(topic: Topic, sessionMinutes: number) {
+function topicProgressInput(
+  topic: Topic,
+  minutes: number,
+  reviewCoverage: number,
+  questCompletion: number,
+) {
   return {
     mastery: topic.progressCache,
-    reviewCoverage: 0,
-    sessionMinutes,
-    questCompletion: topic.status === "mastered" ? 1 : 0,
+    reviewCoverage,
+    sessionMinutes: minutes,
+    questCompletion,
   };
 }
 
@@ -167,17 +179,33 @@ async function subjectSummaries(profileId: string) {
     bySubject.set(t.subjectId, list);
   }
 
-  const minutes = await sessionMinutesByTopic(
-    profileId,
-    all.map((t) => t.id),
-  );
+  const topicIds = all.map((t) => t.id);
+  const [minutes, review, questShare, subjectQuests] = await Promise.all([
+    sessionMinutesByTopic(profileId, topicIds),
+    reviewCoverageByTopic(profileId, topicIds),
+    questCompletionByTopic(profileId, topicIds),
+    completedSubjectQuests(
+      profileId,
+      rows.map((r) => r.id),
+    ),
+  ]);
 
   return rows.map((row) => {
     const own = bySubject.get(row.id) ?? [];
     return {
       ...serialiseSubject(row),
       topicCount: own.length,
-      progress: subjectProgress(own.map((t) => topicProgressInput(t, minutes.get(t.id) ?? 0))),
+      progress: subjectProgress(
+        own.map((t) =>
+          topicProgressInput(
+            t,
+            minutes.get(t.id) ?? 0,
+            review.get(t.id) ?? 0,
+            questShare.get(t.id) ?? 0,
+          ),
+        ),
+        subjectQuests.get(row.id) ?? 0,
+      ),
     };
   });
 }
@@ -285,20 +313,30 @@ subjectsRouter.get("/:id", async (c) => {
     .where(eq(topics.subjectId, id))
     .orderBy(asc(topics.orderIndex));
 
-  const minutes = await sessionMinutesByTopic(
-    profileId,
-    own.map((t) => t.id),
-  );
+  const topicIds = own.map((t) => t.id);
+  const [minutes, review, questShare, subjectQuests] = await Promise.all([
+    sessionMinutesByTopic(profileId, topicIds),
+    reviewCoverageByTopic(profileId, topicIds),
+    questCompletionByTopic(profileId, topicIds),
+    completedSubjectQuests(profileId, [id]),
+  ]);
+  const inputFor = (t: (typeof own)[number]) =>
+    topicProgressInput(
+      t as unknown as Topic,
+      minutes.get(t.id) ?? 0,
+      review.get(t.id) ?? 0,
+      questShare.get(t.id) ?? 0,
+    );
 
   return Response.json({
     subject: {
       ...serialiseSubject(subject),
       topicCount: own.length,
-      progress: subjectProgress(
-        (own as unknown as Topic[]).map((t) => topicProgressInput(t, minutes.get(t.id) ?? 0)),
-      ),
+      progress: subjectProgress(own.map(inputFor), subjectQuests.get(id) ?? 0),
     },
-    topics: own.map(serialiseTopic),
+    // PRD §25 wants each topic's percentage beside its status — measured on
+    // read by the same formula the subject total averages.
+    topics: own.map((t) => ({ ...serialiseTopic(t), progress: topicProgress(inputFor(t)) })),
   });
 });
 

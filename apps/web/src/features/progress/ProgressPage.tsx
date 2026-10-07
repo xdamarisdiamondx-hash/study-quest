@@ -9,7 +9,9 @@ import {
   type AchievementView,
   type StreakView,
 } from "../../lib/useGamification";
+import { useProgress } from "../../lib/useProgress";
 import { useSubjects } from "../../lib/useSubjects";
+import { Heatmap, TrendChart } from "./charts";
 
 const DAY = 86_400_000;
 
@@ -36,6 +38,16 @@ function streakNote(streak: StreakView): string {
   if (gap === 2 && streak.freezeCount > 0)
     return `You're holding ${streak.freezeCount} freeze${streak.freezeCount === 1 ? "" : "s"} — studying today covers yesterday and keeps the streak.`;
   return `Streak paused at ${streak.current} days. Any session today starts it again.`;
+}
+
+/** "1h 5m" (or "45m") from minutes — how every duration on this page reads. */
+function hm(minutes: number): string {
+  return minutes >= 60 ? `${Math.floor(minutes / 60)}h ${minutes % 60}m` : `${minutes}m`;
+}
+
+/** "3 sessions" / "1 session" — the counts on this page read like English. */
+function plural(n: number, word: string): string {
+  return `${n} ${word}${n === 1 ? "" : "s"}`;
 }
 
 /** The last `n` days ending today as the streak's own (UTC) day keys. */
@@ -169,13 +181,14 @@ function AchievementGrid({ achievements }: { achievements: AchievementView[] }) 
 }
 
 export function ProgressPage() {
-  const totalStudyMinutes = 412;
-  const quizAverage = 72;
   // Real as of P4: the same `subjectProgress` the Study page shows.
   const { subjects, status } = useSubjects();
   const active = subjects.filter((s) => !s.archived);
   // Real as of P15: level, streak, calendar and achievements in one read.
   const gamification = useGamification();
+  // Real as of P16: study time, quiz history and the §24 counts in one read.
+  const progress = useProgress();
+  const pv = progress.data;
 
   return (
     <div className="sq-col" style={{ marginTop: "var(--s6)" }}>
@@ -191,7 +204,7 @@ export function ProgressPage() {
           Progress
         </h1>
         <p style={{ margin: 0, color: "var(--muted)", font: "var(--t-body-sm)" }}>
-          XP, levels, streaks and subject progress
+          Study time, quiz scores, XP, levels and streaks
         </p>
       </div>
 
@@ -226,6 +239,151 @@ export function ProgressPage() {
         </Card>
       ) : null}
 
+      <Card title="This week">
+        {progress.isPending ? (
+          <p style={{ margin: 0, color: "var(--muted)", font: "var(--t-body-sm)" }}>
+            Loading this week's numbers…
+          </p>
+        ) : pv ? (
+          <div className="sq-row" style={{ gap: "var(--s6)", flexWrap: "nowrap" }}>
+            <Ring
+              value={(pv.study.weekMinutes / pv.study.weekGoal) * 100}
+              label={`Weekly study goal: ${pv.study.weekMinutes} of ${pv.study.weekGoal} minutes`}
+            />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <Track
+                label="Study time"
+                value={pv.study.weekMinutes}
+                max={pv.study.weekGoal}
+                caption={`${hm(pv.study.weekMinutes)} of ${hm(pv.study.weekGoal)}`}
+              />
+              <div style={{ marginTop: "var(--s4)" }}>
+                <Track
+                  label="Quiz average"
+                  value={pv.quiz.weekAverage ?? 0}
+                  caption={
+                    pv.quiz.weekAverage === null
+                      ? "No attempts this week"
+                      : `${Math.round(pv.quiz.weekAverage)}% this week`
+                  }
+                />
+              </div>
+            </div>
+          </div>
+        ) : null}
+      </Card>
+
+      {pv && (
+        <Card title="Study time" action={<span className="sq-label">Last 90 days</span>}>
+          <div className="sq-row" style={{ gap: "var(--s2)", marginBottom: "var(--s3)" }}>
+            <Chip>Today {hm(pv.study.todayMinutes)}</Chip>
+            <Chip>This week {hm(pv.study.weekMinutes)}</Chip>
+            <Chip>{plural(pv.study.bySubject.length, "subject")} studied</Chip>
+          </div>
+          {pv.study.bySubject.length === 0 ? (
+            <p style={{ margin: 0, color: "var(--muted)", font: "var(--t-body-sm)" }}>
+              No sessions yet — start one and its minutes land here.
+            </p>
+          ) : (
+            pv.study.bySubject.map((s) => (
+              <div
+                key={s.id}
+                className="sq-row"
+                style={{ padding: "var(--s2) 0", gap: "var(--s3)", flexWrap: "nowrap" }}
+              >
+                <Monogram text={s.monogram} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <Track
+                    label={s.name}
+                    value={s.minutes}
+                    max={pv.study.bySubject[0]?.minutes ?? 1}
+                    caption={hm(s.minutes)}
+                  />
+                </div>
+              </div>
+            ))
+          )}
+          <div style={{ marginTop: "var(--s4)" }}>
+            <Heatmap
+              from={pv.study.window.from}
+              to={pv.study.window.to}
+              days={pv.study.days}
+              label="Study minutes per day, last 90 days"
+            />
+          </div>
+        </Card>
+      )}
+
+      {pv && (
+        <Card title="Quiz history">
+          <div className="sq-row" style={{ gap: "var(--s2)", marginBottom: "var(--s3)" }}>
+            <Chip>{plural(pv.quiz.attempts, "attempt")}</Chip>
+            <Chip>
+              {pv.quiz.average === null
+                ? "No scores yet"
+                : `${Math.round(pv.quiz.average)}% average`}
+            </Chip>
+            <Chip>
+              {pv.quiz.retries.retried === 0
+                ? "No retries yet"
+                : `${pv.quiz.retries.improved} of ${pv.quiz.retries.retried} retries improved (avg ${pv.quiz.retries.avgDelta >= 0 ? "+" : ""}${Math.round(pv.quiz.retries.avgDelta)} pp)`}
+            </Chip>
+          </div>
+          <TrendChart
+            points={pv.quiz.trend.map((p) => ({ day: p.day, value: p.percent }))}
+            label="Quiz scores over time"
+            emptyText="No graded quiz attempts yet — the line appears after your first score."
+          />
+          {pv.quiz.byTopic.length > 0 && (
+            <div style={{ marginTop: "var(--s4)" }}>
+              <p className="sq-label" style={{ margin: "0 0 var(--s2)" }}>
+                By topic
+              </p>
+              {pv.quiz.byTopic.map((t) => (
+                <div
+                  key={t.topicId}
+                  className="sq-row"
+                  style={{ padding: "var(--s2) 0", gap: "var(--s3)", flexWrap: "nowrap" }}
+                >
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <Track
+                      label={t.topicName}
+                      value={t.average ?? 0}
+                      caption={
+                        t.average === null
+                          ? "ungraded"
+                          : `${Math.round(t.average)}% · ${plural(t.attempts, "attempt")}`
+                      }
+                    />
+                  </div>
+                  <Chip>
+                    {t.delta === null
+                      ? "first attempt"
+                      : `${t.delta > 0 ? "+" : ""}${Math.round(t.delta)} pts`}
+                  </Chip>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      )}
+
+      {pv && (
+        <Card title="All time">
+          <div className="sq-row" style={{ gap: "var(--s2)", flexWrap: "wrap" }}>
+            <Chip>{plural(pv.counts.sessions, "study session")}</Chip>
+            <Chip>{plural(pv.counts.tasksCompleted, "task")} done</Chip>
+            <Chip>{plural(pv.counts.questsCompleted, "quest")} completed</Chip>
+            <Chip>
+              {pv.counts.quizzesCompleted} {pv.counts.quizzesCompleted === 1 ? "quiz" : "quizzes"}{" "}
+              completed
+            </Chip>
+            <Chip>{plural(pv.counts.subjectsStudied, "subject")} studied</Chip>
+            <Chip>{plural(pv.counts.topicsMastered, "topic")} mastered</Chip>
+          </div>
+        </Card>
+      )}
+
       {gamification.data && (
         <Card title="Streak">
           <p style={{ margin: "0 0 var(--s3)", font: "var(--t-body)" }}>
@@ -233,7 +391,7 @@ export function ProgressPage() {
           </p>
           <StreakCalendar activeDays={gamification.data.activeDays} />
           <div className="sq-row" style={{ gap: "var(--s2)", marginTop: "var(--s3)" }}>
-            <Chip>{gamification.data.streak.current} days now</Chip>
+            <Chip>{plural(gamification.data.streak.current, "day")} now</Chip>
             <Chip>Longest {gamification.data.streak.longest}</Chip>
             <Chip>{gamification.data.streak.freezeCount} freezes held</Chip>
           </div>
@@ -253,22 +411,6 @@ export function ProgressPage() {
           <AchievementGrid achievements={gamification.data.achievements} />
         </Card>
       )}
-
-      <Card title="This week">
-        <div className="sq-row" style={{ gap: "var(--s6)", flexWrap: "nowrap" }}>
-          <Ring value={68} label="Weekly study goal, 68 percent" />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <Track
-              label="Study time"
-              value={Math.min(100, (totalStudyMinutes / 600) * 100)}
-              caption={`${Math.floor(totalStudyMinutes / 60)}h ${totalStudyMinutes % 60}m of 10h`}
-            />
-            <div style={{ marginTop: "var(--s4)" }}>
-              <Track label="Quiz average" value={quizAverage} caption={`${quizAverage}%`} />
-            </div>
-          </div>
-        </div>
-      </Card>
 
       <Card title="Subjects" action={<span className="sq-label">{active.length} active</span>}>
         {status === "loading" ? (
@@ -299,10 +441,12 @@ export function ProgressPage() {
 
       <Card>
         <p>
-          Subject percentages come from <code>@sq/core/progress</code> and count real topic state.
-          XP, levels, streak days and every achievement above are read live from the ledger (P15) —
-          the calendar inks only days the streak itself counted. The study-time and quiz-average
-          numbers above stay placeholders until this page aggregates sessions, in P16.
+          Every number here is computed from the rows that caused it: subject and topic percentages
+          from <code>@sq/core/progress</code> (mastery, reviewed cards, session minutes, quest
+          steps), study time from the session log on the streak's own UTC days with weeks starting
+          Monday, and quiz scores from graded attempts — charts carry a table of the same data
+          underneath. XP, levels, streak days and the achievements are read live from the ledger
+          (P15); the calendar inks only days the streak itself counted.
         </p>
       </Card>
     </div>

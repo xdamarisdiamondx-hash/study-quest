@@ -61,7 +61,7 @@ follow the full guided journey.
 2. **Tasks** — assignments, deadlines, recurring tasks, study tasks
 3. **Study** — subjects, topics, notes, summaries, flashcards, explanations, quizzes
 4. **Quests** — current, completed and special quests, plus quest progress
-5. **Progress** — XP, levels, streaks, achievements, statistics, subject progress
+5. **Progress** — study time heatmap, quiz scores over time, XP, levels, streaks, achievements, subject and topic progress
 
 ## Feature Highlights
 

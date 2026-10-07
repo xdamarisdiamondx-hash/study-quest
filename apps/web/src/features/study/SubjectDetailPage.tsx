@@ -8,9 +8,12 @@
 import { useMemo, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { Card, EmptyState, Monogram, Ring, TabPanel, Tabs, type TabItem } from "@sq/ui";
+import { dayKey } from "@sq/core/gamification";
 import type { TopicStatus } from "@sq/core/schemas/subjects";
 
+import { useProgress } from "../../lib/useProgress";
 import { useSubjectTopics } from "../../lib/useSubjects";
+import { TrendChart, seriesDays } from "../progress/charts";
 import { TopicComposer, TopicRow } from "./TopicRow";
 import { NotesPanel } from "./NotesPanel";
 import { QuizzesPanel } from "../quiz/QuizzesPanel";
@@ -42,6 +45,10 @@ export function SubjectDetailPage() {
   }
   const [dragId, setDragId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
+  // P16: this subject's study minutes over the shared 90-day window, sliced
+  // to 30 or 90 for the trend line (PRD plan: "trend over 30/90 days").
+  const [rangeDays, setRangeDays] = useState<30 | 90>(30);
+  const progress = useProgress();
 
   function onTopicDrop(targetId: string) {
     const from = store.topics.findIndex((t) => t.id === dragId);
@@ -91,6 +98,24 @@ export function SubjectDetailPage() {
   }
 
   const subject = store.subject;
+
+  // The window maths runs client-side from the server's own window keys, so
+  // the subject line and the Progress page's heatmap can't disagree about
+  // which days are in range; quiet days are filled at zero by seriesDays.
+  const win = progress.data?.study.window;
+  const subjectDays = progress.data?.study.bySubject.find((s) => s.id === subject.id)?.days ?? [];
+  const trendFrom =
+    win && rangeDays > 1
+      ? dayKey(new Date(Date.parse(`${win.to}T00:00:00Z`) - (rangeDays - 1) * 86_400_000))
+      : null;
+  const trendPoints =
+    win && trendFrom
+      ? seriesDays(trendFrom, win.to, subjectDays).map((d) => ({ day: d.day, value: d.minutes }))
+      : [];
+  const trendMax = Math.max(
+    60,
+    Math.ceil(Math.max(0, ...trendPoints.map((p) => p.value)) / 60) * 60,
+  );
 
   return (
     <div className="sq-col" style={{ marginTop: "var(--s6)" }}>
@@ -143,9 +168,59 @@ export function SubjectDetailPage() {
           </div>
           <p style={{ marginTop: "var(--s5)", color: "var(--muted)", font: "var(--t-body-sm)" }}>
             Progress is the weighted mix of topic mastery, review coverage, study minutes and quest
-            completion from the shared formula. Two of those four arrive in later phases, so the
-            number will still move as you use the app.
+            completion from the shared formula — all four inputs read from real activity as of P16,
+            recomputed on each read.
           </p>
+        </Card>
+
+        <Card
+          title="Study trend"
+          action={
+            <span className="sq-row" style={{ gap: "var(--s1)" }}>
+              <button
+                type="button"
+                className={`sq-btn sq-btn-sm ${rangeDays === 30 ? "sq-btn-secondary" : "sq-btn-ghost"}`}
+                aria-pressed={rangeDays === 30}
+                onClick={() => setRangeDays(30)}
+              >
+                30 days
+              </button>
+              <button
+                type="button"
+                className={`sq-btn sq-btn-sm ${rangeDays === 90 ? "sq-btn-secondary" : "sq-btn-ghost"}`}
+                aria-pressed={rangeDays === 90}
+                onClick={() => setRangeDays(90)}
+              >
+                90 days
+              </button>
+            </span>
+          }
+        >
+          {progress.isPending ? (
+            <p style={{ margin: 0, color: "var(--muted)", font: "var(--t-body-sm)" }}>
+              Loading study minutes…
+            </p>
+          ) : subjectDays.length === 0 ? (
+            <p style={{ margin: 0, color: "var(--muted)", font: "var(--t-body-sm)" }}>
+              No sessions for this subject yet — the line appears after your first one.
+            </p>
+          ) : (
+            <>
+              <TrendChart
+                points={trendPoints}
+                label={`${subject.name} study minutes per day, last ${rangeDays} days`}
+                max={trendMax}
+                unit="m"
+                columnLabel="Minutes"
+                emptyText="No study minutes in this range yet."
+              />
+              <p
+                style={{ margin: "var(--s2) 0 0", color: "var(--muted)", font: "var(--t-body-sm)" }}
+              >
+                Minutes come from the session log; a day without a session plots at zero.
+              </p>
+            </>
+          )}
         </Card>
       </TabPanel>
 
@@ -165,6 +240,7 @@ export function SubjectDetailPage() {
                 <TopicRow
                   key={topic.id}
                   topic={topic}
+                  progress={topic.progress}
                   index={index}
                   total={store.topics.length}
                   busy={store.busy}

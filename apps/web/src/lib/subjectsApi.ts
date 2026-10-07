@@ -61,13 +61,21 @@ const patch = <T>(path: string, body: unknown) =>
 
 const del = <T>(path: string) => call<T>(path, { method: "DELETE" });
 
+/**
+ * A topic as the detail route sends it: the row plus its computed percentage
+ * (P16). The formula runs on the server — the client only renders it (ADR-016).
+ */
+export type TopicWithProgress = Topic & { progress: number };
+
 /* --- subjects ----------------------------------------------------------- */
 
 export const subjectsApi = {
   list: () => call<{ subjects: SubjectSummary[] }>("/api/subjects"),
 
   detail: (id: string) =>
-    call<{ subject: SubjectSummary; topics: Topic[] }>(`/api/subjects/${encodeURIComponent(id)}`),
+    call<{ subject: SubjectSummary; topics: TopicWithProgress[] }>(
+      `/api/subjects/${encodeURIComponent(id)}`,
+    ),
 
   create: (input: CreateSubject) => post<{ subject: Subject }>("/api/subjects", input),
 
