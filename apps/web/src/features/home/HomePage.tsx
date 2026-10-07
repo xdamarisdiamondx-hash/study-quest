@@ -273,6 +273,10 @@ export function HomePage() {
             month: "long",
           })}
         </p>
+        {/* PRD §6's home CTA: one click from greeting to the clock (P14). */}
+        <Link to="/sessions" className="sq-btn sq-btn-primary" style={{ marginTop: "var(--s3)" }}>
+          Start study session
+        </Link>
       </section>
 
       <Card>

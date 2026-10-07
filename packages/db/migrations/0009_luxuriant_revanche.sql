@@ -1,0 +1,1 @@
+ALTER TABLE "session_steps" ADD COLUMN "title" text DEFAULT '' NOT NULL;

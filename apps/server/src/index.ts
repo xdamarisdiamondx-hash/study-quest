@@ -34,6 +34,7 @@ import { flashcardsRouter } from "./routes/flashcards.ts";
 import { tasksRouter } from "./routes/tasks.ts";
 import { planRouter } from "./routes/plan.ts";
 import { questsRouter } from "./routes/quests.ts";
+import { sessionsRouter } from "./routes/sessions.ts";
 import { fileStore } from "./files/store.ts";
 
 const { users } = dbSchema;
@@ -120,6 +121,9 @@ app.route("/api/plan", planRouter);
 
 /* --- quests: templates, steps, rewards (P13) ------------------------------- */
 app.route("/api/quests", questsRouter);
+
+/* --- study sessions: timer, guided run, log (P14) -------------------------- */
+app.route("/api/sessions", sessionsRouter);
 
 /* --- local file serving (ADR-027 fallback) ------------------------------- */
 app.get("/api/files/*", async (c) => {

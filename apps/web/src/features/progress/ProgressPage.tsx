@@ -92,8 +92,9 @@ export function ProgressPage() {
       <Card>
         <p>
           Subject percentages come from <code>@sq/core/progress</code> and count real topic state.
-          Study time and quiz averages are still placeholders — those arrive with sessions (P14) and
-          quizzes (P8). Charts and history arrive in P16.
+          Finished sessions now log real minutes (P14) — read them in the session log under Study
+          sessions. The study-time chart above is still a placeholder until this page aggregates
+          them, and quiz averages arrive with it, in P16.
         </p>
       </Card>
     </div>

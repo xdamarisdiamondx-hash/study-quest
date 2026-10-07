@@ -19,6 +19,7 @@ import { subjects, topics } from "@sq/db/schema";
 
 import { requireProfile, type ProfileEnv } from "../auth/currentProfile.ts";
 import { db } from "../db.ts";
+import { sessionMinutesByTopic } from "../services/sessions.ts";
 
 /**
  * Subjects and topics (P4, PRD section 6).
@@ -62,15 +63,15 @@ function serialiseTopic(row: typeof topics.$inferSelect) {
 /**
  * Map a topic row onto the inputs the shared progress formula expects (section 18.3).
  *
- * The zeros are honest placeholders for signals that do not exist yet — quizzes land in P8,
- * flashcards in P9, study sessions in P14. Wiring them now means P16 swaps the inputs, not
- * the UI.
+ * Mastery and quest completion read what exists today; `sessionMinutes` now comes
+ * from the study_sessions log (P14). The remaining zeros are honest placeholders —
+ * review coverage lands when P16 swaps the inputs, not the UI.
  */
-function topicProgressInput(topic: Topic) {
+function topicProgressInput(topic: Topic, sessionMinutes: number) {
   return {
     mastery: topic.progressCache,
     reviewCoverage: 0,
-    sessionMinutes: 0,
+    sessionMinutes,
     questCompletion: topic.status === "mastered" ? 1 : 0,
   };
 }
@@ -166,12 +167,17 @@ async function subjectSummaries(profileId: string) {
     bySubject.set(t.subjectId, list);
   }
 
+  const minutes = await sessionMinutesByTopic(
+    profileId,
+    all.map((t) => t.id),
+  );
+
   return rows.map((row) => {
     const own = bySubject.get(row.id) ?? [];
     return {
       ...serialiseSubject(row),
       topicCount: own.length,
-      progress: subjectProgress(own.map(topicProgressInput)),
+      progress: subjectProgress(own.map((t) => topicProgressInput(t, minutes.get(t.id) ?? 0))),
     };
   });
 }
@@ -279,11 +285,18 @@ subjectsRouter.get("/:id", async (c) => {
     .where(eq(topics.subjectId, id))
     .orderBy(asc(topics.orderIndex));
 
+  const minutes = await sessionMinutesByTopic(
+    profileId,
+    own.map((t) => t.id),
+  );
+
   return Response.json({
     subject: {
       ...serialiseSubject(subject),
       topicCount: own.length,
-      progress: subjectProgress((own as unknown as Topic[]).map(topicProgressInput)),
+      progress: subjectProgress(
+        (own as unknown as Topic[]).map((t) => topicProgressInput(t, minutes.get(t.id) ?? 0)),
+      ),
     },
     topics: own.map(serialiseTopic),
   });

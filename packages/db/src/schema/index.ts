@@ -393,6 +393,8 @@ export const sessionSteps = pgTable("session_steps", {
     .references(() => studySessions.id, { onDelete: "cascade" }),
   orderIndex: integer("order_index").notNull().default(0),
   kind: text("kind").notNull(),
+  /** The stage's own words — named from the topic's actual material (P14). */
+  title: text("title").notNull().default(""),
   refType: text("ref_type"),
   refId: uuid("ref_id"),
   status: text("status").notNull().default("pending"),

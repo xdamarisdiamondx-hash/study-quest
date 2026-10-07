@@ -1539,8 +1539,9 @@ will do.
 
 **Progress is the real formula with honest zeros.** `subjectProgress` from `@sq/core/progress`
 is called with the topic rows as they stand. Two of its four inputs (`reviewCoverage`,
-`sessionMinutes`) are `0` because quizzes (P8), flashcards (P9) and study sessions (P14) do not
-exist yet. P16 fills in the inputs; the UI does not change.
+`sessionMinutes`) were `0` because quizzes (P8), flashcards (P9) and study sessions (P14) did not
+exist yet. P14 wired `sessionMinutes` through `sessionMinutesByTopic`; P16 fills in the remaining
+inputs; the UI does not change.
 
 **Status chips map to the three reserved tones.** `not_started` neutral, `learning` iris,
 `mastered` ok — and the label always carries the meaning, so colour is never the only signal.
@@ -1906,13 +1907,51 @@ tracked, and the reward lands in the XP ledger.
 
 **Goal:** three ways to sit down and study (PRD §26).
 
-- [ ] Session modes: Quick Focus (just work), Focus Session (timer, optional pomodoro breaks),
+- [x] Session modes: Quick Focus (just work), Focus Session (timer, optional pomodoro breaks),
       Guided Study (Read → Understand → Practice → Quiz → Review)
-- [ ] Guided session assembles steps from the topic's actual content and runs them in order
-- [ ] Timer: start/pause/stop, background-safe (uses timestamps, not tick counting), persists
+- [x] Guided session assembles steps from the topic's actual content and runs them in order
+- [x] Timer: start/pause/stop, background-safe (uses timestamps, not tick counting), persists
       across a reload
-- [ ] Session log: subject, topic, task, mode, planned vs actual minutes
-- [ ] Session summary on completion with XP, streak status, and the next suggested action
+- [x] Session log: subject, topic, task, mode, planned vs actual minutes
+- [x] Session summary on completion with XP, streak status, and the next suggested action
+
+**Delivered in** `packages/core/src/sessions` — `TimerState` over timestamps (`elapsedMs`/
+`pause`/`resume` take `now`, so no test ever sleeps), `formatClock`, `focusMinutes` (wall
+minus reported pause, clamped), `pomodoroPhase` (breaks only between work stretches),
+`guidedSteps` (Read → Understand → Practice → Quiz → Review over the topic's real
+note/deck/quiz, honest fallbacks when a stage has no material) and `nextAction` (due cards →
+quiz → notes) — 14 tests, no I/O, wire contracts in `schemas/sessions`. Two calls deserve
+stating. **Guided is the one ordered mode**, the deliberate inverse of quests'
+display-not-gate stepper: the sequence _is_ the product, so only the current stage can be
+marked and later ones render locked — while everything else in the app keeps the open-world
+rule. **The clock never counts ticks**: the client renders from `startedAt` (pause
+bookkeeping lives in `localStorage` beside the session id, so a reload restores the exact
+frozen clock), but the _log_ is server truth — `endSession` computes
+`now − startedAt − reported pause` from its own timestamps, so a backgrounded tab, a
+reload or a sleeping machine still logs honest minutes; pause is reported by the client
+because only the screen that caused it can see it. The router `routes/sessions.ts` over
+`services/sessions.ts` enforces **one active session at a time** (a second start answers
+409 `already_active` _with_ the running session, so a second tab joins the same clock
+instead of forking it), resolves scope (a topic supplies its subject, a task inherits its
+filings, and any id named must belong to the caller), assembles guided steps server-side
+from the topic's material, and on end awards `XP.session` (100, reason "session", idempotent
+via the ledger), moves the streak (`recordActivity`), records the `session` quest signal —
+which is what makes the weekly "Complete 5 study sessions" counter move on _any_ scope, one
+per finish — stamps `topics.lastStudiedAt`, and answers with the summary card: minutes vs
+plan, XP, streak, quest outcome, and one suggested next action (`null` without a topic
+rather than a fake suggestion). `sessionMinutesByTopic` feeds `topicProgressInput` at both
+subjects-route call sites, so finished minutes lift topic progress the moment they log
+(P16 owns the mastery/review weights around them). Migration `0009` adds
+`session_steps.title` — stages name real material, not kinds. On the web, `SessionsPage`
+is the route `/sessions` — deliberately _not_ a nav item; the entry is Home's "Start study
+session" CTA (PRD §6). The picker shows three mode tiles, a topic select (required for
+guided, with a hint explaining why) and an optional linked task, plus focus presets and a
+pomodoro toggle whose choice rides in the timer blob rather than a column — breaks change
+what the clock _shows_, not what the session records. The running card renders the
+countdown (focus) or count-up (quick/guided), pause/resume/finish, and the guided stepper
+with `Open`/`Mark … done` on the current stage only; Finish answers with the summary
+dialog, and `end` invalidates the session _and_ quest lists so the weekly counter is never
+stale (a start answered 409 does the same, so the picker flips to the running clock).
 
 **Exit:** a 25-minute focus session and a full guided session both complete, log time, award
 XP and update subject progress.

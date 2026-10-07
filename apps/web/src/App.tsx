@@ -10,6 +10,7 @@ import { TasksPage } from "./features/tasks/TasksPage";
 import { StudyPage } from "./features/study/StudyPage";
 import { SubjectDetailPage } from "./features/study/SubjectDetailPage";
 import { NotesPage } from "./features/study/NotesPage";
+import { SessionsPage } from "./features/sessions/SessionsPage";
 import { QuestsPage } from "./features/quests/QuestsPage";
 import { ProgressPage } from "./features/progress/ProgressPage";
 import { SettingsPage } from "./features/settings/SettingsPage";
@@ -38,6 +39,7 @@ export function App() {
           <Route path="study/:subjectId" element={<SubjectDetailPage />} />
           <Route path="study/:subjectId/notes" element={<NotesPage />} />
           <Route path="study/:subjectId/:topicId/notes" element={<NotesPage />} />
+          <Route path="sessions" element={<SessionsPage />} />
           <Route path="quests" element={<QuestsPage />} />
           <Route path="progress" element={<ProgressPage />} />
           <Route path="settings" element={<SettingsPage />} />
