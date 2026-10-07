@@ -51,6 +51,7 @@ import { requireProfile, type ProfileEnv } from "../auth/currentProfile.ts";
 import { runPrompt } from "../ai/run.ts";
 import { db } from "../db.ts";
 import { recordQuestSignal } from "../services/quests.ts";
+import { recordActivity } from "../services/xp.ts";
 
 export const flashcardsRouter = new Hono<ProfileEnv>();
 
@@ -641,6 +642,10 @@ flashcardsRouter.post("/reviews", async (c) => {
     questOutcome && (questOutcome.stepsCompleted > 0 || questOutcome.questsCompleted.length > 0)
       ? questOutcome
       : null;
+
+  // A fresh rating batch counts as a streak day (plan §18.3). A re-post of the
+  // same batch studies nothing (`studied` stays 0), so it can never tick twice.
+  if (studied > 0) await recordActivity(profileId);
 
   return c.json({ studied, xpAwarded: xp, quest });
 });

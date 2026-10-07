@@ -98,6 +98,8 @@ export interface AttemptResult {
   comparison: { original: { score: number; total: number } } | null;
   /** P13: quest steps this graded attempt just finished (null when none listened). */
   quest: QuestSignalOutcome | null;
+  /** P15: what this attempt paid — one line per ledger row the server wrote. */
+  xp: { total: number; parts: { reason: string; delta: number }[] };
 }
 
 /**

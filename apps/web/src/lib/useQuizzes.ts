@@ -4,13 +4,17 @@
  * React Query over `quizApi`, with one rule the whole phase rests on: lists and detail
  * invalidate together after anything is stored — a quiz generated from the tab, an
  * attempt submitted from the editor, and the history shown on the subject page all read
- * the same rows, so they must never disagree about what exists.
+ * the same rows, so they must never disagree about what exists. P15 adds the second
+ * half of the same rule: a graded attempt pays XP and moves the streak, so the
+ * gamification view invalidates with them and its amount is relayed as a toast.
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type { GenerateQuizBody, QuizListScope, SubmitOutcome } from "./quizApi";
 import { quizApi } from "./quizApi";
+import { useRewardToast } from "./rewards";
 import { questKeys } from "./useQuests";
+import { gamificationKeys } from "./useGamification";
 
 export const quizKeys = {
   all: ["quizzes"] as const,
@@ -50,6 +54,7 @@ export function useGenerateQuiz() {
  */
 export function useSubmitAttempt(quizId: string) {
   const queryClient = useQueryClient();
+  const reward = useRewardToast();
   return useMutation({
     mutationFn: (body: {
       answers: { questionId: string; answer: string; selfMark?: "correct" | "incorrect" }[];
@@ -59,6 +64,8 @@ export function useSubmitAttempt(quizId: string) {
       if (!("pending" in outcome)) {
         queryClient.invalidateQueries({ queryKey: quizKeys.all });
         queryClient.invalidateQueries({ queryKey: questKeys.all });
+        queryClient.invalidateQueries({ queryKey: gamificationKeys.all });
+        reward(outcome.xp.total, "Quiz attempt");
       }
     },
   });

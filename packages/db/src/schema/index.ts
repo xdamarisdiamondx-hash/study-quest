@@ -477,7 +477,9 @@ export const xpLedger = pgTable(
     delta: integer("delta").notNull(),
     reason: text("reason").notNull(),
     sourceType: text("source_type").notNull(),
-    sourceId: uuid("source_id").notNull(),
+    // Opaque source key: a row id where the source has one (attempt, session,
+    // step), a stable code where it does not (an achievement's code) — P15.
+    sourceId: text("source_id").notNull(),
     createdAt: createdAt(),
   },
   // Idempotent awarding: a retry or double-click can never inflate XP (ADR-015).
@@ -500,16 +502,21 @@ export const achievements = pgTable("achievements", {
   hidden: boolean("hidden").notNull().default(false),
 });
 
-export const userAchievements = pgTable("user_achievements", {
-  userId: uuid("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  achievementCode: text("achievement_code")
-    .notNull()
-    .references(() => achievements.code, { onDelete: "cascade" }),
-  progress: integer("progress").notNull().default(0),
-  unlockedAt: timestamp("unlocked_at", { withTimezone: true }),
-});
+export const userAchievements = pgTable(
+  "user_achievements",
+  {
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    achievementCode: text("achievement_code")
+      .notNull()
+      .references(() => achievements.code, { onDelete: "cascade" }),
+    progress: integer("progress").notNull().default(0),
+    unlockedAt: timestamp("unlocked_at", { withTimezone: true }),
+  },
+  // One row per achievement per user: P15 upserts progress on every read.
+  (t) => [primaryKey({ columns: [t.userId, t.achievementCode] })],
+);
 
 export const streaks = pgTable("streaks", {
   userId: uuid("user_id")

@@ -1,16 +1,18 @@
 /**
  * Session state (P14): TanStack Query over /api/sessions.
  *
- * One cross-phase rule the whole web side inherits: finishing a session is real
- * work in several ledgers at once, so `end` invalidates the quest list with its
- * own — the weekly counter moved server-side and the Quests page must show it
- * without a reload. The guided stage marks only touch the session itself.
+ * Two cross-phase rules the whole web side inherits: finishing a session is real
+ * work in several ledgers at once, so `end` invalidates the quest list *and* the
+ * gamification view with its own — the weekly counter and the level strip both
+ * moved server-side and neither may wait for a reload. The guided stage marks
+ * only touch the session itself.
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { sessionApi, type StartSessionBody } from "./sessionsApi";
 import { ApiError } from "./subjectsApi";
 import { questKeys } from "./useQuests";
+import { gamificationKeys } from "./useGamification";
 
 export const sessionKeys = {
   all: ["sessions"] as const,
@@ -44,6 +46,7 @@ export function useSessionActions() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: sessionKeys.all });
       void queryClient.invalidateQueries({ queryKey: questKeys.all });
+      void queryClient.invalidateQueries({ queryKey: gamificationKeys.all });
     },
   });
 

@@ -3,13 +3,16 @@
  *
  * Every mutation invalidates both the day and the task list, because task-kind
  * blocks straddle the two stories — completing one marks the task done (and the
- * task row must not lag behind), while task edits can reword the day.
+ * task row must not lag behind), while task edits can reword the day. The
+ * gamification view joins them (P15): ticking a block off counts a streak day
+ * server-side, and the calendar must show it.
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type { PlanMode } from "@sq/core/planning";
 
 import { planApi, type AddBlockInput, type BlockPatch, type PlanDay } from "./planApi";
+import { gamificationKeys } from "./useGamification";
 import { tasksKeys } from "./useTasks";
 
 export const planKeys = {
@@ -32,6 +35,7 @@ export function usePlanActions() {
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: planKeys.all });
     queryClient.invalidateQueries({ queryKey: tasksKeys.all });
+    queryClient.invalidateQueries({ queryKey: gamificationKeys.all });
   };
 
   const setMode = useMutation({

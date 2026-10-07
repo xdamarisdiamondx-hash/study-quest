@@ -1965,14 +1965,48 @@ XP and update subject progress.
 
 **Goal:** rewards that encourage learning, not app opening (principle 1).
 
-- [ ] XP ledger with idempotent awards and all reasons from §18.3
-- [ ] Levels: curve, titles, progress bar to next level, level-up celebration
-- [ ] Streaks: current/longest, freeze mechanics, streak calendar, gentle recovery messaging
-- [ ] Achievements: First Quest, Quiz Master, Consistent Learner, Subject Explorer, Comeback,
+- [x] XP ledger with idempotent awards and all reasons from §18.3
+- [x] Levels: curve, titles, progress bar to next level, level-up celebration
+- [x] Streaks: current/longest, freeze mechanics, streak calendar, gentle recovery messaging
+- [x] Achievements: First Quest, Quiz Master, Consistent Learner, Subject Explorer, Comeback,
       plus 5 more; progress tracked before unlock, claim flow
-- [ ] Reward feedback: XP toast with reason, badge unlock card, quest-complete moment —
+- [x] Reward feedback: XP toast with reason, badge unlock card, quest-complete moment —
       all under 600 ms, all disabled in reduced-motion
-- [ ] Anti-pattern check: no XP for opening the app, no daily-login-only rewards
+- [x] Anti-pattern check: no XP for opening the app, no daily-login-only rewards
+
+**Delivered in** `packages/core/src/gamification` — the 50-level curve with titles
+(`levelForXp`, `levelProgress`), `dayKey()` (the one UTC day key streak and calendar
+share), and the `ACHIEVEMENTS` catalogue: the five PRD §23 examples plus five more (First
+Session, Note Taker, Card Shark, Early Bird, Unstoppable), every criterion counting real
+work — no row can mention opening the app — with `evaluateAchievements` returning progress
+before unlock and recording the high-water on read; 22 tests, no I/O. The catalogue in core
+is the single source and `seed.ts` upserts it, so the rows the evaluator writes against
+cannot drift from the list it iterates. Migration `0010` widens `xp_ledger.source_id` to
+text — one idempotent key per award across sources — and gives `user_achievements` a
+composite PK: claiming _is_ the ledger row (reason "achievement", source the achievement
+code), so there is no `claimedAt` column to disagree with it, and a claim re-evaluates
+server-side before `awardXp`, invalidating on settle so a failed claim heals by re-reading.
+`services/xp.ts` stays the single writer: quizzes answer with `xp: { total, parts }`
+(attempt +10, first pass at ≥ PASS_SCORE +25, improved retry +15 — the high score keys per
+quiz family, so a retry cannot farm it), flashcards move the streak only when cards were
+actually studied, focus pays `floor(minutes / 10)` per ten minutes, and `recordActivity`
+writes the streak's `activity_log` `study_day` row with local-day dedupe plus the absorbed
+gap day when a freeze is spent — inked on every activity rather than only on streak
+movement, because a day whose first activity predates the writer would otherwise stay
+blank forever while the streak counts it. Two finds from the browser smoke, both fixed:
+the PGlite driver read `.rows` off `exec()`'s result _array_, so the migration skip-check
+always saw an empty set and re-applied every file on every boot — harmless until 0010, the
+first migration whose DDL is not idempotent — and the calendar gate just described. On the
+web, `lib/rewards.tsx` mounts `RewardsHost` (polite toast stack, 2.8 s auto-dismiss, the
+animation token `--base` so reduced motion costs no movement) and `LevelUpWatcher`, which
+subscribes to the query cache — no state is ever set during render or an effect body —
+primes a silent baseline at mount, and celebrates a genuinely higher level in a dialog;
+every XP-paying mutation (tasks, quizzes, flashcards, sessions, quests, plan, claims)
+invalidates `gamificationKeys.all` and posts its toast. Home's `LevelStrip` replaced the
+mock level data with the real view; Progress renders the level card with its title,
+`StreakCalendar` (35 days, `role="img"` plus a legend) and `AchievementGrid` (locked
+progress bars, claim buttons, claimed chips, inline claim errors) with `streakNote`'s four
+states. Study minutes and quiz average keep their placeholders until P16.
 
 **Exit:** every XP event in the ledger is traceable to a source row and cannot be double counted.
 **Effort:** 4 d · **Depends on:** P2 (ledger), P12–P14 (sources)

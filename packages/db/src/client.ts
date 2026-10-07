@@ -140,8 +140,15 @@ export async function createDb(databaseUrl = process.env.DATABASE_URL): Promise<
   await pglite.waitReady;
 
   const run = async (q: string): Promise<QueryResult> => {
-    const result = await pglite.exec(q);
-    return { rows: ((result as { rows?: unknown[] }).rows ?? []) as never[] };
+    // `exec` answers with one Results per statement in the batch, not a row
+    // object. Reading `.rows` off the array always yielded [], which made the
+    // migration skip-check believe nothing had ever run and re-apply every file
+    // on every boot — harmless until 0010, the first migration whose DDL is not
+    // idempotent, and whose "multiple primary keys" error is not an
+    // "already exists" the loop is willing to swallow.
+    const results = await pglite.exec(q);
+    const last = results[results.length - 1];
+    return { rows: (last?.rows ?? []) as never[] };
   };
 
   await migrate(run);

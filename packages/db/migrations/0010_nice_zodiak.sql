@@ -1,0 +1,2 @@
+ALTER TABLE "xp_ledger" ALTER COLUMN "source_id" SET DATA TYPE text;--> statement-breakpoint
+ALTER TABLE "user_achievements" ADD CONSTRAINT "user_achievements_user_id_achievement_code_pk" PRIMARY KEY("user_id","achievement_code");

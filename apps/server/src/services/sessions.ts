@@ -359,6 +359,21 @@ export async function endSession(
     sourceType: "session",
     sourceId: session.id,
   });
+  // Plan §18.3: a focus session also pays +2 per ten minutes it actually held
+  // attention (rounded down). Quick and guided sessions don't — their clock was
+  // never the point of the work. Same source row as the session's own award,
+  // so the reason alone keeps the two ledger entries apart (ADR-015).
+  const focusXp =
+    session.mode === "focus" ? Math.floor(minutes / 10) * XP.focusSessionPerTenMinutes : 0;
+  if (focusXp > 0) {
+    await awardXp({
+      delta: focusXp,
+      userId: profileId,
+      reason: "focus_session",
+      sourceType: "session",
+      sourceId: session.id,
+    });
+  }
   const streak = await recordActivity(profileId, endedAt);
   const quest = await recordQuestSignal(profileId, {
     type: "session",
@@ -368,7 +383,7 @@ export async function endSession(
 
   return {
     session: await toView(row),
-    xp,
+    xp: xp + focusXp,
     streak,
     quest,
     next: await suggestionFor(session),

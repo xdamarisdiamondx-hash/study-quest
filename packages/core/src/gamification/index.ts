@@ -1,5 +1,5 @@
 /**
- * XP, levels and streaks.
+ * XP, levels, streaks and achievements.
  * Rules and rationale: docs/IMPLEMENTATION_PLAN.md section 18.3, ADR-015.
  */
 
@@ -63,6 +63,160 @@ export const XP = {
   questComplete: 500,
 } as const;
 
+/* --- achievements (PRD section 23) --------------------------------------- */
+
+/**
+ * What an achievement's criteria can count. Every value is a fact the server
+ * can gather from rows it already owns — nothing here is derived from a screen.
+ */
+export interface AchievementFacts {
+  questsCompleted: number;
+  /** Distinct quizzes with at least one graded attempt — retakes are one quiz. */
+  quizzesCompleted: number;
+  streakDays: number;
+  subjectsStudied: number;
+  improvedAfterRetry: boolean;
+  notesCreated: number;
+  flashcardsReviewed: number;
+  sessionsCompleted: number;
+  /** Local hour of the earliest completed session, or null when there is none. */
+  earliestSessionHour: number | null;
+}
+
+export type AchievementCriteria = Partial<{
+  [K in keyof AchievementFacts]: number | boolean;
+}>;
+
+export interface Achievement {
+  code: string;
+  name: string;
+  description: string;
+  xpReward: number;
+  criteria: AchievementCriteria;
+}
+
+/**
+ * The catalogue — one source the seed writes into the `achievements` table and
+ * the evaluator reads back (the same pattern as QUEST_TEMPLATES). The five PRD
+ * §23 examples plus five more, each counting real learning: the criteria never
+ * mention opening the app (§23, anti-pattern check).
+ */
+export const ACHIEVEMENTS: readonly Achievement[] = [
+  {
+    code: "first_quest",
+    name: "First Quest",
+    description: "Complete your first Study Quest.",
+    xpReward: 50,
+    criteria: { questsCompleted: 1 },
+  },
+  {
+    code: "quiz_master",
+    name: "Quiz Master",
+    description: "Complete 10 quizzes.",
+    xpReward: 100,
+    criteria: { quizzesCompleted: 10 },
+  },
+  {
+    code: "consistent_learner",
+    name: "Consistent Learner",
+    description: "Study for 7 days in a row.",
+    xpReward: 150,
+    criteria: { streakDays: 7 },
+  },
+  {
+    code: "subject_explorer",
+    name: "Subject Explorer",
+    description: "Study 5 different subjects.",
+    xpReward: 100,
+    criteria: { subjectsStudied: 5 },
+  },
+  {
+    code: "comeback",
+    name: "Comeback",
+    description: "Improve your score after reviewing your mistakes.",
+    xpReward: 75,
+    criteria: { improvedAfterRetry: true },
+  },
+  {
+    code: "first_session",
+    name: "First Session",
+    description: "Finish your first study session.",
+    xpReward: 25,
+    criteria: { sessionsCompleted: 1 },
+  },
+  {
+    code: "note_taker",
+    name: "Note Taker",
+    description: "Write your first 10 notes.",
+    xpReward: 50,
+    criteria: { notesCreated: 10 },
+  },
+  {
+    code: "card_sharp",
+    name: "Card Shark",
+    description: "Review 50 flashcards.",
+    xpReward: 75,
+    criteria: { flashcardsReviewed: 50 },
+  },
+  {
+    code: "early_bird",
+    name: "Early Bird",
+    description: "Complete a study session before 8am.",
+    xpReward: 50,
+    criteria: { earliestSessionHour: 8 },
+  },
+  {
+    code: "unstoppable",
+    name: "Unstoppable",
+    description: "Study for 30 days in a row.",
+    xpReward: 250,
+    criteria: { streakDays: 30 },
+  },
+];
+
+/**
+ * How far along one achievement is for these facts.
+ *
+ * Numeric criteria count up to their target (`progress` is clamped so a screen
+ * can show a full bar before the unlock); booleans and the "before hour" test
+ * are all-or-nothing. Every criteria entry must be met — unlocked means the
+ * whole requirement, never half of it.
+ */
+export function achievementProgress(
+  criteria: AchievementCriteria,
+  facts: AchievementFacts,
+): { progress: number; target: number; unlocked: boolean } {
+  const entries = Object.entries(criteria) as [keyof AchievementFacts, number | boolean][];
+  if (entries.length === 0) return { progress: 0, target: 0, unlocked: false };
+
+  let progress = 0;
+  let target = 0;
+  let unlocked = true;
+
+  for (const [key, requirement] of entries) {
+    const fact = facts[key];
+    if (typeof requirement === "number" && key !== "earliestSessionHour") {
+      const value = typeof fact === "number" ? fact : 0;
+      progress += Math.min(value, requirement);
+      target += requirement;
+      if (value < requirement) unlocked = false;
+    } else if (key === "earliestSessionHour" && typeof requirement === "number") {
+      // "Before 8am": any early session satisfies it; a later one never counts.
+      const met = fact !== null && typeof fact === "number" && fact < requirement;
+      progress += met ? 1 : 0;
+      target += 1;
+      if (!met) unlocked = false;
+    } else {
+      const met = fact === requirement;
+      progress += met ? 1 : 0;
+      target += 1;
+      if (!met) unlocked = false;
+    }
+  }
+
+  return { progress, target, unlocked };
+}
+
 /* --- streaks (PRD section 22) ------------------------------------------ */
 
 export interface StreakState {
@@ -74,7 +228,12 @@ export interface StreakState {
 
 const DAY = 86_400_000;
 
-function toKey(d: Date): string {
+/**
+ * A day's key in the streak's own calendar (the UTC date). Exported so any
+ * calendar drawn from it — the streak grid, P15 — uses the exact boundary
+ * `registerActivity` counts and can never disagree with the streak it shows.
+ */
+export function dayKey(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
@@ -87,7 +246,7 @@ function toKey(d: Date): string {
  * read as a missed day.
  */
 export function registerActivity(state: StreakState, on: Date): StreakState {
-  const today = toKey(on);
+  const today = dayKey(on);
   if (state.lastActiveDate === today) return state;
 
   const midnightUtc = (key: string) => new Date(`${key}T00:00:00Z`).getTime();

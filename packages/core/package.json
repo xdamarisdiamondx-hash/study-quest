@@ -17,6 +17,7 @@
     "./subjects": "./src/subjects/index.ts",
     "./tasks": "./src/tasks/index.ts",
     "./schemas/ai": "./src/schemas/ai.ts",
+    "./schemas/gamification": "./src/schemas/gamification.ts",
     "./schemas/notes": "./src/schemas/notes.ts",
     "./schemas/plan": "./src/schemas/plan.ts",
     "./schemas/quests": "./src/schemas/quests.ts",

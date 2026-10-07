@@ -128,7 +128,7 @@ Then open **http://localhost:5173** and create an account.
 | `pnpm verify`            | Typecheck, lint and the unit tests                                  |
 | `pnpm test`              | 30 tests over the XP curve, levels, streaks, progress and monograms |
 | `pnpm storybook`         | Component catalogue on http://localhost:6006                        |
-| `pnpm db:seed`           | 50 levels, 8 achievements                                           |
+| `pnpm db:seed`           | 50 levels, 10 achievements                                          |
 | `pnpm db:up` / `db:down` | Start or stop the PostgreSQL container                              |
 | `pnpm build`             | Production build of the web app                                     |
 

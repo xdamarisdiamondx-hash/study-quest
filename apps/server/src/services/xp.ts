@@ -10,10 +10,10 @@
  * - Streaks only move on real work: `recordActivity` is called from completions, never
  *   from opening the app (PRD §22 anti-pattern).
  */
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, gte, lt, sql } from "drizzle-orm";
 
 import { registerActivity, type StreakState } from "@sq/core/gamification";
-import { streaks, xpLedger } from "@sq/db/schema";
+import { activityLog, streaks, xpLedger } from "@sq/db/schema";
 
 import { db } from "../db.ts";
 
@@ -98,6 +98,48 @@ export async function recordActivity(userId: string, on = new Date()): Promise<S
         freezeCount: next.freezeCount,
       })
       .where(eq(streaks.userId, userId));
+
+    // A spent freeze means a gap day was absorbed into the streak; it belongs
+    // on the calendar too, or the grid would show a hole the streak never had.
+    if (next.freezeCount < before.freezeCount) {
+      const gap = new Date(on);
+      gap.setDate(gap.getDate() - 1);
+      await markStudyDay(userId, gap);
+    }
   }
+
+  // The calendar counts every day with recorded activity — the streak moved or
+  // not. Gating this on movement stranded a day whose first activity predated
+  // P15 (the row was never written, and no later activity could write it);
+  // `markStudyDay` dedupes anyway, so the hundredth completion of one afternoon
+  // is still a no-op.
+  await markStudyDay(userId, on);
   return next;
+}
+
+/** Idempotent: at most one `study_day` row may exist for a given local day. */
+async function markStudyDay(userId: string, on: Date): Promise<void> {
+  const start = new Date(on);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(start);
+  end.setDate(start.getDate() + 1);
+
+  const [dupe] = await db.orm
+    .select({ id: activityLog.id })
+    .from(activityLog)
+    .where(
+      and(
+        eq(activityLog.userId, userId),
+        eq(activityLog.kind, "study_day"),
+        gte(activityLog.createdAt, start),
+        lt(activityLog.createdAt, end),
+      ),
+    )
+    .limit(1);
+  if (dupe) return;
+
+  await db.orm
+    .insert(activityLog)
+    .values({ userId, kind: "study_day", createdAt: on })
+    .onConflictDoNothing();
 }

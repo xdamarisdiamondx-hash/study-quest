@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  ACHIEVEMENTS,
   LEVEL_TITLES,
   XP,
+  achievementProgress,
+  type AchievementFacts,
   levelForXp,
   levelProgress,
   levelTitle,
@@ -141,5 +144,74 @@ describe("registerActivity", () => {
     let s = { current: 0, longest: 0, lastActiveDate: null as string | null, freezeCount: 0 };
     for (let d = 0; d < 60; d++) s = registerActivity(s, day(d));
     expect(s.freezeCount).toBeLessThanOrEqual(3);
+  });
+});
+
+describe("achievement catalogue", () => {
+  const facts = (over: Partial<AchievementFacts> = {}): AchievementFacts => ({
+    questsCompleted: 0,
+    quizzesCompleted: 0,
+    streakDays: 0,
+    subjectsStudied: 0,
+    improvedAfterRetry: false,
+    notesCreated: 0,
+    flashcardsReviewed: 0,
+    sessionsCompleted: 0,
+    earliestSessionHour: null,
+    ...over,
+  });
+
+  it("has the five PRD section 23 examples among its ten", () => {
+    const codes = ACHIEVEMENTS.map((a) => a.code);
+    expect(ACHIEVEMENTS).toHaveLength(10);
+    for (const code of [
+      "first_quest",
+      "quiz_master",
+      "consistent_learner",
+      "subject_explorer",
+      "comeback",
+    ])
+      expect(codes).toContain(code);
+    expect(new Set(codes).size).toBe(codes.length);
+  });
+
+  it("never rewards mere app opening", () => {
+    // Every criterion counts rows of real work; an untouched account unlocks none.
+    const untouched = facts();
+    for (const a of ACHIEVEMENTS)
+      expect(achievementProgress(a.criteria, untouched).unlocked, a.code).toBe(false);
+  });
+
+  it("counts numeric criteria up to their target and clamps the bar", () => {
+    const quizMaster = ACHIEVEMENTS.find((a) => a.code === "quiz_master")!;
+    const half = achievementProgress(quizMaster.criteria, facts({ quizzesCompleted: 5 }));
+    expect(half).toEqual({ progress: 5, target: 10, unlocked: false });
+
+    const full = achievementProgress(quizMaster.criteria, facts({ quizzesCompleted: 12 }));
+    expect(full.unlocked).toBe(true);
+    expect(full.progress).toBe(10); // clamped: a full bar means done
+  });
+
+  it("gates boolean criteria on the flag alone", () => {
+    const comeback = ACHIEVEMENTS.find((a) => a.code === "comeback")!;
+    expect(achievementProgress(comeback.criteria, facts()).unlocked).toBe(false);
+    expect(
+      achievementProgress(comeback.criteria, facts({ improvedAfterRetry: true })).unlocked,
+    ).toBe(true);
+  });
+
+  it("treats the early-bird hour as before, never at-or-after", () => {
+    const early = ACHIEVEMENTS.find((a) => a.code === "early_bird")!;
+    expect(achievementProgress(early.criteria, facts({ earliestSessionHour: 7 })).unlocked).toBe(
+      true,
+    );
+    expect(achievementProgress(early.criteria, facts({ earliestSessionHour: 8 })).unlocked).toBe(
+      false,
+    );
+    expect(achievementProgress(early.criteria, facts()).unlocked).toBe(false);
+  });
+
+  it("never unlocks from empty criteria", () => {
+    expect(achievementProgress({}, facts()).unlocked).toBe(false);
   });
 });

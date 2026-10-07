@@ -11,6 +11,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { questApi, type CreateQuestBody, type QuestList } from "./questsApi";
+import { gamificationKeys } from "./useGamification";
 
 export const questKeys = {
   all: ["quests"] as const,
@@ -26,7 +27,13 @@ export function useQuests() {
 
 export function useQuestActions() {
   const queryClient = useQueryClient();
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: questKeys.all });
+  // Steps pay XP and can finish a quest (P15): the level strip, the streak
+  // calendar and the achievements all move with them, so they invalidate here
+  // and nowhere per-mutation.
+  const invalidate = () => {
+    void queryClient.invalidateQueries({ queryKey: questKeys.all });
+    void queryClient.invalidateQueries({ queryKey: gamificationKeys.all });
+  };
 
   const create = useMutation({
     mutationFn: (body: CreateQuestBody) => questApi.create(body),

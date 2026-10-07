@@ -305,3 +305,128 @@
   color: var(--muted);
   overflow-wrap: anywhere;
 }
+
+/* --- rewards (P15): the XP toast -------------------------------------- */
+.sq-toasts {
+  position: fixed;
+  right: var(--s4);
+  /* Clears the mobile tab bar; desktop drops the offset below. */
+  bottom: calc(var(--s4) + 64px);
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--s2);
+  pointer-events: none;
+}
+@media (min-width: 900px) {
+  .sq-toasts {
+    right: var(--s5);
+    bottom: var(--s5);
+  }
+}
+.sq-toast {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s2);
+  background: var(--raised);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--gold-500);
+  border-radius: var(--r-md);
+  box-shadow: var(--e3);
+  padding: var(--s3) var(--s4);
+  font: var(--t-body-sm);
+  animation: sq-toast-in var(--base) both;
+}
+.sq-toast b {
+  font: 600 14px/1.4 var(--font-sans);
+  color: var(--gold-700);
+}
+.sq-toast span {
+  color: var(--muted);
+}
+@keyframes sq-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+/* The --base token is 0ms under prefers-reduced-motion, so the toast still
+   appears; it just never slides. */
+
+/* --- streak calendar (P15) --------------------------------------------- */
+.sq-cal {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--s2);
+  max-width: 336px;
+}
+.sq-cal-day {
+  aspect-ratio: 1;
+  background: var(--track);
+  border: 1.5px solid transparent;
+  border-radius: var(--r-sm);
+}
+.sq-cal-day[data-on="true"] {
+  background: var(--accent);
+}
+.sq-cal-day[data-today="true"] {
+  border-color: var(--strong);
+}
+.sq-cal-swatch {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  aspect-ratio: auto;
+  border-radius: 3px;
+}
+
+/* --- achievements (P15) ------------------------------------------------- */
+.sq-ach-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: var(--s3);
+}
+.sq-ach {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  background: var(--page);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: var(--s3) var(--s4);
+}
+/* Unlocked-but-unclaimed is the one card asking for a press: accent it. */
+.sq-ach[data-state="unlocked"] {
+  border-color: var(--accent);
+}
+/* Pin whatever the state is (progress, claim, badge) to the card's floor. */
+.sq-ach > :last-child {
+  margin-top: auto;
+}
+.sq-ach-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--s2);
+}
+.sq-ach-progress {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+}
+.sq-ach-bar {
+  display: block;
+  flex: 1;
+  height: 6px;
+  background: var(--track);
+  border-radius: var(--r-full);
+  overflow: hidden;
+}
+.sq-ach-bar > span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: var(--r-full);
+  transition: width var(--slow);
+}

@@ -11,9 +11,10 @@ import {
 } from "@sq/ui";
 import { groupQuest, localDate, type QuestItem } from "@sq/core/planning";
 
-import { level, profile, recommendation } from "../../data/mock";
+import { recommendation } from "../../data/mock";
 import { DueReviewCard } from "../flashcards/DueReviewCard";
 import { useAuth } from "../../lib/useAuth";
+import { useGamification } from "../../lib/useGamification";
 import { useHealth } from "../../lib/useHealth";
 import { usePlanActions, usePlanDay } from "../../lib/usePlan";
 import { useSubjects } from "../../lib/useSubjects";
@@ -256,6 +257,51 @@ function TodaysQuest() {
   );
 }
 
+/**
+ * Level, XP and streak — the account's own numbers since P15, summed from the
+ * ledger on the server. While the first read is in flight the card holds its
+ * shape with a loading line; a failed one leaves the card out entirely, because
+ * ServiceStatus above already explains an unreachable API better than a zero
+ * ever could ("0 XP" would be a lie, not a fallback).
+ */
+function LevelStrip() {
+  const { data, isPending } = useGamification();
+
+  if (isPending) {
+    return (
+      <Card>
+        <p style={{ margin: 0, color: "var(--muted)", font: "var(--t-body-sm)" }}>
+          Loading your level and streak…
+        </p>
+      </Card>
+    );
+  }
+  if (!data) return null;
+
+  return (
+    <Card>
+      <div className="sq-row" style={{ gap: "var(--s4)", flexWrap: "nowrap" }}>
+        <LevelBadge level={data.level.level} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <Track
+            label={`XP to level ${data.level.level + 1}`}
+            variant="xp"
+            value={data.level.into}
+            max={data.level.needed}
+            caption={`${data.level.into} / ${data.level.needed}`}
+          />
+        </div>
+        <div style={{ textAlign: "right" }}>
+          <Streak days={data.streak.current} />
+          <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>
+            {data.totalXp} XP total
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
 export function HomePage() {
   // The account's real name — never the mock profile's placeholder.
   const { profile: account } = useAuth();
@@ -279,26 +325,7 @@ export function HomePage() {
         </Link>
       </section>
 
-      <Card>
-        <div className="sq-row" style={{ gap: "var(--s4)", flexWrap: "nowrap" }}>
-          <LevelBadge level={level.level} />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <Track
-              label={`XP to level ${level.level + 1}`}
-              variant="xp"
-              value={level.into}
-              max={level.needed}
-              caption={`${level.into} / ${level.needed}`}
-            />
-          </div>
-          <div style={{ textAlign: "right" }}>
-            <Streak days={profile.streakDays} />
-            <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>
-              {profile.totalXp} XP total
-            </div>
-          </div>
-        </div>
-      </Card>
+      <LevelStrip />
 
       <DueReviewCard />
 
@@ -321,9 +348,9 @@ export function HomePage() {
       <ServiceStatus />
 
       <p style={{ color: "var(--muted)", fontSize: 13, margin: "0 0 var(--s4)" }}>
-        Today's Quest now reads your real plan (P12) — check things off here or on the Plan page.
-        Subjects, topics and subject progress are real as of P4; XP and streaks stay placeholder
-        until gamification (P15). See <code>docs/PHASES.md</code>.
+        Today's Quest reads your real plan (P12); XP, level and streak above are read from the
+        ledger as of P15 — they move the moment you earn them. Subjects, topics and subject progress
+        have been real since P4. See <code>docs/PHASES.md</code>.
       </p>
     </div>
   );

@@ -12,7 +12,9 @@ import type { CardRating } from "@sq/core/schemas/ai";
 
 import type { CreateDeckBody, DeckListScope, DueScope, GenerateDeckBody } from "./flashcardsApi";
 import { flashApi } from "./flashcardsApi";
+import { useRewardToast } from "./rewards";
 import { questKeys } from "./useQuests";
+import { gamificationKeys } from "./useGamification";
 
 export const flashKeys = {
   all: ["flashcards"] as const,
@@ -120,18 +122,22 @@ export function useCardMutation() {
  * Rate a whole session. Success invalidates everything a rating touches — the
  * queue, the deck's counts, the list, the summary — because one batch moves all
  * of them at once, and the quest list too: a batch is PRD §20's "study
- * flashcards" success event (P13).
+ * flashcards" success event (P13). The gamification view joins them (P15): a
+ * fresh batch pays XP, counts a streak day and feeds the achievements.
  */
 export function useSubmitReviews() {
   const queryClient = useQueryClient();
+  const reward = useRewardToast();
   return useMutation({
     mutationFn: (body: {
       batchId: string;
       reviews: { cardId: string; rating: CardRating; durationMs?: number }[];
     }) => flashApi.reviews(body),
-    onSuccess: () => {
+    onSuccess: (outcome) => {
       queryClient.invalidateQueries({ queryKey: flashKeys.all });
       queryClient.invalidateQueries({ queryKey: questKeys.all });
+      queryClient.invalidateQueries({ queryKey: gamificationKeys.all });
+      reward(outcome.xpAwarded, "Flashcards studied");
     },
   });
 }

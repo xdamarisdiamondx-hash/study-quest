@@ -15,7 +15,8 @@
  *
  * A graded attempt also fires the P13 quest signal: "complete quiz" listens for this
  * event (and "final challenge" for this event at PASS_SCORE), so PRD §20's stepper
- * fills itself while the student studies.
+ * fills itself while the student studies — and, as of P15, pays the §18.3 XP (attempt,
+ * first pass at PASS_SCORE, improved retry) from three separately keyed ledger rows.
  */
 import { Hono } from "hono";
 import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
@@ -26,6 +27,8 @@ import {
   submitQuizAttemptSchema,
   type QuizType,
 } from "@sq/core/schemas/ai";
+import { XP } from "@sq/core/gamification";
+import { PASS_SCORE } from "@sq/core/quests";
 import { gradeQuiz, nextMastery, retryFocus, scoreOf, weakConcepts } from "@sq/core/quiz";
 import {
   notes,
@@ -41,6 +44,7 @@ import { requireProfile, type ProfileEnv } from "../auth/currentProfile.ts";
 import { runPrompt } from "../ai/run.ts";
 import { db } from "../db.ts";
 import { recordQuestSignal } from "../services/quests.ts";
+import { awardXp, recordActivity } from "../services/xp.ts";
 
 export const quizzesRouter = new Hono<ProfileEnv>();
 
@@ -607,6 +611,30 @@ quizzesRouter.post("/:id/attempts", async (c) => {
       ? questOutcome
       : null;
 
+  /* --- XP and the streak (PRD §22, plan §18.3) ---------------------------- *
+   * Three ledger rows, each keyed on its own source so none can double-pay:
+   * the attempt itself, the first time this quiz family (a retry counts as
+   * its original) is passed at PASS_SCORE, and a retry that beats the attempt
+   * it came from. A graded attempt is real work, so it also moves the streak. */
+  const parts: { reason: string; delta: number }[] = [];
+  const spend = async (delta: number, reason: string, sourceType: string, sourceId: string) => {
+    const got = await awardXp({ userId: profileId, delta, reason, sourceType, sourceId });
+    if (got > 0) parts.push({ reason, delta: got });
+  };
+
+  await spend(XP.quizAttempt, "quiz_attempt", "attempt", attempt.id);
+  if (attempt.total > 0 && attempt.score / attempt.total >= PASS_SCORE)
+    // Keyed on the *original* quiz: a retry of a passed quiz must not pay it again.
+    await spend(XP.quizHighScore, "quiz_high_score", "quiz", quiz.retryOf ?? quiz.id);
+  if (
+    comparison &&
+    comparison.original.total > 0 &&
+    attempt.total > 0 &&
+    attempt.score / attempt.total > comparison.original.score / comparison.original.total
+  )
+    await spend(XP.retryImproved, "retry_improved", "attempt", attempt.id);
+  await recordActivity(profileId);
+
   return c.json({
     attempt: {
       id: attempt.id,
@@ -622,5 +650,6 @@ quizzesRouter.post("/:id/attempts", async (c) => {
     mastery,
     comparison,
     quest,
+    xp: { total: parts.reduce((sum, p) => sum + p.delta, 0), parts },
   });
 });

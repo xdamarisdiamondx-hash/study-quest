@@ -5,74 +5,17 @@
  * into a shared database. Subjects are per-user and are created during onboarding
  * from the templates in @sq/core/starter.
  *
- * Safe to re-run: every insert is an upsert.
+ * The achievement catalogue itself lives in @sq/core/gamification (P15) — the
+ * screens and the evaluator read it there; this writes it into `achievements`
+ * as reference data. Safe to re-run: every insert is an upsert.
  */
 import { sql } from "drizzle-orm";
 
 import { createDb } from "@sq/db/client";
-import { xpRequired, LEVEL_TITLES } from "@sq/core/gamification";
+import { ACHIEVEMENTS, xpRequired, LEVEL_TITLES } from "@sq/core/gamification";
 import * as dbSchema from "@sq/db/schema";
 
 const { levels, achievements } = dbSchema;
-
-const ACHIEVEMENTS = [
-  {
-    code: "first_quest",
-    name: "First Quest",
-    description: "Complete your first Study Quest.",
-    xpReward: 50,
-    criteria: { questsCompleted: 1 },
-  },
-  {
-    code: "quiz_master",
-    name: "Quiz Master",
-    description: "Complete 10 quizzes.",
-    xpReward: 100,
-    criteria: { quizzesCompleted: 10 },
-  },
-  {
-    code: "consistent_learner",
-    name: "Consistent Learner",
-    description: "Study for 7 days in a row.",
-    xpReward: 150,
-    criteria: { streakDays: 7 },
-  },
-  {
-    code: "subject_explorer",
-    name: "Subject Explorer",
-    description: "Study 5 different subjects.",
-    xpReward: 100,
-    criteria: { subjectsStudied: 5 },
-  },
-  {
-    code: "comeback",
-    name: "Comeback",
-    description: "Improve your score after reviewing your mistakes.",
-    xpReward: 75,
-    criteria: { improvedAfterRetry: true },
-  },
-  {
-    code: "note_taker",
-    name: "Note Taker",
-    description: "Write your first 10 notes.",
-    xpReward: 50,
-    criteria: { notesCreated: 10 },
-  },
-  {
-    code: "card_sharp",
-    name: "Card Shark",
-    description: "Review 50 flashcards.",
-    xpReward: 75,
-    criteria: { flashcardsReviewed: 50 },
-  },
-  {
-    code: "early_bird",
-    name: "Early Bird",
-    description: "Complete a study session before 8am.",
-    xpReward: 50,
-    criteria: { sessionBeforeHour: 8 },
-  },
-];
 
 export async function seed() {
   const db = await createDb();

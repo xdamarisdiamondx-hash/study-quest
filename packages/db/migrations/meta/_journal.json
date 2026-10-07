@@ -71,6 +71,13 @@
       "when": 1791379430724,
       "tag": "0009_luxuriant_revanche",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791406302970,
+      "tag": "0010_nice_zodiak",
+      "breakpoints": true
     }
   ]
 }
