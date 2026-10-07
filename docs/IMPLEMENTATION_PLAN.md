@@ -1857,13 +1857,46 @@ quest reflects real progress as items are completed.
 
 **Goal:** quests as meaningful study goals, not renamed tasks (PRD §20–21).
 
-- [ ] Quest templates: Topic, Subject, Exam, Weekly, Personal (PRD §21)
-- [ ] Quest builder: title, scope, steps, reward, due date; steps reference real activities
+- [x] Quest templates: Topic, Subject, Exam, Weekly, Personal (PRD §21)
+- [x] Quest builder: title, scope, steps, reward, due date; steps reference real activities
       (read notes, review summary, study flashcards, complete quiz, pass final challenge)
-- [ ] Step execution deep-links into the actual feature and auto-completes on success
-- [ ] Quest progress, locked/unlocked step states, completion celebration + XP
-- [ ] Active and completed quest views; "special quests" offered occasionally, never spammed
-- [ ] Quest templates in the seed data so the first-run experience has one waiting
+- [x] Step execution deep-links into the actual feature and auto-completes on success
+- [x] Quest progress, locked/unlocked step states, completion celebration + XP
+- [x] Active and completed quest views; "special quests" offered occasionally, never spammed
+- [x] Quest templates in the seed data so the first-run experience has one waiting
+
+**Delivered in** `packages/core/src/quests` — templates (`QUEST_TEMPLATES` rewards: topic 150,
+subject 500 = `XP.questComplete`, exam 300, weekly 150, personal 200), `templateSteps` (the
+step catalogue the _server_ resolves at creation, so titles/order/refs can never drift from
+what the client previews), `stepStates`, `specialQuestOffer` and the completion snapshot
+logic — 32 tests, no I/O, with wire contracts in `packages/core/src/schemas/quests`. Two
+design calls deserve stating. **Step states are display, not a gate**: "locked" is a colour,
+out-of-order completions stay done (principle 4 — the stepper sorts by `orderIndex` and
+never revokes), and optional steps can't hold anything hostage. **Signals are server-hooked
+wherever the server already knows**: a graded quiz attempt completes `complete_quiz` on any
+pass and `final_challenge` only at ≥ `PASS_SCORE` (0.8), a flashcard batch completes
+`study_flashcards` for the topics its rated cards live in, both via one `recordQuestSignal`
+that is idempotent (a repeated event answers `quest: null`, never a double award); only
+`notes_opened`/`summary` — events only the screen knows — are POSTed from the client
+(`POST /api/quests/signals`, ownership-checked), fired fire-and-forget from the reader and
+the summary panel. Subject scope resolves topic→subject server-side, so one Physics signal
+feeds the Physics quest's steps. The read model is `services/quests.ts` over
+`routes/quests.ts`: list (active/completed/offer), create, decline, abandon, complete/reset
+step, signals. **Offers are at most one** — subject (≥2 topics) first, then a topic with
+material; declined or completed rows block the same scope in _any_ status, and a subject
+quest's row silences the topic fallback inside it, so the offer slot moves on to the next
+candidate instead of nagging (A.8). Reset reopens a quest that this step completed and
+revokes both awards through the ledger; streak days are never unticked. Migration `0008`
+adds `quest_steps.target`/`progress` for the weekly count. Onboarding's POST /subjects now
+wipes the user's quests with their subjects (replace semantics) and creates the starter
+"Master {first topic}" quest — first run has one waiting (A.8). On the web,
+`lib/questsApi` + `lib/useQuests` sit under `QuestsPage` (offer card, active cards with the
+stepper, count rows, due/XP chips, celebration dialog) and `QuestBuilderDialog` (five
+template tiles, scope pickers, exam name/date, weekly target, personal step editor); step
+rows deep-link into the real activity (`?tab=flashcards|quizzes` — `SubjectDetailPage` now
+reads its tab from the URL), quiz results and card-study screens surface the quest outcome
+chips beside XP, and `useSubmitAttempt`/`useSubmitReviews` invalidate the quest list so the
+Quests page is never stale after the work happens.
 
 **Exit:** complete a subject quest end to end — every step launches real work, progress is
 tracked, and the reward lands in the XP ledger.

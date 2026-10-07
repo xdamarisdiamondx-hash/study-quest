@@ -457,6 +457,11 @@ export const questSteps = pgTable("quest_steps", {
   required: boolean("required").notNull().default(true),
   status: text("status").notNull().default("pending"),
   completedAt: timestamp("completed_at", { withTimezone: true }),
+  // Count steps (P13): "complete 5 study sessions this week" completes by
+  // reaching its target, not by a single event. target=1 means "one event",
+  // which is what every other step kind is.
+  target: integer("target").notNull().default(1),
+  progress: integer("progress").notNull().default(0),
 });
 
 /* --- gamification --------------------------------------------------------- */

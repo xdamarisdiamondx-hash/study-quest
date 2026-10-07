@@ -204,6 +204,25 @@ export function QuizResults({
           </p>
         )}
 
+        {/* P13: the graded attempt is a quest success event — say so here, on the
+            screen where the work happened, rather than only on the Quests page. */}
+        {result.quest &&
+          (result.quest.stepsCompleted > 0 || result.quest.questsCompleted.length > 0) && (
+            <div style={{ display: "flex", gap: "var(--s2)", flexWrap: "wrap" }}>
+              {result.quest.stepsCompleted > 0 && (
+                <Chip tone="ok">
+                  Quest step{result.quest.stepsCompleted === 1 ? "" : "s"} done · +
+                  {result.quest.xpAwarded} XP
+                </Chip>
+              )}
+              {result.quest.questsCompleted.map((q) => (
+                <Chip key={q.id} tone="ok">
+                  Quest complete — {q.title} +{q.xp} XP
+                </Chip>
+              ))}
+            </div>
+          )}
+
         <ol className="sq-quiz-review">
           {review.map((row, i) => (
             <li key={row.id} className="sq-quiz-review-item">

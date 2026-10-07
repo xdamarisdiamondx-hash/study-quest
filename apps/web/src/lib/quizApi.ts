@@ -7,6 +7,7 @@
  */
 import type { QuizType } from "@sq/core/schemas/ai";
 
+import type { QuestSignalOutcome } from "./questsApi";
 import { ApiError } from "./subjectsApi";
 
 /** One question as the taking screen receives it — never with the answer attached. */
@@ -95,6 +96,8 @@ export interface AttemptResult {
   mastery: { conceptTag: string; mastery: number; attempts: number; correct: number }[];
   /** On a retry: the attempt it is trying to beat. */
   comparison: { original: { score: number; total: number } } | null;
+  /** P13: quest steps this graded attempt just finished (null when none listened). */
+  quest: QuestSignalOutcome | null;
 }
 
 /**

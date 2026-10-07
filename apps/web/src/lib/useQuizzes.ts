@@ -10,6 +10,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type { GenerateQuizBody, QuizListScope, SubmitOutcome } from "./quizApi";
 import { quizApi } from "./quizApi";
+import { questKeys } from "./useQuests";
 
 export const quizKeys = {
   all: ["quizzes"] as const,
@@ -45,6 +46,7 @@ export function useGenerateQuiz() {
  * Submit an attempt. Answers the outcome can be `{pending}` — short answers awaiting
  * the student's own verdict — and a second call with their self-marks settles it; both
  * calls invalidate the same lists because only the second one stores anything.
+ * Quests invalidate too: a graded attempt is PRD §20's "complete quiz" success event.
  */
 export function useSubmitAttempt(quizId: string) {
   const queryClient = useQueryClient();
@@ -54,7 +56,10 @@ export function useSubmitAttempt(quizId: string) {
       durationMs: number;
     }): Promise<SubmitOutcome> => quizApi.submit(quizId, body),
     onSuccess: (outcome) => {
-      if (!("pending" in outcome)) queryClient.invalidateQueries({ queryKey: quizKeys.all });
+      if (!("pending" in outcome)) {
+        queryClient.invalidateQueries({ queryKey: quizKeys.all });
+        queryClient.invalidateQueries({ queryKey: questKeys.all });
+      }
     },
   });
 }

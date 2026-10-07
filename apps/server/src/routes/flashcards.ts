@@ -17,6 +17,10 @@
  * session idempotent: a flush after a crash, a retry, or a double-click skips
  * rows it already applied instead of running the schedule over them twice —
  * the lesson ADR-031 drew for quiz submissions, applied to spaced repetition.
+ *
+ * A rated batch also fires the P13 quest signal: every topic whose cards were
+ * touched completes matching "study flashcards" steps (PRD §20), while the
+ * re-post safety above keeps the signal harmless to fire twice.
  */
 import { Hono } from "hono";
 import { and, asc, desc, eq, inArray, isNull, lte, or, sql } from "drizzle-orm";
@@ -46,6 +50,7 @@ import {
 import { requireProfile, type ProfileEnv } from "../auth/currentProfile.ts";
 import { runPrompt } from "../ai/run.ts";
 import { db } from "../db.ts";
+import { recordQuestSignal } from "../services/quests.ts";
 
 export const flashcardsRouter = new Hono<ProfileEnv>();
 
@@ -618,7 +623,26 @@ flashcardsRouter.post("/reviews", async (c) => {
       });
   }
 
-  return c.json({ studied, xpAwarded: xp });
+  /* --- quest steps (P13): every topic studied completes its flashcard step -- */
+  const studiedTopics = [
+    ...new Set(
+      [...cards.values()].map((card) => card.topicId).filter((id): id is string => Boolean(id)),
+    ),
+  ];
+  const questOutcome =
+    studiedTopics.length > 0
+      ? await recordQuestSignal(profileId, {
+          type: "flashcards",
+          topicIds: studiedTopics,
+          subjectIds: [],
+        })
+      : null;
+  const quest =
+    questOutcome && (questOutcome.stepsCompleted > 0 || questOutcome.questsCompleted.length > 0)
+      ? questOutcome
+      : null;
+
+  return c.json({ studied, xpAwarded: xp, quest });
 });
 
 /* --- shared queries -------------------------------------------------------- */

@@ -57,6 +57,13 @@
       "when": 1791331442400,
       "tag": "0007_awesome_kate_bishop",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791373602176,
+      "tag": "0008_bumpy_stephen_strange",
+      "breakpoints": true
     }
   ]
 }

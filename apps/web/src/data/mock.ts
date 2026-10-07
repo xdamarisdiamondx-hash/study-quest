@@ -28,16 +28,3 @@ export const recommendation = {
   text: "You scored 5/10 on Motion. Try a quick review?",
   cta: "Start review",
 };
-
-export const activeQuest = {
-  id: "q-photo",
-  title: "Master Photosynthesis",
-  progress: "3/5",
-  steps: [
-    { id: "s1", title: "Read notes", state: "done" as const },
-    { id: "s2", title: "Review summary", state: "done" as const },
-    { id: "s3", title: "Study flashcards", state: "done" as const },
-    { id: "s4", title: "Complete quiz", state: "current" as const },
-    { id: "s5", title: "Pass final challenge", state: "locked" as const },
-  ],
-};

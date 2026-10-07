@@ -275,6 +275,17 @@ export function CardStudy({ title, cards, submit, onExit }: CardStudyProps) {
                 ),
               )}
               {(outcome?.xpAwarded ?? 0) > 0 && <Chip tone="ok">+{outcome?.xpAwarded} XP</Chip>}
+              {/* P13: a rated batch is "study flashcards" — surface what it moved. */}
+              {(outcome?.quest?.stepsCompleted ?? 0) > 0 && (
+                <Chip tone="ok">
+                  Quest step{outcome?.quest?.stepsCompleted === 1 ? "" : "s"} done
+                </Chip>
+              )}
+              {(outcome?.quest?.questsCompleted ?? []).map((q) => (
+                <Chip key={q.id} tone="ok">
+                  Quest complete — {q.title} +{q.xp} XP
+                </Chip>
+              ))}
             </div>
             <p className="sq-ai-empty">
               Cards you rated Review are already due again — everything else waits out its interval.

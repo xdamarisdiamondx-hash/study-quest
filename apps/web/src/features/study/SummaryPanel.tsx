@@ -14,6 +14,7 @@ import type { SummaryFormat, SummaryLength } from "@sq/core/schemas/ai";
 
 import { useAiStream, useFlash } from "../../lib/useAiStream";
 import { useNoteActions } from "../../lib/useNotes";
+import { useQuestSignal } from "../../lib/useQuests";
 import { AiAvailabilityNotice, useAiAvailability } from "./AiAvailability";
 
 /**
@@ -66,6 +67,8 @@ export function SummaryPanel({
   const ai = useAiStream();
   const notes = useNoteActions();
   const availability = useAiAvailability();
+  /** P13: a produced summary means the student now has one to review. */
+  const questSignal = useQuestSignal();
 
   const lengthChoice = LENGTHS.find((l) => l.value === length)!;
   const formatChoice = FORMATS.find((f) => f.value === format)!;
@@ -74,7 +77,11 @@ export function SummaryPanel({
   const sourceName = noteTitle.trim() || "Untitled note";
 
   const generate = (fresh: boolean) => {
-    void ai.run("/api/ai/summarise", { noteId, length, format }, fresh);
+    void ai.run("/api/ai/summarise", { noteId, length, format }, fresh).then((outcome) => {
+      // A summary that actually arrived completes the "review summary" quest
+      // step for this note's topic; a failed or stopped run completes nothing.
+      if (outcome?.text && topicId) questSignal("summary", topicId);
+    });
   };
 
   const saveToNote = async () => {

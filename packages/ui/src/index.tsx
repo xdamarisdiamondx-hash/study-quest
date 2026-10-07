@@ -253,20 +253,41 @@ export type StepState = "done" | "current" | "todo" | "locked";
 
 export function QuestStepper({
   steps,
+  onSelect,
 }: {
   steps: { id: string; title: string; state: StepState }[];
+  /**
+   * When present each step becomes a button: the page decides what activating
+   * means (open the linked activity, mark a manual step done, undo a done one).
+   * The stepper only owns the row and its state colours.
+   */
+  onSelect?: (id: string) => void;
 }) {
   return (
     <ol className="sq-steps" style={{ listStyle: "none", margin: 0, padding: 0 }}>
       {steps.map((s, i) => (
         <li key={s.id} className="sq-step" data-state={s.state}>
-          <span className="sq-step-box" aria-hidden="true">
-            {s.state === "done" ? "✓" : s.state === "locked" ? "·" : i + 1}
-          </span>
-          <span>{s.title}</span>
+          {onSelect ? (
+            <button type="button" className="sq-step-action" onClick={() => onSelect(s.id)}>
+              <StepRow state={s.state} index={i} title={s.title} />
+            </button>
+          ) : (
+            <StepRow state={s.state} index={i} title={s.title} />
+          )}
         </li>
       ))}
     </ol>
+  );
+}
+
+function StepRow({ state, index, title }: { state: StepState; index: number; title: string }) {
+  return (
+    <>
+      <span className="sq-step-box" aria-hidden="true">
+        {state === "done" ? "✓" : state === "locked" ? "·" : index + 1}
+      </span>
+      <span>{title}</span>
+    </>
   );
 }
 

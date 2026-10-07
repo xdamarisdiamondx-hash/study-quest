@@ -9,6 +9,7 @@
  */
 import type { CardRating } from "@sq/core/schemas/ai";
 
+import type { QuestSignalOutcome } from "./questsApi";
 import { ApiError } from "./subjectsApi";
 
 /** One card as every screen reads it — the stored SM-2 fields included. */
@@ -92,6 +93,8 @@ export interface CardsSummary {
 export interface StudyOutcome {
   studied: number;
   xpAwarded: number;
+  /** P13: quest steps this batch of ratings just finished (null when none listened). */
+  quest: QuestSignalOutcome | null;
 }
 
 async function request<T>(

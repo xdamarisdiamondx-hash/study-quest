@@ -12,6 +12,7 @@ import type { CardRating } from "@sq/core/schemas/ai";
 
 import type { CreateDeckBody, DeckListScope, DueScope, GenerateDeckBody } from "./flashcardsApi";
 import { flashApi } from "./flashcardsApi";
+import { questKeys } from "./useQuests";
 
 export const flashKeys = {
   all: ["flashcards"] as const,
@@ -118,7 +119,8 @@ export function useCardMutation() {
 /**
  * Rate a whole session. Success invalidates everything a rating touches — the
  * queue, the deck's counts, the list, the summary — because one batch moves all
- * of them at once.
+ * of them at once, and the quest list too: a batch is PRD §20's "study
+ * flashcards" success event (P13).
  */
 export function useSubmitReviews() {
   const queryClient = useQueryClient();
@@ -127,6 +129,9 @@ export function useSubmitReviews() {
       batchId: string;
       reviews: { cardId: string; rating: CardRating; durationMs?: number }[];
     }) => flashApi.reviews(body),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: flashKeys.all }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: flashKeys.all });
+      queryClient.invalidateQueries({ queryKey: questKeys.all });
+    },
   });
 }

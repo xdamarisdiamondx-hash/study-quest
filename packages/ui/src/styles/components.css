@@ -713,6 +713,28 @@
 .sq-step[data-state="locked"] {
   opacity: 0.55;
 }
+/* Selectable rows (P13): the button fills the step so the row keeps its card
+   look while becoming one hit target for open / mark done / undo. */
+.sq-step-action {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.sq-step-action:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: var(--r-sm);
+}
 
 /* --- empty state --------------------------------------------------------- */
 .sq-empty {

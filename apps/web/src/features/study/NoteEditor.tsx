@@ -24,6 +24,7 @@ import {
 
 import { notesApi, type CreateNote } from "../../lib/notesApi";
 import { useNoteActions, useAutosave } from "../../lib/useNotes";
+import { useQuestSignal } from "../../lib/useQuests";
 import { SummaryPanel } from "./SummaryPanel";
 import { ExplainPanel } from "./ExplainPanel";
 import { QuizPanel } from "../quiz/QuizPanel";
@@ -64,6 +65,8 @@ export function NoteEditor({
   >(null);
   /** The open note's topic — needed to file anything an AI panel saves. */
   const [noteTopicId, setNoteTopicId] = useState<string | null>(null);
+  /** PRD §20's "read the notes": opening the reader is the only screen that knows. */
+  const questSignal = useQuestSignal();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -154,7 +157,13 @@ export function NoteEditor({
   // Read aloud opens the reading theatre (P10) — available on unsaved drafts too, since
   // reading is local; only Explain inside it needs the note to exist.
   const sentences = splitSentences(bodyMd);
-  const handleReadAloud = () => setPanel(panel === "reading" ? null : "reading");
+  const handleReadAloud = () => {
+    const opening = panel !== "reading";
+    setPanel(opening ? "reading" : null);
+    // P13: opening the reader on a *saved, topic-linked* note counts as the
+    // quest step "read the notes" — fire-and-forget, never in the reading path.
+    if (opening && propNoteId && noteTopicId) questSignal("notes_opened", noteTopicId);
+  };
 
   // Attachments
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {

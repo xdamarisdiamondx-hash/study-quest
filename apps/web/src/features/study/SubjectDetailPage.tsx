@@ -6,7 +6,7 @@
  * slice while this page owns the header and tab bar.
  */
 import { useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { Card, EmptyState, Monogram, Ring, TabPanel, Tabs, type TabItem } from "@sq/ui";
 import type { TopicStatus } from "@sq/core/schemas/subjects";
 
@@ -29,7 +29,17 @@ const TABS: TabItem[] = [
 export function SubjectDetailPage() {
   const { subjectId } = useParams<{ subjectId: string }>();
   const store = useSubjectTopics(subjectId);
-  const [tab, setTab] = useState("overview");
+  // The tab lives in the URL (P13) so a quest step can deep-link to the quizzes
+  // or flashcards tab; unknown values fall back to Overview instead of blanking.
+  const [params, setParams] = useSearchParams();
+  const requestedTab = params.get("tab");
+  const tab = requestedTab && TABS.some((t) => t.id === requestedTab) ? requestedTab : "overview";
+  function setTab(next: string) {
+    const nextParams = new URLSearchParams(params);
+    if (next === "overview") nextParams.delete("tab");
+    else nextParams.set("tab", next);
+    setParams(nextParams, { replace: true });
+  }
   const [dragId, setDragId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
 

@@ -12,6 +12,10 @@
  * quiz whose mistakes produced them, and `focusTags` carries the concepts to drill. The
  * focus is derived here from the original's latest attempt, so what a retry targets can
  * always be explained from stored data.
+ *
+ * A graded attempt also fires the P13 quest signal: "complete quiz" listens for this
+ * event (and "final challenge" for this event at PASS_SCORE), so PRD §20's stepper
+ * fills itself while the student studies.
  */
 import { Hono } from "hono";
 import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
@@ -36,6 +40,7 @@ import {
 import { requireProfile, type ProfileEnv } from "../auth/currentProfile.ts";
 import { runPrompt } from "../ai/run.ts";
 import { db } from "../db.ts";
+import { recordQuestSignal } from "../services/quests.ts";
 
 export const quizzesRouter = new Hono<ProfileEnv>();
 
@@ -587,6 +592,21 @@ quizzesRouter.post("/:id/attempts", async (c) => {
 
   if (!attempt) return c.json({ error: "internal_error" }, 500);
 
+  /* --- quest steps (P13): the graded attempt is the success event ---------- */
+  const questOutcome =
+    quiz.topicId && attempt.total > 0
+      ? await recordQuestSignal(profileId, {
+          type: "quiz",
+          topicIds: [quiz.topicId],
+          subjectIds: [],
+          score: attempt.score / attempt.total,
+        })
+      : null;
+  const quest =
+    questOutcome && (questOutcome.stepsCompleted > 0 || questOutcome.questsCompleted.length > 0)
+      ? questOutcome
+      : null;
+
   return c.json({
     attempt: {
       id: attempt.id,
@@ -601,5 +621,6 @@ quizzesRouter.post("/:id/attempts", async (c) => {
     weak,
     mastery,
     comparison,
+    quest,
   });
 });

@@ -1,4 +1,4 @@
-import { count, eq } from "drizzle-orm";
+import { asc, count, eq } from "drizzle-orm";
 import { Hono } from "hono";
 
 import { STARTER_SUBJECTS, monogramFor } from "@sq/core/starter";
@@ -7,8 +7,9 @@ import * as dbSchema from "@sq/db/schema";
 import type { AuthedEnv } from "../auth/session.ts";
 import { getSession } from "../auth/session.ts";
 import { db } from "../db.ts";
+import { createQuest } from "../services/quests.ts";
 
-const { users, subjects, topics, streaks } = dbSchema;
+const { users, subjects, topics, streaks, quests } = dbSchema;
 
 export const onboarding = new Hono<AuthedEnv>();
 
@@ -70,6 +71,9 @@ onboarding.post("/subjects", async (c) => {
 
   // Replace rather than merge, so re-running onboarding cannot duplicate subjects.
   await db.orm.delete(subjects).where(eq(subjects.userId, profile.id));
+  // Quests pointed at those subjects — replace them too, for the same reason
+  // (P13: a starter quest is part of what this endpoint hands out).
+  await db.orm.delete(quests).where(eq(quests.userId, profile.id));
 
   const created = await db.orm
     .insert(subjects)
@@ -94,6 +98,20 @@ onboarding.post("/subjects", async (c) => {
     })),
   );
   if (topicRows.length > 0) await db.orm.insert(topics).values(topicRows);
+
+  // The first-run experience has a quest waiting (P13): the canonical
+  // "Master {topic}" over the first topic of the first chosen subject —
+  // steps deep-link into whichever activities the student builds first.
+  const first = created[0];
+  if (first) {
+    const [firstTopic] = await db.orm
+      .select({ id: topics.id })
+      .from(topics)
+      .where(eq(topics.subjectId, first.id))
+      .orderBy(asc(topics.orderIndex))
+      .limit(1);
+    if (firstTopic) await createQuest(profile.id, { template: "topic", topicId: firstTopic.id });
+  }
 
   return c.json({ subjects: created, topicCount: topicRows.length }, 201);
 });
