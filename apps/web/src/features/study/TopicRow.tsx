@@ -35,6 +35,7 @@ export function TopicRow({
   onStatus,
   onRename,
   onDelete,
+  focused,
 }: {
   topic: Topic;
   /** Measured percentage (0..1) from the shared formula — P16, PRD §25. */
@@ -44,6 +45,8 @@ export function TopicRow({
   busy: boolean;
   isDragging?: boolean;
   isDropTarget?: boolean;
+  /** Marks this row as the `?focus=` target a search result pointed at (P19). */
+  focused?: boolean;
   onDragStart?: () => void;
   onDragOver?: () => void;
   onDragLeave?: () => void;
@@ -126,6 +129,7 @@ export function TopicRow({
       onDragEnd={onDragEnd}
       data-dragging={isDragging}
       data-drop={isDropTarget}
+      data-focus={focused || undefined}
     >
       <DragHandle label={topic.name} />
       <span className="sq-topic-text">

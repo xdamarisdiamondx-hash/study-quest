@@ -22,6 +22,8 @@ interface TaskRowProps {
   onPlan?: () => void;
   /** The overdue affordance — sets the deadline to today. */
   onMoveToday?: () => void;
+  /** Marks this row as the `?focus=` target a search result pointed at (P19). */
+  focused?: boolean;
   busy?: boolean;
 }
 
@@ -38,6 +40,7 @@ export function TaskRow({
   onEdit,
   onPlan,
   onMoveToday,
+  focused,
   busy,
 }: TaskRowProps) {
   const done = task.status !== "open";
@@ -52,7 +55,7 @@ export function TaskRow({
         : `Complete "${task.title}"`;
 
   return (
-    <div className="sq-li" data-done={done}>
+    <div className="sq-li" data-done={done} data-focus={focused || undefined}>
       <button
         type="button"
         className="sq-check"

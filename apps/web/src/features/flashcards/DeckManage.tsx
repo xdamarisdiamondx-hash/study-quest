@@ -16,6 +16,7 @@ import { Button, Chip, IconButton } from "@sq/ui";
 import { isDue, isHard, toTsv } from "@sq/core/flashcards";
 
 import type { CardView } from "../../lib/flashcardsApi";
+import { useFocusId, useScrollToFocus } from "../../lib/useFocus";
 import { useCardMutation, useDeckDetail, useDeleteDeck } from "../../lib/useFlashcards";
 
 const DAY_MS = 86_400_000;
@@ -56,6 +57,11 @@ export function DeckManage({ deckId, onBack, onStudy }: DeckManageProps) {
   const [importing, setImporting] = useState(false);
   const [importText, setImportText] = useState("");
   const [note, setNote] = useState<string | null>(null);
+
+  // The ?focus= target of a search result (P19): outline the card and centre
+  // it once the deck's cards have actually loaded.
+  const focusId = useFocusId();
+  useScrollToFocus(focusId, !detail.isLoading);
 
   const deck = detail.data?.deck ?? null;
 
@@ -212,7 +218,7 @@ export function DeckManage({ deckId, onBack, onStudy }: DeckManageProps) {
 
       <ul className="sq-deck-cards">
         {deck.cards.map((card, i) => (
-          <li key={card.id} className="sq-deck-card">
+          <li key={card.id} className="sq-deck-card" data-focus={focusId === card.id || undefined}>
             {editing === card.id ? (
               <div className="sq-deck-card-edit">
                 <input

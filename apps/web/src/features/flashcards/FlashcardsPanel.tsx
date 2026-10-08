@@ -10,10 +10,12 @@
  * session itself — one queue, fetched on demand, played on the shared theatre.
  */
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Button, Card, Chip, EmptyState, Picker } from "@sq/ui";
 import type { Topic } from "@sq/core/schemas/subjects";
 
 import type { DueScope } from "../../lib/flashcardsApi";
+import { useScrollToFocus } from "../../lib/useFocus";
 import {
   useCardsSummary,
   useDeckList,
@@ -34,13 +36,24 @@ const shortDate = (iso: string) =>
   new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
 
 export function FlashcardsPanel({ subjectId, topics }: FlashcardsPanelProps) {
+  // A card result from search (P19) deep-links `?focus=<cardId>&deck=<deckId>`:
+  // the deck opens straight away and DeckManage outlines the card inside it; a
+  // deck result is plain `?focus=<deckId>` and outlines the list row below.
+  const [params, setParams] = useSearchParams();
+  const focusId = params.get("focus");
+  const deckParam = params.get("deck");
+
   const list = useDeckList({ subjectId });
   const summary = useCardsSummary(subjectId);
   const [topicPick, setTopicPick] = useState<string | null>(null);
-  const [openDeck, setOpenDeck] = useState<string | null>(null);
+  const [openDeck, setOpenDeck] = useState<string | null>(deckParam);
   const [request, setRequest] = useState<{ scope: DueScope; title: string; n: number } | null>(
     null,
   );
+
+  // Centre the outlined deck row once the list has loaded. When the deck is
+  // open, the card is centred inside DeckManage instead.
+  useScrollToFocus(focusId, !list.isLoading && openDeck === null);
 
   // A snapshot of the queue, fetched only when a session is asked for — a tab
   // that is only being read should not be pulling cards (useStudyQueue).
@@ -97,7 +110,15 @@ export function FlashcardsPanel({ subjectId, topics }: FlashcardsPanelProps) {
         <Card title="Flashcards">
           <DeckManage
             deckId={openDeck}
-            onBack={() => setOpenDeck(null)}
+            onBack={() => {
+              // Leaving the manager must not leave a stale landing link behind —
+              // a refresh would otherwise reopen the deck the user just left.
+              const next = new URLSearchParams(params);
+              next.delete("deck");
+              next.delete("focus");
+              setParams(next, { replace: true });
+              setOpenDeck(null);
+            }}
             onStudy={(id) =>
               startStudy(
                 { deckId: id, limit: 200 },
@@ -214,7 +235,11 @@ export function FlashcardsPanel({ subjectId, topics }: FlashcardsPanelProps) {
             ) : (
               <ul className="sq-deck-list">
                 {decks.map((deck) => (
-                  <li key={deck.id} className="sq-deck-row">
+                  <li
+                    key={deck.id}
+                    className="sq-deck-row"
+                    data-focus={focusId === deck.id || undefined}
+                  >
                     <div className="sq-deck-row-main">
                       <b>{deck.title}</b>
                       <div className="sq-deck-row-meta">

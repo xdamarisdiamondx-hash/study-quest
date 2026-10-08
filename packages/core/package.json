@@ -13,6 +13,7 @@
     "./quests": "./src/quests/index.ts",
     "./quiz": "./src/quiz/index.ts",
     "./reminders": "./src/reminders/index.ts",
+    "./search": "./src/search/index.ts",
     "./sessions": "./src/sessions/index.ts",
     "./starter": "./src/starter/index.ts",
     "./subjects": "./src/subjects/index.ts",

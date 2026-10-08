@@ -786,3 +786,220 @@
 .sq-rem-next-time {
   color: var(--muted);
 }
+
+/* --- search (P19): the header key, the ?K palette, and the result lists -- */
+.sq-search-btn .sq-search-kbd {
+  padding: 1px 6px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  font: var(--t-caption);
+  line-height: 1.4;
+  color: var(--muted);
+}
+@media (max-width: 760px) {
+  .sq-search-btn .sq-search-kbd {
+    display: none;
+  }
+}
+
+/* The palette is top-anchored like a spotlight window rather than a centred
+   dialog: it is a list you scan from the top, not a form you fill. */
+.sq-palette-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: min(14vh, 120px) var(--s4) var(--s4);
+  background: color-mix(in srgb, var(--sand-950) 45%, transparent);
+  backdrop-filter: blur(3px);
+}
+.sq-palette {
+  display: flex;
+  flex-direction: column;
+  width: min(640px, 100%);
+  max-height: min(70vh, 560px);
+  overflow: hidden;
+  background: var(--raised);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--e4);
+}
+.sq-palette-input {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: var(--s3) var(--s4);
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+}
+.sq-palette-field {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  font: var(--t-body-lg);
+  color: var(--strong);
+}
+.sq-palette-field::placeholder {
+  color: var(--muted);
+}
+.sq-palette-body {
+  flex: 1;
+  min-height: 64px;
+  padding: var(--s2);
+  overflow-y: auto;
+}
+.sq-palette-group {
+  padding: var(--s3) var(--s3) var(--s1);
+  font: var(--t-caption);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.sq-palette-empty {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+  padding: var(--s4) var(--s3);
+}
+.sq-palette-empty b {
+  color: var(--strong);
+  overflow-wrap: anywhere;
+}
+.sq-palette-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+  padding: var(--s2) var(--s4);
+  border-top: 1px solid var(--border);
+}
+.sq-palette-all {
+  font: var(--t-body-sm);
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.sq-palette-all:hover {
+  text-decoration: underline;
+}
+
+/* One row shape for both surfaces: title strong, the subject � topic context
+   quiet beneath it, the excerpt two lines deep, and the matched letters
+   marked in iris rather than highlighter yellow (few colours, no novelty). */
+.sq-hit {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--s2) var(--s3);
+  border-radius: var(--r-sm);
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+.sq-hit-active,
+.sq-palette .sq-hit:hover {
+  background: var(--track);
+}
+.sq-hit:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.sq-hit-title {
+  color: var(--strong);
+  overflow-wrap: anywhere;
+}
+.sq-hit-tail {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.sq-hit-context {
+  font: var(--t-caption);
+  color: var(--muted);
+}
+.sq-hit-excerpt {
+  display: -webkit-box;
+  overflow: hidden;
+  font: var(--t-body-sm);
+  color: var(--text);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.sq-hit mark {
+  padding: 0 2px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--iris-400) 38%, transparent);
+  color: var(--strong);
+}
+
+/* --- the search page ----------------------------------------------------- */
+.sq-search-page {
+  max-width: 880px;
+}
+.sq-search-bar {
+  display: flex;
+  gap: var(--s2);
+  max-width: 620px;
+}
+.sq-search-input {
+  flex: 1;
+  min-width: 0;
+}
+.sq-search-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s4);
+  margin: var(--s4) 0 var(--s5);
+}
+.sq-search-subject {
+  min-width: 220px;
+}
+.sq-search-group + .sq-search-group {
+  margin-top: var(--s5);
+}
+.sq-search-group-label {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s2);
+  margin: 0 0 var(--s2);
+  font: var(--t-h3);
+  color: var(--strong);
+}
+.sq-search-hits {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.sq-search-hits .sq-hit {
+  padding: var(--s3) var(--s4);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  transition: border-color var(--base, 150ms) ease;
+}
+.sq-search-hits .sq-hit:hover {
+  border-color: var(--accent);
+}
+.sq-search-hits .sq-hit:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+.sq-search-suggest {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s2);
+  margin-top: var(--s4);
+}

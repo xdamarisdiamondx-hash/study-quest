@@ -21,6 +21,7 @@ import {
   type TaskView,
 } from "@sq/core/tasks";
 
+import { useScrollToFocus } from "../../lib/useFocus";
 import { useSubjects } from "../../lib/useSubjects";
 import { useTaskActions, useTaskList } from "../../lib/useTasks";
 import { PrepDialog } from "./PrepDialog";
@@ -60,7 +61,11 @@ export function TasksPage() {
   // The subject tab deep-links in with ?subject=<id>; the URL seeds the filter once and
   // the picker owns it from there — no effect re-adopts it after the user clears it.
   const [params] = useSearchParams();
-  const [view, setView] = useState<TaskView>("today");
+  // A search result (P19) lands on /tasks?focus=<id>: the page opens on the
+  // widest view so an open task in any bucket can render — the pinned row
+  // below covers whatever still falls outside it (a finished task).
+  const focusId = params.get("focus");
+  const [view, setView] = useState<TaskView>(focusId ? "all" : "today");
   const [sortBy, setSortBy] = useState<SortBy>("deadline");
   const [subjectFilter, setSubjectFilter] = useState<string | null>(params.get("subject"));
   const [kindFilter, setKindFilter] = useState<string | null>(null);
@@ -89,9 +94,18 @@ export function TasksPage() {
         (!priorityFilter || t.priority === priorityFilter),
     );
     if (view === "done") {
-      return [...rows].sort((a, b) => (b.completedAt ?? "").localeCompare(a.completedAt ?? ""));
+      const done = [...rows].sort((a, b) =>
+        (b.completedAt ?? "").localeCompare(a.completedAt ?? ""),
+      );
+      const finished = focusId ? tasks.find((t) => t.id === focusId) : null;
+      // A search landing must show its own row even when the task sits in
+      // another bucket (a finished task has no home in an open view): pin it
+      // to the top rather than re-bucketing the page behind the user's back.
+      return finished && !done.includes(finished) ? [finished, ...done] : done;
     }
-    return sortTasks(rows, sortBy);
+    const sorted = sortTasks(rows, sortBy);
+    const target = focusId ? tasks.find((t) => t.id === focusId) : null;
+    return target && !sorted.includes(target) ? [target, ...sorted] : sorted;
   })();
 
   const openCount = tasks.filter((t) => t.status === "open").length;
@@ -130,6 +144,9 @@ export function TasksPage() {
     const timer = setTimeout(() => setUndo(null), 8000);
     return () => clearTimeout(timer);
   }, [undo]);
+
+  // Centre the outlined row from a search result once the list can hold it.
+  useScrollToFocus(focusId, !list.isPending);
 
   const listError = list.isError ? "Could not load your tasks." : null;
   const actionError =
@@ -270,6 +287,7 @@ export function TasksPage() {
                 task={task}
                 now={now}
                 subjectName={subjectName(task.subjectId)}
+                focused={focusId === task.id}
                 busy={actions.complete.isPending || actions.uncomplete.isPending}
                 onToggle={() => void toggle(task)}
                 onEdit={() => setComposer({ task })}

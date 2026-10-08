@@ -10,6 +10,7 @@ import { useState } from "react";
 import { Button, Card, EmptyState, Picker } from "@sq/ui";
 import type { Topic } from "@sq/core/schemas/subjects";
 
+import { useFocusId, useScrollToFocus } from "../../lib/useFocus";
 import { useNotes, type Note } from "../../lib/useNotes";
 import { NoteEditor } from "./NoteEditor";
 
@@ -40,6 +41,11 @@ export function NotesPanel({ subjectId, topics, topicId: lockedTopicId }: NotesP
   const [view, setView] = useState<View>({ kind: "list" });
 
   const notes = useNotes({ subjectId, topicId: lockedTopicId ?? filter ?? undefined });
+
+  // The ?focus= target of a search result (P19): outline the note and centre
+  // it — ready when the list view is showing and the notes have loaded.
+  const focusId = useFocusId();
+  useScrollToFocus(focusId, view.kind === "list" && !notes.isLoading);
 
   const topicName = (id: string | null) =>
     id ? (topics.find((t) => t.id === id)?.name ?? "Unfiled") : "No topic";
@@ -159,7 +165,7 @@ export function NotesPanel({ subjectId, topics, topicId: lockedTopicId }: NotesP
           </p>
           <ul className="sq-note-list" style={{ marginTop: "var(--s3)" }}>
             {notes.notes.map((note) => (
-              <li key={note.id}>
+              <li key={note.id} data-focus={focusId === note.id || undefined}>
                 <NoteRow
                   note={note}
                   topic={showTopicName ? topicName(note.topicId) : null}
@@ -174,7 +180,15 @@ export function NotesPanel({ subjectId, topics, topicId: lockedTopicId }: NotesP
   );
 }
 
-function NoteRow({ note, topic, onOpen }: { note: Note; topic: string | null; onOpen: () => void }) {
+function NoteRow({
+  note,
+  topic,
+  onOpen,
+}: {
+  note: Note;
+  topic: string | null;
+  onOpen: () => void;
+}) {
   return (
     <button type="button" className="sq-note" onClick={onOpen}>
       <span style={{ flex: 1, minWidth: 0 }}>

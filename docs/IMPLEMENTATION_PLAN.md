@@ -2145,12 +2145,35 @@ notification at the right time, and can be snoozed or switched off per type.
 
 **Goal:** find anything, fast (PRD §29).
 
-- [ ] `tsvector` + `pg_trgm` index populated by triggers; ranked results with typo and prefix
-      matching so "Newt" finds "Newton"
-- [ ] Search palette (⌘K / Ctrl+K) and a search screen
-- [ ] Results grouped by entity with subject/topic context and jump-to-highlight
-- [ ] Filters by type and subject; recent searches
-- [ ] Empty and no-match states with suggestions
+- [x] `tsvector` (GIN) index populated by triggers; ranked results with prefix matching, and a
+      bounded fuzzy pass so "Newt" finds "Newton" (PGlite lacks `pg_trgm` — A.8)
+- [x] Search palette (⌘K / Ctrl+K) and a search screen
+- [x] Results grouped by entity with subject/topic context and jump-to-highlight
+- [x] Filters by type and subject; recent searches
+- [x] Empty and no-match states with suggestions
+
+**Delivered in** `packages/core/src/search` — `searchTokens`/`normalizeQuery` (lowercase
+alphanumeric, diacritics folded, possessives split), `buildTsQuery` (prefix lexemes, length ≥ 2
+so a stray `s` cannot fail the query), `scoreMatch` (title-prefix > title-word > body, dice
+≥ 0.4 with possessive stripping), `rankSearch` (two-pass: exact ranked first, fuzzy fill), the
+marked `Segment[]` for title and excerpt, and `hrefFor` — every type's deep link with
+`?focus=` (`&deck=` on flashcard _cards_ so the panel opens the right deck); 29 tests pin it.
+Migration `0013` adds `search_index` (a GIN index over `tsv`) with backfill and triggers on
+subjects, topics, notes, quiz questions, flashcards (both deck rows and card rows, type
+`flashcard`) and tasks, plus `recent_searches`; archived subjects stop answering (rows kept —
+archiving is reversible) and deletes remove index rows with their entity. Server:
+`services/search.ts` runs the two phases — `tsv @@ to_tsquery` with `ts_rank` first, and only
+when that returns < 10 rows a bounded fuzzy scan (`LIMIT 3000`, scored in JS, dice ≥ 0.4) —
+`LEFT JOIN flashcards` resolving a card hit to its deck; `routes/search.ts` mounts
+`GET /api/search` and `/recent` (list, save, clear, key-capped at 60 chars). Web:
+`SearchPalette` (⌘K/Ctrl+K from the AppShell header key, 160 ms debounce, arrow/Enter
+navigation over grouped hits, recents when empty, saves the query on pick) and `SearchPage`
+(URL is the source of truth — `q`/`type`/`subjectId` synced with `replace`; type chips with
+counts, subject picker, grouped results, near-miss hint with Newton/Motion/Revise suggestions).
+Jump-to-highlight is one shared `useFocus.ts` (`useFocusId` + `useScrollToFocus`) honoured by
+TaskRow (pinned to top when the view would hide it), TopicRow, QuizzesPanel, NotesPanel,
+FlashcardsPanel (deck auto-open, cleared on back) and DeckManage — rows self-mark
+`data-focus` against `[data-focus="true"]` styling, no setState-in-effect anywhere.
 
 **Exit:** searching "Newton" returns the Motion notes, the Newton's Laws quiz, its flashcards
 and the related revision task.

@@ -605,11 +605,40 @@ export const activityLog = pgTable("activity_log", {
 });
 
 /** Full-text search (ADR-013): tsvector + trigram, maintained by triggers. */
-export const searchIndex = pgTable("search_index", {
-  entityType: text("entity_type").notNull(),
-  entityId: uuid("entity_id").notNull(),
-  title: text("title").notNull().default(""),
-  body: text("body").notNull().default(""),
-  subjectId: uuid("subject_id"),
-  topicId: uuid("topic_id"),
-});
+export const searchIndex = pgTable(
+  "search_index",
+  {
+    entityType: text("entity_type").notNull(),
+    entityId: uuid("entity_id").notNull(),
+    /** Whose content this row describes — every query filters on it (P19). */
+    userId: uuid("user_id").notNull(),
+    title: text("title").notNull().default(""),
+    body: text("body").notNull().default(""),
+    subjectId: uuid("subject_id"),
+    topicId: uuid("topic_id"),
+  },
+  (t) => [
+    // One row per entity: triggers upsert on (type, id).
+    primaryKey({ columns: [t.entityType, t.entityId] }),
+    index("search_index_user_idx").on(t.userId),
+  ],
+);
+
+/** Recent searches (P19): what the palette offered before, newest first. */
+export const recentSearches = pgTable(
+  "recent_searches",
+  {
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    /** `recentKey()` — case-folded, so "Newton" and "newton" are one row. */
+    key: text("key").notNull(),
+    /** What the student actually typed, for the list. */
+    query: text("query").notNull(),
+    ranAt: timestamp("ran_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.key] }),
+    index("recent_searches_ran_idx").on(t.userId, t.ranAt),
+  ],
+);

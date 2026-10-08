@@ -13,6 +13,7 @@ import { NotesPage } from "./features/study/NotesPage";
 import { SessionsPage } from "./features/sessions/SessionsPage";
 import { QuestsPage } from "./features/quests/QuestsPage";
 import { ProgressPage } from "./features/progress/ProgressPage";
+import { SearchPage } from "./features/search/SearchPage";
 import { SettingsPage } from "./features/settings/SettingsPage";
 
 export function App() {
@@ -42,6 +43,7 @@ export function App() {
           <Route path="sessions" element={<SessionsPage />} />
           <Route path="quests" element={<QuestsPage />} />
           <Route path="progress" element={<ProgressPage />} />
+          <Route path="search" element={<SearchPage />} />
           <Route path="settings" element={<SettingsPage />} />
         </Route>
       </Route>

@@ -12,6 +12,7 @@ import { dayKey } from "@sq/core/gamification";
 import type { TopicStatus } from "@sq/core/schemas/subjects";
 
 import { useProgress } from "../../lib/useProgress";
+import { useScrollToFocus } from "../../lib/useFocus";
 import { useSubjectTopics } from "../../lib/useSubjects";
 import { TrendChart, seriesDays } from "../progress/charts";
 import { TopicComposer, TopicRow } from "./TopicRow";
@@ -37,6 +38,10 @@ export function SubjectDetailPage() {
   const [params, setParams] = useSearchParams();
   const requestedTab = params.get("tab");
   const tab = requestedTab && TABS.some((t) => t.id === requestedTab) ? requestedTab : "overview";
+  // The topics tab outlines and centres the topic a search result pointed at
+  // (P19) — ready once this subject's topics have actually loaded.
+  const focusId = params.get("focus");
+  useScrollToFocus(focusId, tab === "topics" && store.status !== "loading");
   function setTab(next: string) {
     const nextParams = new URLSearchParams(params);
     if (next === "overview") nextParams.delete("tab");
@@ -244,6 +249,7 @@ export function SubjectDetailPage() {
                   index={index}
                   total={store.topics.length}
                   busy={store.busy}
+                  focused={focusId === topic.id}
                   isDragging={dragId === topic.id}
                   isDropTarget={overId === topic.id && dragId !== topic.id}
                   onDragStart={() => setDragId(topic.id)}

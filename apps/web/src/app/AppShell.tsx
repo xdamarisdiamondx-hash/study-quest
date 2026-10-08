@@ -5,6 +5,7 @@ import { Monogram, Wordmark } from "@sq/ui";
 import { useAuth } from "../lib/useAuth";
 import { RewardsHost } from "../lib/rewards";
 import { NotificationBell } from "../features/notifications/NotificationBell";
+import { SearchPalette } from "../features/search/SearchPalette";
 import { useTheme } from "./useTheme";
 
 const SECTIONS = [
@@ -87,6 +88,9 @@ function Tab({ to, label, icon }: (typeof SECTIONS)[number]) {
   );
 }
 
+/** The shortcut shown on the header's search button — ⌘K where ⌘ exists. */
+const SEARCH_KEY = /mac|iphone|ipad/i.test(navigator.platform) ? "⌘K" : "Ctrl K";
+
 function initials(name: string): string {
   return name
     .split(/\s+/)
@@ -165,6 +169,20 @@ function AccountMenu() {
 
 export function AppShell() {
   const { theme, toggle } = useTheme();
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  // ⌘K on a Mac, Ctrl K everywhere else — one binding, from anywhere in the
+  // shell, toggling the palette (P19).
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setSearchOpen((open) => !open);
+      }
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
 
   return (
     // The reward toasts and the level-up watcher live above the shell: every
@@ -174,6 +192,27 @@ export function AppShell() {
         <header className="sq-topbar">
           <Wordmark />
           <span className="sq-topbar-spacer" />
+          <button
+            type="button"
+            className="sq-btn sq-btn-secondary sq-btn-sm sq-search-btn"
+            onClick={() => setSearchOpen(true)}
+            aria-label="Search"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.7"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
+              <circle cx="11" cy="11" r="6.5" />
+              <path d="m16 16 4.5 4.5" />
+            </svg>
+            <span className="sq-search-kbd" aria-hidden="true">
+              {SEARCH_KEY}
+            </span>
+          </button>
           <NotificationBell />
           <button
             type="button"
@@ -216,6 +255,10 @@ export function AppShell() {
             <Tab key={s.to} {...s} />
           ))}
         </nav>
+
+        {/* Mounted last: the palette is fixed-positioned and must sit above
+            every part of the shell it can be summoned from. */}
+        {searchOpen ? <SearchPalette onClose={() => setSearchOpen(false)} /> : null}
       </div>
     </RewardsHost>
   );

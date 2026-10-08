@@ -90,7 +90,9 @@ follow the full guided journey.
 - **Recommendations** — helpful next steps, never overwhelming
 - **Notifications** — a bell with deadline, session, quest, revision, streak and digest nudges;
   per-type switches, quiet hours and snooze, all in the student's hands
-- **Search** — across subjects, topics, notes, tasks, quizzes, flashcards and quests
+- **Search** — the ⌘K / Ctrl+K palette or the search page: across subjects, topics, notes,
+  tasks, quizzes, flashcards and quests, typo-tolerant ("newtn" finds "Newton"), filterable by
+  type and subject, with recent queries and results that jump straight to the highlighted row
 
 ## MVP Scope
 

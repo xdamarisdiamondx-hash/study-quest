@@ -17,6 +17,7 @@ import type { Topic } from "@sq/core/schemas/subjects";
 
 import type { QuizSummary } from "../../lib/quizApi";
 import { quizApi } from "../../lib/quizApi";
+import { useFocusId, useScrollToFocus } from "../../lib/useFocus";
 import { useQuizList } from "../../lib/useQuizzes";
 import { QuizComposer } from "./QuizComposer";
 import { QuizResults } from "./QuizResults";
@@ -87,6 +88,11 @@ export function QuizzesPanel({ subjectId, topics }: QuizzesPanelProps) {
   const [topicPick, setTopicPick] = useState<string | null>(null);
   const [opening, setOpening] = useState<string | null>(null);
   const [openError, setOpenError] = useState<string | null>(null);
+
+  // The ?focus= target of a search result (P19): outline the row and centre
+  // it once the list has actually loaded.
+  const focusId = useFocusId();
+  useScrollToFocus(focusId, !list.isLoading);
 
   // Self-healing: a picked topic that was deleted falls back to the first one.
   const activeTopic = topics.find((t) => t.id === topicPick) ?? topics[0] ?? null;
@@ -209,7 +215,11 @@ export function QuizzesPanel({ subjectId, topics }: QuizzesPanelProps) {
                           );
                           const bestPct = best ? pct(best.score, best.total) : null;
                           return (
-                            <li key={quiz.id} className="sq-quiz-row">
+                            <li
+                              key={quiz.id}
+                              className="sq-quiz-row"
+                              data-focus={focusId === quiz.id || undefined}
+                            >
                               <div className="sq-quiz-row-main">
                                 <b>{quiz.title}</b>
                                 <div className="sq-quiz-row-meta">

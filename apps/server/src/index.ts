@@ -39,6 +39,7 @@ import { gamificationRouter } from "./routes/gamification.ts";
 import { progressRouter } from "./routes/progress.ts";
 import { recommendationsRouter } from "./routes/recommendations.ts";
 import { remindersRouter } from "./routes/reminders.ts";
+import { searchRouter } from "./routes/search.ts";
 import { startScheduler } from "./scheduler.ts";
 import { fileStore } from "./files/store.ts";
 
@@ -141,6 +142,9 @@ app.route("/api/recommendations", recommendationsRouter);
 
 /* --- reminders: bell, centre, settings (P18) ------------------------------- */
 app.route("/api/reminders", remindersRouter);
+
+/* --- search: the palette and the results page (P19) ----------------------- */
+app.route("/api/search", searchRouter);
 
 /* --- local file serving (ADR-027 fallback) ------------------------------- */
 app.get("/api/files/*", async (c) => {

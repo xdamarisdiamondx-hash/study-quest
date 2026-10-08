@@ -8,7 +8,7 @@
  * the student stays in control (principle 4) while the list above them keeps
  * honest count.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button, Card, Chip, Dialog, EmptyState, QuestStepper } from "@sq/ui";
 
@@ -133,7 +133,9 @@ export function QuestsPage() {
     });
   }
 
-  const active = data?.active ?? [];
+  // Memoized: the `?? []` fallback would hand the focus effect below a new
+  // array on every render while the query is still loading.
+  const active = useMemo(() => data?.active ?? [], [data]);
   const completed = data?.completed ?? [];
   const offer = data?.offer ?? null;
 
