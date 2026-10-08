@@ -2096,12 +2096,46 @@ Quest links carry `?quest=<id>`, which QuestsPage scrolls into view and outlines
 
 **Goal:** useful nudges, fully under the student's control (PRD §28).
 
-- [ ] Local scheduler in the server process; catch-up window on start (ADR-017)
-- [ ] Reminder types: deadlines (T-1 day, T-1 hour), planned sessions, quest milestones, revision
+- [x] Local scheduler in the server process; catch-up window on start (ADR-017)
+- [x] Reminder types: deadlines (T-1 day, T-1 hour), planned sessions, quest milestones, revision
       due (flashcards), streak at risk, unfinished tasks
-- [ ] Delivery: in-app notification centre + Web Notifications API when permitted
-- [ ] Quiet hours, per-type toggles, snooze, weekly digest option
-- [ ] Reminder list UI with next-fire times
+- [x] Delivery: in-app notification centre + Web Notifications API when permitted
+- [x] Quiet hours, per-type toggles, snooze, weekly digest option
+- [x] Reminder list UI with next-fire times
+
+**Delivered in** `packages/core/src/reminders/index.ts` — the whole schedule as pure
+rules: seven types, each with an explicit local hour (`REMINDER_HOURS`), quiet hours
+that wrap midnight and hold a slot until the window ends, a 4-hour catch-up window
+(a slot missed while the machine was off is delivered late once, not queued), a
+26-hour materialisation horizon (short-lived rows keep their copy fresh) and a
+12-hour dedupe key (same type + ref, which also keeps a 30-minute snooze from
+spawning a second row). `reminderSyncPlan` decides inserts and drops — including
+dropping pending rows whose event is gone (task completed, plan finished, type
+switched off) while delivered rows stand as history — and `nextFires` forecasts the
+same slots for the settings page, so the preview can never disagree with delivery.
+24 tests pin the timing, the copy and the drops. Migration `0012` gives `reminders`
+its frozen `title`/`body`/`href` plus `readAt`/`snoozedUntil`, and adds
+`reminder_settings` — a missing row _is_ the default (all types on, quiet 22:00–07:00),
+so a fresh account nudges without visiting settings. Server: `services/reminders.ts`
+gathers the same snapshots P17's view reads (one account's card and nudge can't
+disagree) and applies the plan, then delivers rows whose `fireAt` has arrived and
+prunes the 30-day history; `scheduler.ts` ticks every 60 seconds with an immediate
+boot tick (catch-up on start) and an overlap guard, started inside `serve()` only;
+`routes/reminders.ts` serves the centre, the settings pair (with forecast) and three
+idempotent row writes — read, snooze, read-all — every query scoped to the caller.
+Switching a type off deletes its pending rows in the same request, so the API
+answer and the account agree immediately. The digest reports the last _closed_
+week and on Monday morning before 09:00 reads the previous week — a machine off
+all Sunday still gets Monday's numbers — while a week with no study says nothing
+at all (§33: a "0 minutes" digest would be a shaming nudge). Web:
+`NotificationBell` in the AppShell header polls the centre every 30 seconds,
+badges the unread count, and handles reads and snoozes optimistically;
+`RemindersCard` in Settings carries one `role="switch"` per type, the quiet-hours
+inputs (saved on blur, so typing isn't fought), the next-fire list and the browser
+permission button — permission is only ever requested from that click. The OS
+notification fires from an effect keyed on `localStorage`'s last-delivered
+timestamp: a reload never re-announces a row, and a first-ever grant seeds the
+marker instead of erupting with the whole history.
 
 **Exit:** a reminder configured for tomorrow appears in the notification centre and the OS
 notification at the right time, and can be snoozed or switched off per type.

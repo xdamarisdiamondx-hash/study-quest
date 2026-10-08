@@ -88,7 +88,8 @@ follow the full guided journey.
 - **Study sessions** — quick focus, timed focus, or guided (Read → Understand → Practice →
   Quiz → Review)
 - **Recommendations** — helpful next steps, never overwhelming
-- **Notifications** — deadlines, sessions, quests, revision, streaks, unfinished tasks
+- **Notifications** — a bell with deadline, session, quest, revision, streak and digest nudges;
+  per-type switches, quiet hours and snooze, all in the student's hands
 - **Search** — across subjects, topics, notes, tasks, quizzes, flashcards and quests
 
 ## MVP Scope

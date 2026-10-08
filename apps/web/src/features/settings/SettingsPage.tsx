@@ -17,6 +17,7 @@ import { Button, Card, Chip, EmptyState, Input, Picker, Track } from "@sq/ui";
 
 import { aiApi, type AiSettingsView } from "../../lib/aiApi";
 import { useFlash } from "../../lib/useAiStream";
+import { RemindersCard } from "../notifications/RemindersCard";
 
 interface ProviderInfo {
   value: AiProviderName;
@@ -198,7 +199,9 @@ export function SettingsPage() {
     <div className="sq-col" style={{ marginTop: "var(--s6)" }}>
       <div>
         <h1 style={H1}>Settings</h1>
-        <p style={SUB}>What the AI features call, where the key comes from, and what it costs</p>
+        <p style={SUB}>
+          What the AI features call, what it costs, and when Study Quest may interrupt you
+        </p>
       </div>
 
       {status === "loading" && !view ? (
@@ -408,6 +411,10 @@ export function SettingsPage() {
           </Card>
         </>
       ) : null}
+
+      {/* Reminders are their own concern (P18): they load on their own query and
+          stay available even when the AI settings above failed to load. */}
+      <RemindersCard />
     </div>
   );
 }

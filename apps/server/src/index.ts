@@ -38,6 +38,8 @@ import { sessionsRouter } from "./routes/sessions.ts";
 import { gamificationRouter } from "./routes/gamification.ts";
 import { progressRouter } from "./routes/progress.ts";
 import { recommendationsRouter } from "./routes/recommendations.ts";
+import { remindersRouter } from "./routes/reminders.ts";
+import { startScheduler } from "./scheduler.ts";
 import { fileStore } from "./files/store.ts";
 
 const { users } = dbSchema;
@@ -137,6 +139,9 @@ app.route("/api/progress", progressRouter);
 /* --- recommendations: what's next (P17) ----------------------------------- */
 app.route("/api/recommendations", recommendationsRouter);
 
+/* --- reminders: bell, centre, settings (P18) ------------------------------- */
+app.route("/api/reminders", remindersRouter);
+
 /* --- local file serving (ADR-027 fallback) ------------------------------- */
 app.get("/api/files/*", async (c) => {
   const key = c.req.path.replace("/api/files/", "");
@@ -202,5 +207,8 @@ if (process.env.NETLIFY !== "true") {
     console.log(`Study Quest API listening on http://${HOST}:${info.port}`);
     console.log(`  health: http://${HOST}:${info.port}/api/health`);
     console.log(`  sign in: http://localhost:5173`);
+    // The tick lives inside the local serve only — Netlify has no long-running
+    // process, and ADR-017 keeps the scheduler in-process wherever there is one.
+    startScheduler();
   });
 }

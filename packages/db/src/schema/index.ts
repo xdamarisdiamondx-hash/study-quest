@@ -550,6 +550,11 @@ export const recommendationDismissals = pgTable(
 );
 
 /* --- platform -------------------------------------------------------------- */
+/**
+ * P18 notification centre rows. Title/body/href are the copy frozen at the slot
+ * (ADR-016's history exception — the centre shows what was actually said);
+ * snoozedUntil feeds the redelivery tick, readAt marks the bell seen.
+ */
 export const reminders = pgTable("reminders", {
   id: id(),
   userId: uuid("user_id")
@@ -562,6 +567,29 @@ export const reminders = pgTable("reminders", {
   deliveredAt: timestamp("delivered_at", { withTimezone: true }),
   channel: text("channel").notNull().default("in_app"),
   enabled: boolean("enabled").notNull().default(true),
+  /** Snapshot of the sentence delivered, kept for the centre's history. */
+  title: text("title").notNull().default(""),
+  body: text("body").notNull().default(""),
+  href: text("href").notNull().default(""),
+  readAt: timestamp("read_at", { withTimezone: true }),
+  /** Snooze sets this to now+30m and clears deliveredAt; the tick redelivers. */
+  snoozedUntil: timestamp("snoozed_until", { withTimezone: true }),
+});
+
+/**
+ * P18 student controls (§28): per-type switches and quiet hours. A missing row
+ * is the default — everything on, 22:00–07:00 quiet (ADR-017's local scheduler
+ * keeps time in the student's clock, not the server's).
+ */
+export const reminderSettings = pgTable("reminder_settings", {
+  userId: uuid("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  /** Overrides only: a type absent from this map is on. */
+  enabled: jsonb("enabled").$type<Partial<Record<string, boolean>>>().notNull().default({}),
+  quietStart: text("quiet_start").notNull().default("22:00"),
+  quietEnd: text("quiet_end").notNull().default("07:00"),
+  createdAt: createdAt(),
 });
 
 export const activityLog = pgTable("activity_log", {

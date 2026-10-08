@@ -4,6 +4,7 @@ import { Monogram, Wordmark } from "@sq/ui";
 
 import { useAuth } from "../lib/useAuth";
 import { RewardsHost } from "../lib/rewards";
+import { NotificationBell } from "../features/notifications/NotificationBell";
 import { useTheme } from "./useTheme";
 
 const SECTIONS = [
@@ -173,6 +174,7 @@ export function AppShell() {
         <header className="sq-topbar">
           <Wordmark />
           <span className="sq-topbar-spacer" />
+          <NotificationBell />
           <button
             type="button"
             className="sq-btn sq-btn-secondary sq-btn-sm"
