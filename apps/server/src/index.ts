@@ -22,6 +22,7 @@ import * as dbSchema from "@sq/db/schema";
 import { createAuth, ensureProfile } from "./auth.ts";
 import type { AuthedEnv } from "./auth/session.ts";
 import { getSession } from "./auth/session.ts";
+import { ensureLanMatchesHost, isUnlocked, lanEnabled, setRebinder } from "./lan.ts";
 import { db } from "./db.ts";
 import { aiErrorStatus, AiError } from "./ai/types.ts";
 import { anyEnvConfigured } from "./ai/settings.ts";
@@ -40,6 +41,7 @@ import { progressRouter } from "./routes/progress.ts";
 import { recommendationsRouter } from "./routes/recommendations.ts";
 import { remindersRouter } from "./routes/reminders.ts";
 import { searchRouter } from "./routes/search.ts";
+import { lanRouter } from "./routes/lan.ts";
 import { startScheduler } from "./scheduler.ts";
 import { fileStore } from "./files/store.ts";
 
@@ -63,6 +65,26 @@ const app = new Hono<AuthedEnv>();
 app.use("*", async (c, next) => {
   c.set("auth", auth);
   await next();
+});
+
+/* --- LAN gate (P20, ADR-023): while LAN mode is on, a 4-digit PIN issued by
+   /api/lan/unlock stands between the network and every other route. Health, the
+   gate's own routes and /api/me are exempt: the UI needs them to decide whether
+   to show the gate and whether a session exists behind it, and none of them
+   reveal study data without a valid session cookie. */
+app.use("/api/*", async (c, next) => {
+  if (!lanEnabled()) return next();
+  const path = c.req.path;
+  if (
+    path === "/api/health" ||
+    path === "/api/lan/status" ||
+    path === "/api/lan/unlock" ||
+    path === "/api/me"
+  ) {
+    return next();
+  }
+  if (isUnlocked(c.req.header("cookie"))) return next();
+  return c.json({ error: "lan_locked", message: "Enter the app PIN to continue." }, 423);
 });
 
 /* --- auth: Better Auth owns every route under /api/auth/* -------------- */
@@ -146,6 +168,9 @@ app.route("/api/reminders", remindersRouter);
 /* --- search: the palette and the results page (P19) ----------------------- */
 app.route("/api/search", searchRouter);
 
+/* --- LAN access and the app PIN (P20) ------------------------------------- */
+app.route("/api/lan", lanRouter);
+
 /* --- local file serving (ADR-027 fallback) ------------------------------- */
 app.get("/api/files/*", async (c) => {
   const key = c.req.path.replace("/api/files/", "");
@@ -206,13 +231,47 @@ app.onError((err, c) => {
 
 export { app };
 
+/* --- LAN mode (P20): the bind decides whether a PIN is mandatory ---------- */
+const boot = ensureLanMatchesHost(HOST);
+if (boot.onNetwork && boot.minted) {
+  console.log(`[lan] LAN access is ON — app PIN: ${boot.minted}`);
+} else if (boot.onNetwork) {
+  console.log("[lan] LAN access is ON (PIN already configured — Settings → LAN).");
+} else if (lanEnabled()) {
+  console.log(
+    "[lan] PIN gate is on while HOST stays loopback — nobody on the network can reach this process.",
+  );
+}
+
 if (process.env.NETLIFY !== "true") {
-  serve({ fetch: app.fetch, port: PORT, hostname: HOST }, (info) => {
+  const server = serve({ fetch: app.fetch, port: PORT, hostname: HOST }, (info) => {
     console.log(`Study Quest API listening on http://${HOST}:${info.port}`);
     console.log(`  health: http://${HOST}:${info.port}/api/health`);
     console.log(`  sign in: http://localhost:5173`);
     // The tick lives inside the local serve only — Netlify has no long-running
     // process, and ADR-017 keeps the scheduler in-process wherever there is one.
     startScheduler();
+  });
+
+  // Rebinding for the LAN toggle (P20): Node cannot move a bound socket between
+  // interfaces in place, so close the listener and re-open it on the other
+  // address. Same port, same process — sessions, the scheduler and the database
+  // are untouched.
+  setRebinder(async (enabled: boolean) => {
+    // HTTP/1 only — @hono/node-server's union type also admits HTTP/2, which
+    // has no force-close; dropping its idle connections is harmless anyway.
+    if ("closeAllConnections" in server) server.closeAllConnections();
+    await new Promise<void>((resolve, reject) => {
+      server.close((err) => (err ? reject(err) : resolve()));
+    });
+    await new Promise<void>((resolve, reject) => {
+      const onError = (err: Error) => reject(err);
+      server.once("error", onError);
+      server.listen(PORT, enabled ? "0.0.0.0" : "127.0.0.1", () => {
+        server.off("error", onError);
+        resolve();
+      });
+    });
+    console.log(`[lan] listening on ${enabled ? "0.0.0.0" : "127.0.0.1"}:${PORT}`);
   });
 }

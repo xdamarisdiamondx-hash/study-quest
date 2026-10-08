@@ -1003,3 +1003,134 @@
   gap: var(--s2);
   margin-top: var(--s4);
 }
+
+/* --------------------------------------------------------------- P20 · offline, PWA, LAN */
+
+.sq-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-full);
+  background: var(--page);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.sq-pill-offline {
+  border-color: var(--warn-500);
+  background: var(--warn-100);
+  color: var(--warn-700);
+}
+.sq-pill-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* Notices ride directly under the topbar: one row, no shadow, no animation. */
+.sq-strip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s3);
+  padding: var(--s2) var(--s4);
+  border-bottom: 1px solid var(--border);
+  background: var(--page);
+  color: var(--text);
+  font-size: 13px;
+}
+.sq-strip-update {
+  background: var(--iris-50);
+  border-bottom-color: var(--iris-200);
+  color: var(--iris-900);
+}
+.sq-strip-ready {
+  color: var(--muted);
+}
+
+/* Gate boot splash — shown only while /api/lan/status answers. */
+.sq-boot {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: var(--page);
+  color: var(--strong);
+  font-family: var(--font-display);
+  font-size: 26px;
+}
+
+/* The PIN gate: one card, nothing else on screen. */
+.sq-gate {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: var(--s6);
+  background: var(--page);
+}
+.sq-gate-card {
+  width: min(420px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  padding: var(--s8);
+}
+.sq-gate-card h1 {
+  margin: var(--s3) 0 0;
+  font-family: var(--font-display);
+  font-size: 24px;
+  color: var(--strong);
+}
+.sq-gate-input {
+  font-size: 26px;
+  letter-spacing: 0.4em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.sq-gate-error {
+  margin: 0;
+  color: var(--bad-700);
+  font-size: 13px;
+}
+
+/* Plain bullet lists used by the PWA and LAN cards. */
+.sq-bullets {
+  margin: var(--s4) 0;
+  padding-left: 1.25em;
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+.sq-bullets li {
+  margin: var(--s2) 0;
+}
+.sq-bullets b {
+  color: var(--text);
+}
+.sq-bullets code {
+  white-space: nowrap;
+}
+
+.sq-lan-details {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s3);
+  margin-top: var(--s4);
+  padding-top: var(--s4);
+  border-top: 1px solid var(--border);
+}
+.sq-lan-pin {
+  margin: 0;
+  color: var(--text);
+  font-size: 15px;
+}
+.sq-lan-pin b {
+  font-family: var(--font-display);
+  font-size: 26px;
+  letter-spacing: 0.2em;
+  color: var(--strong);
+}

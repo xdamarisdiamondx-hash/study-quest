@@ -9,6 +9,13 @@ import "./styles/app.css";
 
 import { App } from "./App";
 import { AuthProvider } from "./lib/useAuth";
+import { installOffline } from "./offline/install";
+import { watchInstallPrompt } from "./offline/installPrompt";
+
+// The offline queue wraps fetch before any component can issue one, and the
+// install prompt is a page-lifetime subscription (P20).
+installOffline();
+watchInstallPrompt();
 
 const host = document.getElementById("root");
 if (!host) throw new Error("#root is missing from index.html");

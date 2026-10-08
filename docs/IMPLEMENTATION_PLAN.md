@@ -2187,12 +2187,43 @@ and the related revision task.
 
 **Goal:** installable, and useful on a bad connection.
 
-- [ ] `vite-plugin-pwa`: app shell precache, network-first data, cache-first assets
-- [ ] Offline: last-viewed notes/topics/tasks readable; writes queued in IndexedDB and replayed
-- [ ] Install prompt with custom UI; standalone display, icons, splash, theme colour
-- [ ] Update-available prompt; versioned cache cleanup
-- [ ] LAN access mode: bind `0.0.0.0`, PIN gate, instructions for installing on a phone
-- [ ] Background sync for queued writes where supported
+- [x] `vite-plugin-pwa`: app shell precache, network-first data, cache-first assets
+- [x] Offline: last-viewed notes/topics/tasks readable; writes queued in IndexedDB and replayed
+- [x] Install prompt with custom UI; standalone display, icons, splash, theme colour
+- [x] Update-available prompt; versioned cache cleanup
+- [x] LAN access mode: bind `0.0.0.0`, PIN gate, instructions for installing on a phone
+- [x] Background sync for queued writes where supported
+
+**Delivered in** `apps/web/src/offline` — a hand-written service worker (`sw.ts`,
+injectManifest so workbox splices the revisioned precache: 17 entries, ~973 KiB of shell) with
+NetworkOnly for `/api/health` and `/api/files/*` (the offline signal must never come from
+cache), NetworkFirst for every other GET `/api/**` (4 s timeout, `sq-api` cache, 400 entries /
+14 d, and **any 5xx falls back to the last synced copy** — a gateway answering "server down"
+is indistinguishable from offline at the client), navigation → precached `index.html`,
+`activate` → `claim()` so the very first session is already controlled, and a `sync` listener
+(tag `sq-outbox`) that drains the queue when the browser thinks connectivity returned. The
+outbox (`outbox.ts`, IndexedDB `sq-offline`) holds only **PUT/PATCH/DELETE to this origin's
+API** (A.8: creates stay online-only — a queued create would invent an id; all three methods
+are idempotent so replay is safe even if the write landed before the server died) and is
+filed by `fetch.ts` when fetch rejects **or** a gateway answers 500/502/503/504, answering
+synthetic 202 with `x-sq-queued` so the student keeps working; `replay.ts` drains strictly in
+sequence — 2xx drop, permanent 4xx `{404,409,410,412,422}` drop-and-continue, 401/403/423/
+408/429/5xx keep-and-stop, network keep-and-stop — triggered by `online`, boot and the SW
+`sync` tag, then fires `sq-synced` which the AppShell turns into a `queryClient.invalidate-
+Queries()`. UI: `useRegisterSW` with **prompt**-type updates (student decides when to reload,
+never a background swap under an unfinished quiz — both flags are `[boolean, setter]` tuples,
+unpack them or the strip shows forever), "new version / Reload" and "ready to work offline"
+strips, an honest queued/offline header pill, `beforeinstallprompt` captured for a custom
+Install button with the menu-install fallback copy (`PwaCard`), 3-icon manifest + theme +
+apple-touch-icon. LAN: `config.local.json {enabled, pinHash, salt, token}` (git-ignored),
+server gate returns 423 `lan_locked` on every API route except `/health`, `/lan/status`,
+`/lan/unlock`, `/me`; PIN is `sha256(salt:pin)` compared in constant time, 5 wrong → 429 for
+30 s, toggling on rebinds `0.0.0.0` (replay-safe: `closeAllConnections` guarded), other
+sessions lock via token rotation while the toggling one keeps its cookie; `LanGate` renders
+before auth on any host without the cookie (proven across `localhost` vs `127.0.0.1`),
+`scripts/lan-setup.ps1` does mkcert + phone CA, and `pnpm lan` serves the built app over
+HTTPS on `0.0.0.0:4173` for phone installs. 20 offline tests pin replay order, the drop
+matrix, queue scope and the 5xx path.
 
 **Exit:** installed to a phone home screen, opened with Wi-Fi off, shows the last content and
 queues an edit that syncs when the network returns.

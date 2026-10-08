@@ -33,11 +33,17 @@ function ServiceStatus() {
   if (offline) {
     return (
       <div className="sq-card" style={{ borderColor: "var(--warn-500)" }}>
-        <h2>API not reachable</h2>
+        <h2>You're offline</h2>
         <p>
-          The app shell is running, but <code>/api/health</code> did not answer. Start the database
-          and server with <code>pnpm db:up</code> and <code>pnpm dev:all</code>.
+          This device is showing the last content it saved. Pages you have opened before keep
+          working; edits you make now are queued and sync in order when the connection returns.
         </p>
+        {import.meta.env.DEV ? (
+          <p style={{ marginBottom: 0 }}>
+            Running locally, this can also mean the API is not up — start it with{" "}
+            <code>pnpm dev:all</code>.
+          </p>
+        ) : null}
       </div>
     );
   }

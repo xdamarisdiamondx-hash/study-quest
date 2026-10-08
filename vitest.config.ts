@@ -17,8 +17,9 @@ export default defineConfig({
   },
   test: {
     // Domain logic is plain TypeScript, so no DOM environment is needed (ADR-021).
+    // The web tests are the offline queue's rules (P20), written to be DOM-free too.
     environment: "node",
-    include: ["packages/**/*.test.ts", "apps/server/**/*.test.ts"],
+    include: ["packages/**/*.test.ts", "apps/server/**/*.test.ts", "apps/web/**/*.test.ts"],
     coverage: {
       provider: "v8",
       include: ["packages/core/src/**", "apps/server/src/**"],

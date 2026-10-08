@@ -93,6 +93,12 @@ follow the full guided journey.
 - **Search** — the ⌘K / Ctrl+K palette or the search page: across subjects, topics, notes,
   tasks, quizzes, flashcards and quests, typo-tolerant ("newtn" finds "Newton"), filterable by
   type and subject, with recent queries and results that jump straight to the highlighted row
+- **Installable & offline** — install to a home screen (desktop or phone): the app and every
+  page you have opened keep working with no network, edits to existing items queue on the
+  device and sync in order when you are back, and new versions wait for your Reload
+- **LAN mode** — flip it on in Settings to reach the app (and install it) from a phone on the
+  same Wi-Fi: everything asks for a 4-digit PIN first, and `scripts/lan-setup.ps1` + `pnpm lan`
+  serve it over HTTPS so the phone accepts the install
 
 ## MVP Scope
 

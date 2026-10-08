@@ -18,6 +18,8 @@ import { Button, Card, Chip, EmptyState, Input, Picker, Track } from "@sq/ui";
 import { aiApi, type AiSettingsView } from "../../lib/aiApi";
 import { useFlash } from "../../lib/useAiStream";
 import { RemindersCard } from "../notifications/RemindersCard";
+import { LanCard } from "./LanCard";
+import { PwaCard } from "./PwaCard";
 
 interface ProviderInfo {
   value: AiProviderName;
@@ -415,6 +417,10 @@ export function SettingsPage() {
       {/* Reminders are their own concern (P18): they load on their own query and
           stay available even when the AI settings above failed to load. */}
       <RemindersCard />
+
+      {/* Install, offline and LAN (P20): independent loads, like the card above. */}
+      <PwaCard />
+      <LanCard />
     </div>
   );
 }
