@@ -5,7 +5,7 @@
   "buildCommand": "node scripts/build-vercel.mjs",
   "outputDirectory": "apps/web/dist",
   "functions": {
-    "api/index.mjs": {
+    "api/index.js": {
       "includeFiles": "packages/db/migrations/**",
       "maxDuration": 60
     }

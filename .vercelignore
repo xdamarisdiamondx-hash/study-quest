@@ -4,7 +4,7 @@
 # .gitignore hides from git must be hidden here too — above all `.env` and
 # `config.local.json` (LAN PIN), which must never leave this machine, and
 # `.certs`, which holds a private key. The build regenerates what it needs:
-# api/index.mjs comes from scripts/build-vercel.mjs, apps/web/dist from the
+# api/index.js comes from scripts/build-vercel.mjs, apps/web/dist from the
 # web build.
 
 # Secrets and machine-local config
@@ -31,7 +31,6 @@ build/
 out/
 *.tsbuildinfo
 apps/web/dist/
-api/
 
 # Platform and tooling state
 .git/
@@ -40,6 +39,12 @@ api/
 netlify/functions/api/
 .opencode/
 .neon
+
+# build-vercel.mjs links api/node_modules at the server's own node_modules so
+# module resolution from the bundle matches the local rehearsal. Only that
+# link is excluded — the built api/index.js itself must stay visible or
+# Vercel's function discovery cannot match it.
+api/node_modules
 
 # Test output
 coverage/

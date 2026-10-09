@@ -51,7 +51,7 @@ async function main() {
   const origin = `http://127.0.0.1:${server.address().port}`;
   process.env.BASE_URL = origin;
 
-  const { default: loaded } = await import("../api/index.mjs");
+  const { default: loaded } = await import("../api/index.js");
   handler = loaded;
 
   const call = async (path, { method = "GET", body, headers = {}, jar } = {}) => {
