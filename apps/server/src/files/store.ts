@@ -4,7 +4,12 @@
  * Cloudflare R2 via S3-compatible API when configured, otherwise local disk.
  * The interface is the same so the rest of the app doesn't care where bytes live.
  */
-import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+  DeleteObjectCommand,
+} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { createReadStream } from "node:fs";
 import { mkdir, writeFile, unlink } from "node:fs/promises";
@@ -24,6 +29,14 @@ export interface FileStore {
 function localStore(): FileStore {
   return {
     async put(key: string, body: Buffer, _contentType: string) {
+      // A serverless host's bundle directory is read-only: bytes written here
+      // would vanish with the instance anyway. Say so plainly instead of
+      // surfacing an EROFS stack as "something went wrong" — the fix is R2.
+      if (process.env.VERCEL === "1" || process.env.NETLIFY === "true") {
+        throw new Error(
+          "Attachment storage is not configured for this deployment — set R2_ACCOUNT_ID, R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY.",
+        );
+      }
       const fullPath = join(DATA_ROOT, key);
       await mkdir(dirname(fullPath), { recursive: true });
       await writeFile(fullPath, body);

@@ -1,0 +1,49 @@
+# What the Vercel CLI does not upload.
+#
+# When this file exists it replaces .gitignore for the CLI, so everything
+# .gitignore hides from git must be hidden here too — above all `.env` and
+# `config.local.json` (LAN PIN), which must never leave this machine, and
+# `.certs`, which holds a private key. The build regenerates what it needs:
+# api/index.mjs comes from scripts/build-vercel.mjs, apps/web/dist from the
+# web build.
+
+# Secrets and machine-local config
+.env
+.env.*
+!.env.example
+config.local.json
+.certs/
+
+# Local state and data (the database lives in Neon; data/ is this machine's)
+data/
+*.log
+sq-*cookies*.txt
+.smoke-*
+errors.txt
+typecheck.txt
+server_typecheck.txt
+
+# Dependencies and build output (rebuilt on Vercel)
+node_modules/
+dist/
+build/
+.next/
+out/
+*.tsbuildinfo
+apps/web/dist/
+api/
+
+# Platform and tooling state
+.git/
+.vercel/
+.netlify/
+netlify/functions/api/
+.opencode/
+.neon
+
+# Test output
+coverage/
+playwright-report/
+test-results/
+db/*.dump
+db/*.sql.gz

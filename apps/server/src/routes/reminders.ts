@@ -12,12 +12,15 @@ import { Hono } from "hono";
 import { REMINDER_LABELS, REMINDER_TYPES, type ReminderType } from "@sq/core/reminders";
 
 import { requireProfile, type ProfileEnv } from "../auth/currentProfile.ts";
+import { logError } from "../log.ts";
+import { isServerless } from "../serverless.ts";
 import {
   firePreview,
   loadSettings,
   markAllRead,
   markRead,
   remindersCentre,
+  remindersSync,
   snooze,
   updateSettings,
 } from "../services/reminders.ts";
@@ -46,7 +49,27 @@ async function settingsPayload(profileId: string) {
   };
 }
 
-remindersRouter.get("/", async (c) => c.json(await remindersCentre(c.var.profileId)));
+/**
+ * Freshness on a serverless host (Vercel): there is no process to hold the
+ * scheduler's timer, so the bell syncs its own account here instead — at most
+ * once a minute per warm instance, and only when the student actually looks.
+ * The hourly cron (/api/cron/tick) is the backstop for everything else; a
+ * failed sync is logged and the centre still renders from what is stored.
+ */
+const FRESH_SYNC_MS = 60_000;
+let lastFreshSync = 0;
+
+remindersRouter.get("/", async (c) => {
+  if (isServerless() && Date.now() - lastFreshSync >= FRESH_SYNC_MS) {
+    lastFreshSync = Date.now();
+    try {
+      await remindersSync(c.var.profileId);
+    } catch (err) {
+      logError("reminders:fresh", err);
+    }
+  }
+  return c.json(await remindersCentre(c.var.profileId));
+});
 
 remindersRouter.get("/settings", async (c) => c.json(await settingsPayload(c.var.profileId)));
 

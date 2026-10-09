@@ -22,6 +22,7 @@ import { requireProfile, type ProfileEnv } from "../auth/currentProfile.ts";
 import { getSession } from "../auth/session.ts";
 import { db } from "../db.ts";
 import { fileStore } from "../files/store.ts";
+import { isServerless } from "../serverless.ts";
 import { backupNow, lastBackup } from "../services/backup.ts";
 import { eraseEverything } from "../services/erase.ts";
 import {
@@ -102,6 +103,18 @@ dataRouter.get("/backup", async (c) => {
 dataRouter.post("/backup", async (c) => {
   const denied = await requireProfile(c);
   if (denied) return denied;
+  // A serverless deployment has no disk to keep a zip on: writing one would
+  // succeed into a directory that vanishes with the instance. Export (above)
+  // is the same bytes, on demand, in the student's hands.
+  if (isServerless()) {
+    return c.json(
+      {
+        error: "backup_unavailable",
+        message: "Scheduled backups need a disk — use Export to download everything instead.",
+      },
+      503,
+    );
+  }
   try {
     return c.json({ last: await backupNow(db) });
   } catch (err) {

@@ -1,4 +1,4 @@
-import { app } from "../../apps/server/src/index.ts";
+import { app } from "../../apps/server/src/app.ts";
 
 export default {
   async fetch(request: Request) {

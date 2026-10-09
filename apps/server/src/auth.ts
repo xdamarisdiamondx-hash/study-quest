@@ -31,6 +31,12 @@ export interface AuthDeps {
   /** Public origin of the API, used for cookie and CSRF checks. */
   baseURL: string;
   isProduction: boolean;
+  /**
+   * Additional origins to trust beyond the local ones below — a deployed
+   * instance passes the hosts Vercel serves it under (production domain,
+   * branch alias). Same CSRF rule, wider audience.
+   */
+  extraTrustedOrigins?: string[];
 }
 
 /**
@@ -43,9 +49,10 @@ export interface AuthDeps {
  * means a fresh install rejects its own sign-in form. Both loopback spellings of the
  * serving port are trusted, along with the vite dev/preview ports (5173, 4173) and
  * this machine's LAN addresses, so the phone install in P20 can sign in from
- * `https://<lan-ip>:4173`.
+ * `https://<lan-ip>:4173`. A deployed instance adds its own hosts through
+ * `extraOrigins` — the same list the platform told us it serves.
  */
-export function trustedOrigins(baseURL: string): string[] {
+export function trustedOrigins(baseURL: string, extraOrigins: readonly string[] = []): string[] {
   const ports = new Set(["5173", "4173"]);
   try {
     const port = new URL(baseURL).port;
@@ -64,6 +71,9 @@ export function trustedOrigins(baseURL: string): string[] {
   }
 
   const origins = new Set<string>([baseURL]);
+  for (const origin of extraOrigins) {
+    if (origin) origins.add(origin.replace(/\/+$/, ""));
+  }
   for (const scheme of ["http", "https"]) {
     for (const host of hosts) {
       for (const port of ports) origins.add(`${scheme}://${host}:${port}`);
@@ -72,7 +82,7 @@ export function trustedOrigins(baseURL: string): string[] {
   return [...origins];
 }
 
-export function createAuth({ orm, baseURL, isProduction }: AuthDeps) {
+export function createAuth({ orm, baseURL, isProduction, extraTrustedOrigins }: AuthDeps) {
   return betterAuth({
     appName: "Study Quest",
     baseURL: baseURL,
@@ -106,7 +116,7 @@ export function createAuth({ orm, baseURL, isProduction }: AuthDeps) {
       },
     },
 
-    trustedOrigins: trustedOrigins(baseURL),
+    trustedOrigins: trustedOrigins(baseURL, extraTrustedOrigins ?? []),
 
     /**
      * Create the app-level profile the moment an auth user exists.

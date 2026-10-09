@@ -57,4 +57,22 @@ describe("trustedOrigins", () => {
     expect(broken).toContain("http://localhost:5173");
     expect(broken).toContain("http://localhost:4173");
   });
+
+  it("adds the deployment origins a hosted instance passes in", () => {
+    // Vercel tells the function which hosts it serves under; those join the
+    // list verbatim (a stray trailing slash is not a second origin).
+    const hosted = trustedOrigins("https://study-quest.vercel.app", [
+      "https://study-quest.vercel.app",
+      "https://study-quest-git-main-someone.vercel.app/",
+    ]);
+    expect(hosted).toContain("https://study-quest.vercel.app");
+    expect(hosted).toContain("https://study-quest-git-main-someone.vercel.app");
+    // The local spellings are still there — one build serves both hosts.
+    expect(hosted).toContain("http://localhost:4173");
+  });
+
+  it("ignores empty extra origins instead of trusting the current origin", () => {
+    const hosted = trustedOrigins("https://study-quest.vercel.app", ["", undefined as never]);
+    expect(hosted).not.toContain("");
+  });
 });

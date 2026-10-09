@@ -6,6 +6,7 @@
  * in-process. That keeps the app fully functional before Docker is configured, and it
  * is the same schema and the same SQL either way.
  */
+import { existsSync } from "node:fs";
 import { mkdir, readdir, readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -38,13 +39,34 @@ export interface Db {
   close: () => Promise<void>;
 }
 
-const MIGRATIONS_DIR = join(dirname(fileURLToPath(import.meta.url)), "..", "migrations");
+const MODULE_DIR = dirname(fileURLToPath(import.meta.url));
+
+/**
+ * Where the migration SQL lives. Normally it sits beside this module in
+ * packages/db — but a serverless bundle is a single file somewhere else, so
+ * the candidates also cover an explicit MIGRATIONS_DIR and the copy
+ * `includeFiles` places under the deployment root. The first candidate that
+ * actually holds the drizzle journal wins; a miss falls back to the module
+ * location, where `readdir` produces the honest error.
+ */
+function migrationsDir(): string {
+  const candidates = [
+    process.env.MIGRATIONS_DIR,
+    join(MODULE_DIR, "..", "migrations"),
+    join(process.cwd(), "packages", "db", "migrations"),
+  ];
+  for (const candidate of candidates) {
+    if (candidate && existsSync(join(candidate, "meta", "_journal.json"))) return candidate;
+  }
+  return join(MODULE_DIR, "..", "migrations");
+}
 
 /** Migration files as ordered [name, sql] pairs. */
 async function migrationEntries(): Promise<[string, string][]> {
-  const names = (await readdir(MIGRATIONS_DIR)).filter((n) => n.endsWith(".sql")).sort();
+  const dir = migrationsDir();
+  const names = (await readdir(dir)).filter((n) => n.endsWith(".sql")).sort();
   const out: [string, string][] = [];
-  for (const name of names) out.push([name, await readFile(join(MIGRATIONS_DIR, name), "utf8")]);
+  for (const name of names) out.push([name, await readFile(join(dir, name), "utf8")]);
   return out;
 }
 
@@ -150,6 +172,19 @@ export async function createDb(databaseUrl = process.env.DATABASE_URL): Promise<
         err instanceof Error ? err.message : err,
       );
     }
+  }
+
+  // A serverless host (Vercel, Netlify) has no durable local disk: PGlite
+  // would start empty on every cold start and every note written here would
+  // evaporate with the instance. Both ways of arriving at this line — no
+  // DATABASE_URL at all, or one that failed to connect — end here, because a
+  // loud boot failure beats a working app that quietly loses study data.
+  if (process.env.VERCEL === "1" || process.env.NETLIFY === "true") {
+    throw new Error(
+      databaseUrl
+        ? `PostgreSQL at ${maskUrl(databaseUrl)} is unreachable on this serverless deployment, and the in-process PGlite fallback cannot be used here — set or fix DATABASE_URL.`
+        : "DATABASE_URL is not set, and the in-process PGlite database cannot be used on this serverless deployment — set DATABASE_URL to a pooled PostgreSQL connection string.",
+    );
   }
 
   const { PGlite } = await import("@electric-sql/pglite");

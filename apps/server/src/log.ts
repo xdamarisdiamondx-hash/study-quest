@@ -16,8 +16,14 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-/** Repo-local, beside the database and the file store: `data/logs/`. */
-const LOG_DIR = join(__dirname, "..", "..", "..", "data", "logs");
+/** Where the local log file lives: `data/logs/`, beside the database and the
+ *  file store. On Vercel the bundle directory is read-only, so the log moves
+ *  to the one writable directory a function has — per warm instance, which is
+ *  still exactly what the Copy diagnostics action needs to read it back. */
+const LOG_DIR =
+  process.env.VERCEL === "1"
+    ? join("/tmp", "studyquest", "logs")
+    : join(__dirname, "..", "..", "..", "data", "logs");
 const LOG_FILE = join(LOG_DIR, "server.log");
 const MAX_BYTES = 1024 * 1024;
 const KEEP_GENERATIONS = 3;
