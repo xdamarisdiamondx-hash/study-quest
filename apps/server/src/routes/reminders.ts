@@ -53,8 +53,9 @@ async function settingsPayload(profileId: string) {
  * Freshness on a serverless host (Vercel): there is no process to hold the
  * scheduler's timer, so the bell syncs its own account here instead — at most
  * once a minute per warm instance, and only when the student actually looks.
- * The hourly cron (/api/cron/tick) is the backstop for everything else; a
- * failed sync is logged and the centre still renders from what is stored.
+ * The daily cron (/api/cron/tick) is the backstop for everything else — daily
+ * because Vercel's Hobby plan admits one run a day; a failed sync is logged
+ * and the centre still renders from what is stored.
  */
 const FRESH_SYNC_MS = 60_000;
 let lastFreshSync = 0;
