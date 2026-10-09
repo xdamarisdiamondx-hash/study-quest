@@ -15,6 +15,9 @@ import { lanApi } from "./lib/lanApi";
 const SignInPage = lazy(() =>
   import("./features/auth/SignInPage").then((m) => ({ default: m.SignInPage })),
 );
+const PrivacyPage = lazy(() =>
+  import("./features/privacy/PrivacyPage").then((m) => ({ default: m.PrivacyPage })),
+);
 const OnboardingPage = lazy(() =>
   import("./features/onboarding/OnboardingPage").then((m) => ({ default: m.OnboardingPage })),
 );
@@ -109,6 +112,8 @@ export function App() {
             </RedirectIfAuthed>
           }
         />
+        {/* Public on purpose: readable before an account exists (P22). */}
+        <Route path="/privacy" element={<PrivacyPage />} />
 
         {/* Everything below requires a session (P3). */}
         <Route element={<RequireAuth />}>

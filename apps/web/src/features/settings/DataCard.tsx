@@ -8,6 +8,7 @@
  * than a day says so, in words, without a badge to dismiss.
  */
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { Button, Card } from "@sq/ui";
 
 interface BackupInfo {
@@ -130,17 +131,14 @@ export function DataCard() {
   return (
     <Card title="Data">
       <p className="sq-help" style={{ marginTop: 0 }}>
-        Your study data lives in a local database on this machine. Export takes all of it —
-        rows, attachments and a README — as one zip. Backups write the same zip to
+        Your study data lives in one PostgreSQL database — on this machine, or wherever
+        <code> .env</code> points it. Export takes all of it — rows, attachments and a README — as
+        one zip. Backups write the same zip to
         <code> data/backups</code> once a day, keeping the last 14.
       </p>
 
       <div className="sq-row" style={{ gap: "var(--s3)", flexWrap: "wrap" }}>
-        <Button
-          variant="secondary"
-          disabled={active !== null}
-          onClick={() => void download()}
-        >
+        <Button variant="secondary" disabled={active !== null} onClick={() => void download()}>
           {active === "export" ? "Preparing…" : "Export everything (.zip)"}
         </Button>
         <Button variant="secondary" disabled={active !== null} onClick={() => void backUp()}>
@@ -176,6 +174,12 @@ export function DataCard() {
           {error}
         </p>
       ) : null}
+
+      <p className="sq-help" style={{ marginBottom: 0 }}>
+        <Link to="/privacy">
+          What is stored, what leaves this machine, and how to delete everything
+        </Link>
+      </p>
     </Card>
   );
 }

@@ -4,6 +4,10 @@
  * Used by CI to prove the schema applies cleanly, and useful locally when Docker is
  * running. Exits non-zero on any failure so CI stops.
  */
+// `.env` first: the DATABASE_URL check below reads process.env, and imports hoist
+// above this file's body. See env.ts.
+import "./env.ts";
+
 import { createDb } from "@sq/db/client";
 
 const databaseUrl = process.env.DATABASE_URL;

@@ -119,32 +119,52 @@ types · social features · leaderboards · shared study groups · advanced pers
 5. **Always answer "What's next?"** — after finishing something, help the student choose what
    to do next.
 
-## ## Running the app
+## Running the app
 
-The app and the database both run locally.
+Everything runs on this machine. Node 22 LTS and pnpm are the only prerequisites; the
+database is your choice of three (see below).
 
-```bash
-pnpm install     # once
-pnpm db:seed     # levels and achievements
-pnpm dev:all     # database + API on :4321 + web on :5173
+```powershell
+.\scripts\setup.ps1     # checks Node/pnpm/Docker, writes .env, installs, starts the database
+pnpm db:seed            # levels and achievements (the server also writes these at boot)
+pnpm dev:all            # API on :4321 + web on :5173
 ```
 
-Then open **http://localhost:5173** and create an account.
+By hand, the same three steps are `copy .env.example .env`, `pnpm install`, `pnpm db:up` —
+or point `DATABASE_URL` at a hosted Postgres instead (a Neon branch, say) and skip `db:up`
+along with Docker entirely.
 
-| Command                  | What it does                                                        |
-| ------------------------ | ------------------------------------------------------------------- |
-| `pnpm dev:all`           | Database, API and web app together                                  |
-| `pnpm verify`            | Typecheck, lint and the unit tests                                  |
-| `pnpm test`              | 30 tests over the XP curve, levels, streaks, progress and monograms |
-| `pnpm storybook`         | Component catalogue on http://localhost:6006                        |
-| `pnpm db:seed`           | 50 levels, 10 achievements                                          |
-| `pnpm db:up` / `db:down` | Start or stop the PostgreSQL container                              |
-| `pnpm build`             | Production build of the web app                                     |
+Then open **http://localhost:5173** and create an account. Onboarding ends by offering
+starter subjects — one arrives with a worked example, so the app is never an empty shell.
 
-**The database has two drivers.** With `DATABASE_URL` set it uses PostgreSQL 17 in Docker
-(the intended setup). Without it, it falls back to **PGlite** — real PostgreSQL compiled to
-WebAssembly, running in-process. That is why the app is fully working today even though the
-Docker engine is still waiting on WSL 2 and a reboot. The same generated SQL applies to both.
+To run it like an app instead of a dev build — one process serving the built app and the
+API, and starting at Windows logon:
+
+```powershell
+.\scripts\start.ps1                 # builds, then serves http://localhost:4321
+.\scripts\install-autostart.ps1      # start it automatically when you sign in
+```
+
+Day-to-day questions (which database is in use, why a logon did not start the app, where
+backups live) are answered in **[docs/USER_GUIDE.md](docs/USER_GUIDE.md)**.
+
+| Command                  | What it does                                                       |
+| ------------------------ | ------------------------------------------------------------------ |
+| `pnpm dev:all`           | Database, API and web app together                                 |
+| `pnpm verify`            | Typecheck, lint and the unit tests                                 |
+| `pnpm test`              | Unit tests over the XP curve, planning, privacy, search and routes |
+| `pnpm budget`            | Build, then check the bundle against its size budget               |
+| `pnpm storybook`         | Component catalogue on http://localhost:6006                       |
+| `pnpm db:seed`           | 50 levels, 10 achievements                                         |
+| `pnpm db:up` / `db:down` | Start or stop the PostgreSQL container                             |
+| `pnpm build`             | Production build of the web app                                    |
+
+**The database has two drivers.** With `DATABASE_URL` set it uses PostgreSQL 17 — either
+the Docker container (`pnpm db:up`) or any hosted Postgres, such as a Neon branch, which
+needs no container at all. Without it, the app falls back to **PGlite** — real PostgreSQL
+compiled to WebAssembly, running in-process — so it starts before any database is
+configured. The same generated SQL applies to all three, and the server writes the level
+curve and achievement catalogue itself at boot.
 
 Prerequisites: Node 22 LTS and pnpm. Docker Desktop is needed only for the containerised
 database. A Cloudflare account (R2) and an AI provider are both optional — the app runs
@@ -186,10 +206,11 @@ Study quest/
 │   └── init.sql               # extensions on first container start
 ├── docs/
 │   ├── PHASES.md              # phase index — start here
+│   ├── USER_GUIDE.md          # run it, use it daily, fix it when it breaks
 │   ├── PRD.md                 # requirements + Appendix A (notes: tech decisions)
 │   └── IMPLEMENTATION_PLAN.md # design system + architecture + all 23 phases
-├── scripts/                   # setup, dev, start, backup helpers
-└── data/                      # local database and backups (git-ignored)
+├── scripts/                   # setup, dev, start, backup and logon autostart helpers
+└── data/                      # local database, backups and logs (git-ignored)
 ```
 
 ## Build order
@@ -234,6 +255,7 @@ and what changed from the first preview in
 | Document                                                   | What it covers                                                                                                |
 | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
 | [docs/PHASES.md](docs/PHASES.md)                           | **Start here** — the 23 phases in order, one line each, with links                                            |
+| [docs/USER_GUIDE.md](docs/USER_GUIDE.md)                   | Running it, using it daily, autostart, and the fixes for everything that actually goes wrong                  |
 | [docs/PRD.md](docs/PRD.md)                                 | The product requirements, plus Appendix A — notes on the technology decisions, their rationale and trade-offs |
 | [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) | Everything needed to build the product, in one document                                                       |
 
@@ -247,18 +269,18 @@ The implementation plan has three parts:
 
 ## Technical direction
 
-The app and the database run locally, at no cost:
+The app runs locally, at no cost; the database can too:
 
 | Concern        | Choice                                                              | Runs                       |
 | -------------- | ------------------------------------------------------------------- | -------------------------- |
 | App framework  | React 19 + TypeScript + Vite, installable as a PWA                  | Local                      |
-| Database       | PostgreSQL 17 + Drizzle ORM, in Docker                              | Local container            |
+| Database       | PostgreSQL 17 + Drizzle ORM — Docker, hosted (e.g. Neon), or PGlite | Local or hosted            |
 | Authentication | Better Auth (email + password, local sessions)                      | Local                      |
 | File storage   | Cloudflare R2 (10 GB free, no egress fees)                          | Cloud — the only exception |
 | Server         | Hono on Node.js 22, serving the app and API from one process        | Local                      |
 | AI             | Provider-agnostic: Ollama locally (free, offline) or any cloud key  | Local or cloud             |
-| Search         | PostgreSQL full-text + `pg_trgm`                                    | Local container            |
-| Also           | Tailwind CSS v4, Zod, TanStack Query, Storybook, Vitest, Playwright | Local                      |
+| Search         | PostgreSQL full-text search, with a bounded fuzzy pass for typos    | With the database          |
+| Also           | Zod, TanStack Query, Storybook, Vitest                              | Local                      |
 
 The reasoning behind each choice, the alternatives considered, and the trade-offs are recorded
 in [docs/PRD.md](docs/PRD.md#appendix-a--notes-technical-approach-and-decisions) Appendix A.
@@ -268,8 +290,11 @@ for the architecture behind each choice.
 
 ## Status
 
-Requirements defined (PRD v1.0), design system and architecture decided, and a 23-phase
-implementation plan written. Next step is Phase 0: local toolchain and project skeleton.
+All 23 phases are built: the MVP (P0–P19), installability, offline use, backups and
+accessibility (P20–P21), and the release work of P22 — first-run content, a privacy page
+with a real erase, logon autostart and this documentation. Released as **v0.1.0**. What
+remains is the two-week daily-use beta, which is a person using it rather than a ticket
+to close; the phase-by-phase record is in [docs/PHASES.md](docs/PHASES.md).
 
 ## License
 

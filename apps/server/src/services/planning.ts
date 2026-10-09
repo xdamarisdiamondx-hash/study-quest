@@ -92,11 +92,14 @@ export async function topicSnapshots(
     .groupBy(quizzes.topicId);
 
   // Due = waiting to be reviewed: never seen, or seen and due by now (flashcards route rule).
+  // `now` is serialised to ISO text by hand: postgres-js rejects a raw Date as a bound
+  // parameter (ERR_INVALID_ARG_TYPE) where PGlite's driver would accept it, and the
+  // difference shows up as a 500 on /api/recommendations against a real PostgreSQL.
   const cardRows = await db.orm
     .select({
       topicId: flashcards.topicId,
       cards: count(),
-      due: sql<number>`count(*) filter (where ${flashcards.dueAt} is null or ${flashcards.dueAt} <= ${now})`,
+      due: sql<number>`count(*) filter (where ${flashcards.dueAt} is null or ${flashcards.dueAt} <= ${now.toISOString()})`,
     })
     .from(flashcards)
     .where(inArray(flashcards.topicId, ids))

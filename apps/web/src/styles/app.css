@@ -1235,3 +1235,79 @@
   white-space: pre-wrap;
   word-break: break-word;
 }
+
+/* ---- P22: privacy ---- */
+/* The sign-in frame, wide enough to hold a document. */
+.sq-auth-card.sq-doc {
+  max-width: 720px;
+}
+
+.sq-doc h2 {
+  font: var(--t-h3);
+  color: var(--strong);
+  margin: var(--s6) 0 var(--s2);
+}
+
+.sq-doc h2:first-of-type {
+  margin-top: 0;
+}
+
+.sq-doc p {
+  font: var(--t-body);
+  color: var(--muted);
+  margin: 0 0 var(--s3);
+}
+
+.sq-doc p.sq-doc-lead {
+  font: var(--t-body-lg);
+  color: var(--strong);
+  margin-bottom: var(--s2);
+}
+
+.sq-doc ul {
+  margin: 0 0 var(--s4);
+  padding-left: 1.15rem;
+  display: grid;
+  gap: var(--s2);
+}
+
+.sq-doc li {
+  font: var(--t-body);
+  color: var(--muted);
+}
+
+.sq-doc li::marker {
+  color: var(--accent);
+}
+
+.sq-doc b {
+  color: var(--strong);
+  font-weight: 600;
+}
+
+.sq-doc code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.92em;
+  background: var(--surface-2, var(--surface));
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1px 5px;
+}
+
+.sq-doc-danger {
+  display: grid;
+  gap: var(--s3);
+  margin-top: var(--s5);
+  padding-top: var(--s5);
+  border-top: 1px solid var(--border);
+}
+
+.sq-doc-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s3);
+}
+
+.sq-doc .sq-auth-note {
+  color: var(--muted);
+}

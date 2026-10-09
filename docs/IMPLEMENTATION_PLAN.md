@@ -2254,12 +2254,14 @@ Results are written up in [QUALITY.md](QUALITY.md).
 
 **Goal:** it is running every day.
 
-- [ ] First-run content: onboarding quests, a demo subject with real material
-- [ ] `install-autostart.ps1` so the server starts at Windows logon
-- [ ] Documentation: README quickstart, `docs/USER_GUIDE.md`, troubleshooting page
-- [ ] Version tagging, release notes, `CHANGELOG.md`
+- [x] First-run content: onboarding quests, a demo subject with real material
+- [x] `install-autostart.ps1` so the server starts at Windows logon
+- [x] Documentation: README quickstart, `docs/USER_GUIDE.md`, troubleshooting page
+- [x] Version tagging, release notes, `CHANGELOG.md`
 - [ ] Beta run: use it for two real weeks, log friction, fix what blocks daily use
-- [ ] Privacy page in the app: what is stored, what leaves the machine, how to delete everything
+      (user-owned: starts with the v0.1.0 install, so this box closes when the two weeks
+      are up rather than with a commit)
+- [x] Privacy page in the app: what is stored, what leaves the machine, how to delete everything
 
 **Exit:** the app has been used daily for two weeks, backed up, and reinstalled from scratch
 on a clean machine using only the README.

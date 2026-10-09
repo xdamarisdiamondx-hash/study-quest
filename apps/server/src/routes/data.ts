@@ -1,13 +1,14 @@
 /**
  * Data portability and backups (P21).
  *
- * Three endpoints, all session-gated by `requireProfile` and all behind the
+ * Endpoints below, all session-gated by `requireProfile` and all behind the
  * LAN PIN when it is on (index.ts exempts only health/lan/me):
  *
  *   GET  /api/export   the same zip the scheduler writes, on demand
  *   POST /api/import   replace everything with a zip's contents
  *   GET  /api/backup   when the last scheduled backup landed
  *   POST /api/backup   write one now
+ *   POST /api/erase    delete everything the caller owns (P22 privacy page)
  *
  * Import is the only route in the app allowed a body larger than the 12 MB
  * cap: an export carries every attachment, and refusing to restore a backup
@@ -15,9 +16,14 @@
  */
 import { Hono } from "hono";
 
+import { eraseDataSchema } from "@sq/core/schemas/data";
+
 import { requireProfile, type ProfileEnv } from "../auth/currentProfile.ts";
+import { getSession } from "../auth/session.ts";
 import { db } from "../db.ts";
+import { fileStore } from "../files/store.ts";
 import { backupNow, lastBackup } from "../services/backup.ts";
+import { eraseEverything } from "../services/erase.ts";
 import {
   buildExportZip,
   parseExportZip,
@@ -101,6 +107,52 @@ dataRouter.post("/backup", async (c) => {
   } catch (err) {
     return c.json(
       { error: "backup_failed", message: err instanceof Error ? err.message : "backup failed" },
+      500,
+    );
+  }
+});
+
+/**
+ * Erase everything the caller owns (P22 privacy page).
+ *
+ * The body carries a literal confirmation, so the ask lives in two places: the
+ * client confirms with the student, and the request still has to name what it
+ * wants. `account` takes the sign-in with it — the response below is the last
+ * one this session will get.
+ */
+dataRouter.post("/erase", async (c) => {
+  const denied = await requireProfile(c);
+  if (denied) return denied;
+
+  const parsed = eraseDataSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) {
+    return c.json(
+      {
+        error: "invalid",
+        issues: parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`),
+      },
+      400,
+    );
+  }
+
+  const session = await getSession(c.req.raw.headers, c.get("auth"));
+  if (!session) return c.json({ error: "unauthorized" }, 401);
+
+  try {
+    const report = await eraseEverything(
+      db,
+      { id: c.get("profileId"), authUserId: session.user.id },
+      fileStore,
+      { deleteAccount: parsed.data.scope === "account" },
+    );
+    return c.json({ ok: true, ...report });
+  } catch (err) {
+    // The transaction rolled back: nothing was removed.
+    return c.json(
+      {
+        error: "erase_failed",
+        message: err instanceof Error ? err.message : "erase failed — nothing was changed",
+      },
       500,
     );
   }

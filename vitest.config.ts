@@ -20,6 +20,10 @@ export default defineConfig({
     // The web tests are the offline queue's rules (P20), written to be DOM-free too.
     environment: "node",
     include: ["packages/**/*.test.ts", "apps/server/**/*.test.ts", "apps/web/**/*.test.ts"],
+    // The database-backed suites build a PGlite instance in beforeAll and apply every
+    // migration to it (erase, reference). On a cold machine that is more than vitest's
+    // 10 s hook default, and the failure reads as a broken test rather than a slow one.
+    hookTimeout: 60_000,
     coverage: {
       provider: "v8",
       include: ["packages/core/src/**", "apps/server/src/**"],

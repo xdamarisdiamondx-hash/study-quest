@@ -5,13 +5,16 @@
  * DATABASE_URL is set, otherwise PGlite in-process — so the app runs before Docker is
  * configured.
  */
-import { config } from "dotenv";
+import { createReadStream } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { createReadStream } from "node:fs";
+
+// Deliberately the first import: it puts `.env` in process.env before any module
+// below is evaluated. See env.ts — a config() call in this file's body would run
+// too late, because imports hoist above it.
+import "./env.ts";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-config({ path: join(__dirname, "..", "..", "..", ".env") });
 
 import { serve } from "@hono/node-server";
 import { bodyLimit } from "hono/body-limit";
@@ -47,8 +50,10 @@ import { lanRouter } from "./routes/lan.ts";
 import { diagnosticsRouter } from "./routes/diagnostics.ts";
 import { dataRouter } from "./routes/data.ts";
 import { logError } from "./log.ts";
+import { ensureReferenceData } from "./services/reference.ts";
 import { startScheduler } from "./scheduler.ts";
 import { fileStore } from "./files/store.ts";
+import { resolveWeb } from "./web.ts";
 
 const { users } = dbSchema;
 
@@ -57,6 +62,23 @@ const HOST = process.env.HOST ?? "127.0.0.1";
 const BASE_URL = process.env.BASE_URL ?? process.env.BETTER_AUTH_URL ?? `http://${HOST}:${PORT}`;
 
 console.log(`[db] driver: ${db.driver}`);
+
+/**
+ * Reference data before anything reads it: `user_achievements.achievement_code` is a
+ * foreign key into `achievements`, so a database that was migrated but never seeded
+ * answers every gamification read with a 23503 — which is what the live Neon branch
+ * did until the server started writing the catalogue itself. One round trip on an
+ * already-probed pool; a failure is logged rather than fatal, because the app still
+ * serves and `pnpm db:seed` can retry it.
+ */
+try {
+  const written = await ensureReferenceData(db.orm);
+  console.log(
+    `[seed] reference data ready: ${written.levels} levels, ${written.achievements} achievements`,
+  );
+} catch (err) {
+  logError("boot:reference-data", err);
+}
 
 const auth = createAuth({
   orm: db.orm,
@@ -292,6 +314,33 @@ app.get("/api/health", (c) =>
     200,
   ),
 );
+
+/* --- the built web app, from the same process as the API (P22) ------------
+   Registered last, so every /api route above keeps answering for itself and
+   anything unmatched that looks like a page gets the SPA shell instead of a
+   JSON 404. See web.ts for the two rules and the cache policy. */
+const WEB_DIST = join(__dirname, "..", "..", "web", "dist");
+app.on(["GET", "HEAD"], "*", (c) => {
+  if (process.env.NETLIFY === "true") return c.notFound(); // Netlify serves the assets
+
+  let requestPath = c.req.path;
+  try {
+    requestPath = decodeURIComponent(requestPath);
+  } catch {
+    return c.notFound(); // a malformed escape is not ours to guess at
+  }
+
+  const found = resolveWeb(WEB_DIST, requestPath);
+  if (!found) return c.notFound();
+
+  const headers: Record<string, string> = {
+    "Content-Type": found.contentType,
+    "Cache-Control": found.cacheControl,
+    "X-Content-Type-Options": "nosniff",
+  };
+  if (c.req.method === "HEAD") return new Response(null, { headers });
+  return new Response(createReadStream(found.path) as unknown as ReadableStream, { headers });
+});
 
 app.notFound((c) => c.json({ error: "not_found", path: c.req.path }, 404));
 

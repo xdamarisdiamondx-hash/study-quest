@@ -100,10 +100,33 @@ export async function createDb(databaseUrl = process.env.DATABASE_URL): Promise<
       // on every start, and postgres-js raises it as an exception otherwise.
       const client = postgres(databaseUrl, {
         max: 5,
-        connect_timeout: 5,
+        // A cold connection to a hosted database measures ~4.5s here (DNS, TLS,
+        // pooler handshake), so a 5s budget made the *first* attempt fail often
+        // enough that the process quietly started on the built-in database
+        // instead — the same app, a second place for its data. ADR-028's fallback
+        // is for a database that is genuinely not there, not for a slow one.
+        connect_timeout: 15,
         onnotice: () => {},
       });
-      await client`select 1`;
+
+      // Retry the probe before accepting "unavailable": a hosted database drops a
+      // first connection now and then (`read ECONNRESET`), and one dropped
+      // connection must not decide where the day's study data lands.
+      let probeError: unknown = null;
+      for (let attempt = 1; attempt <= 3; attempt += 1) {
+        try {
+          await client`select 1`;
+          probeError = null;
+          break;
+        } catch (err) {
+          probeError = err;
+          if (attempt < 3) await new Promise((resolve) => setTimeout(resolve, attempt * 1000));
+        }
+      }
+      if (probeError) {
+        await client.end({ timeout: 2 }).catch(() => undefined);
+        throw probeError;
+      }
 
       // postgres-js `unsafe` already resolves to the rows array for a SELECT; for DDL it
       // resolves to an array of Result objects, which carry no rows. Normalise both.
@@ -123,7 +146,7 @@ export async function createDb(databaseUrl = process.env.DATABASE_URL): Promise<
       };
     } catch (err) {
       console.warn(
-        `[db] PostgreSQL at ${maskUrl(databaseUrl)} is unavailable, falling back to PGlite.`,
+        `[db] PostgreSQL at ${maskUrl(databaseUrl)} is unavailable, falling back to PGlite. Data written from now on goes to the local built-in database, NOT to ${maskUrl(databaseUrl)}.`,
         err instanceof Error ? err.message : err,
       );
     }

@@ -1,7 +1,7 @@
 import { asc, count, eq } from "drizzle-orm";
 import { Hono } from "hono";
 
-import { STARTER_SUBJECTS, monogramFor } from "@sq/core/starter";
+import { STARTER_SUBJECTS, monogramFor, type StarterExample } from "@sq/core/starter";
 import * as dbSchema from "@sq/db/schema";
 
 import type { AuthedEnv } from "../auth/session.ts";
@@ -9,7 +9,18 @@ import { getSession } from "../auth/session.ts";
 import { db } from "../db.ts";
 import { createQuest } from "../services/quests.ts";
 
-const { users, subjects, topics, streaks, quests } = dbSchema;
+const {
+  users,
+  subjects,
+  topics,
+  streaks,
+  quests,
+  notes,
+  quizzes,
+  quizQuestions,
+  flashcardDecks,
+  flashcards,
+} = dbSchema;
 
 export const onboarding = new Hono<AuthedEnv>();
 
@@ -29,6 +40,9 @@ onboarding.get("/templates", (c) =>
       name: s.name,
       monogram: monogramFor(s.name),
       topicCount: s.topics.length,
+      // The picker says which set ships worked example material (P22), so the
+      // hint on the row and the rows that get created cannot drift apart.
+      hasExample: Boolean(s.example),
     })),
   }),
 );
@@ -54,6 +68,83 @@ onboarding.get("/state", async (c) => {
     subjectCount: counted[0]?.value ?? 0,
   });
 });
+
+/**
+ * Copy one template's worked example into the student's own rows (P22): the note,
+ * the quiz and its questions, the deck and its cards — the same three things the
+ * AI flow writes, shipped as text so a first run does not depend on a provider key.
+ * Everything hangs off the subject's own topic row, so the topic quest's steps
+ * deep-link straight into real material.
+ */
+async function insertExample(
+  userId: string,
+  subjectId: string,
+  example: StarterExample,
+  topicRows: { id: string; name: string; subjectId: string | null }[],
+): Promise<void> {
+  const topicId =
+    topicRows.find((t) => t.subjectId === subjectId && t.name === example.note.topic)?.id ?? null;
+
+  const [note] = await db.orm
+    .insert(notes)
+    .values({
+      userId,
+      topicId,
+      title: example.note.title,
+      bodyMd: example.note.bodyMd,
+      wordCount: example.note.bodyMd.split(/\s+/).filter(Boolean).length,
+    })
+    .returning({ id: notes.id });
+
+  const [quiz] = await db.orm
+    .insert(quizzes)
+    .values({
+      userId,
+      topicId,
+      sourceNoteId: note?.id ?? null,
+      title: example.quiz.title,
+      questionCount: example.quiz.questions.length,
+      difficulty: "medium",
+      status: "ready",
+    })
+    .returning({ id: quizzes.id });
+
+  if (quiz) {
+    await db.orm.insert(quizQuestions).values(
+      example.quiz.questions.map((q, orderIndex) => ({
+        quizId: quiz.id,
+        orderIndex,
+        type: "mcq",
+        prompt: q.prompt,
+        options: q.options,
+        // Grading compares this text against the submitted option (packages/core/quiz).
+        correctAnswer: q.answer,
+        explanation: q.explanation,
+        difficulty: "medium",
+        topicId,
+        conceptTag: q.conceptTag ?? null,
+      })),
+    );
+  }
+
+  const [deck] = await db.orm
+    .insert(flashcardDecks)
+    .values({ userId, topicId, sourceNoteId: note?.id ?? null, title: example.deck.title })
+    .returning({ id: flashcardDecks.id });
+
+  if (deck) {
+    // No dueAt: a null due date counts as due now (routes/flashcards), so the
+    // deck is studyable on the first visit rather than tomorrow.
+    await db.orm.insert(flashcards).values(
+      example.deck.cards.map((c) => ({
+        deckId: deck.id,
+        topicId,
+        front: c.front,
+        back: c.back,
+      })),
+    );
+  }
+}
 
 /** Copy a starter subject set into this user's own subjects and topics. */
 onboarding.post("/subjects", async (c) => {
@@ -97,11 +188,28 @@ onboarding.post("/subjects", async (c) => {
       orderIndex: order,
     })),
   );
-  if (topicRows.length > 0) await db.orm.insert(topics).values(topicRows);
+  const insertedTopics =
+    topicRows.length > 0
+      ? await db.orm
+          .insert(topics)
+          .values(topicRows)
+          .returning({ id: topics.id, name: topics.name, subjectId: topics.subjectId })
+      : [];
 
-  // The first-run experience has a quest waiting (P13): the canonical
-  // "Master {topic}" over the first topic of the first chosen subject —
-  // steps deep-link into whichever activities the student builds first.
+  // Worked example material (P22): the subject that ships it arrives with a real
+  // note, a quiz over it and a deck of its key terms, so the quest handed out
+  // below walks into material instead of empty screens.
+  for (const row of created) {
+    const subject = chosen.find((s) => s.name === row.name);
+    if (subject?.example) {
+      await insertExample(profile.id, row.id, subject.example, insertedTopics);
+    }
+  }
+
+  // The first-run experience has quests waiting (P13, P22): the canonical
+  // "Master {topic}" over the first topic of the first chosen subject — its steps
+  // deep-link into whichever activities the student builds first — plus the week
+  // itself, so day one has a number to hit as well as a path to walk.
   const first = created[0];
   if (first) {
     const [firstTopic] = await db.orm
@@ -112,6 +220,7 @@ onboarding.post("/subjects", async (c) => {
       .limit(1);
     if (firstTopic) await createQuest(profile.id, { template: "topic", topicId: firstTopic.id });
   }
+  await createQuest(profile.id, { template: "weekly" });
 
   return c.json({ subjects: created, topicCount: topicRows.length }, 201);
 });

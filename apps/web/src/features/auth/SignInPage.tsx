@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { Link, Navigate, useLocation } from "react-router-dom";
 import { Logo } from "@sq/ui";
 
 import { authClient } from "../../lib/authClient";
@@ -175,7 +175,7 @@ export function SignInPage() {
 
         <p className="sq-auth-note">
           Accounts live only on this computer. Sessions are stored in an httpOnly cookie, so no
-          token is ever exposed to page scripts.
+          token is ever exposed to page scripts. <Link to="/privacy">What Study Quest stores</Link>.
         </p>
       </div>
     </main>

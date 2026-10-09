@@ -7,13 +7,17 @@ import { useAuth } from "../../lib/useAuth";
  * First-run onboarding (P3): the study loop, then a first subject.
  *
  * Four steps, each with one question. Nothing is required to continue except picking a
- * subject set on step 3 — the principle is that the student stays in control.
+ * subject set on step 3 — the principle is that the student stays in control. The set
+ * flagged "worked example" hands back a real note, quiz and deck (P22), so the first
+ * quest has material to walk through rather than empty screens.
  */
 
 interface Template {
   name: string;
   monogram: string;
   topicCount: number;
+  /** True for the set that ships a real note, quiz and deck (P22). */
+  hasExample?: boolean;
 }
 
 const JOURNEY = [
@@ -138,7 +142,8 @@ export function OnboardingPage() {
             <h1 className="sq-onb-title">What are you studying?</h1>
             <p className="sq-onb-sub">
               Pick a starting set. You can add, rename or remove any of these later — nothing is
-              locked in.
+              locked in. One set arrives with a worked example: a real note, quiz and deck to walk
+              through.
             </p>
 
             <ul className="sq-onb-list">
@@ -153,7 +158,10 @@ export function OnboardingPage() {
                     <Monogram text={t.monogram} active={picked.has(t.name)} />
                     <span className="sq-onb-row-text">
                       <b>{t.name}</b>
-                      <small>{t.topicCount} topics</small>
+                      <small>
+                        {t.topicCount} topics
+                        {t.hasExample ? " · worked example" : ""}
+                      </small>
                     </span>
                     <span className="sq-onb-check" data-on={picked.has(t.name)} aria-hidden="true">
                       {picked.has(t.name) ? (
