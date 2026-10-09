@@ -17,6 +17,7 @@ import type { Topic } from "@sq/core/schemas/subjects";
 
 import type { QuizSummary } from "../../lib/quizApi";
 import { quizApi } from "../../lib/quizApi";
+import { formatMonthDay } from "../../lib/i18n";
 import { useFocusId, useScrollToFocus } from "../../lib/useFocus";
 import { useQuizList } from "../../lib/useQuizzes";
 import { QuizComposer } from "./QuizComposer";
@@ -33,7 +34,7 @@ interface QuizzesPanelProps {
 const pct = (score: number, total: number) => (total > 0 ? Math.round((score / total) * 100) : 0);
 
 const shortDate = (iso: string) =>
-  new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  formatMonthDay(iso);
 
 /** One group's attempts as a trend line — oldest left, newest right. */
 function Spark({ values, label }: { values: number[]; label: string }) {

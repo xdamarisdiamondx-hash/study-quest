@@ -23,6 +23,7 @@
     "test:watch": "vitest",
     "db:generate": "pnpm --filter @sq/db generate",
     "icons": "node scripts/generate-icons.mjs",
+    "budget": "pnpm --filter @sq/web build && node scripts/budget.mjs",
     "lan": "pnpm --filter @sq/web build && pnpm --filter @sq/web preview",
     "db:seed": "pnpm --filter @sq/server seed",
     "db:up": "docker compose up -d db",

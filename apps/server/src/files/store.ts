@@ -12,7 +12,8 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const DATA_ROOT = join(__dirname, "..", "..", "..", "data", "files");
+/** Where the local store keeps bytes; exported so export/backup can walk it (P21). */
+export const DATA_ROOT = join(__dirname, "..", "..", "..", "data", "files");
 
 export interface FileStore {
   put(key: string, body: Buffer, contentType: string): Promise<void>;

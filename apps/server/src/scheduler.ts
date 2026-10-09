@@ -13,6 +13,8 @@
 import { users } from "@sq/db/schema";
 
 import { db } from "./db.ts";
+import { logError, logLine } from "./log.ts";
+import { backupIsStale, backupNow } from "./services/backup.ts";
 import { remindersSync } from "./services/reminders.ts";
 
 const TICK_MS = 60_000;
@@ -29,17 +31,22 @@ async function tick(): Promise<void> {
       try {
         const outcome = await remindersSync(account.id, new Date());
         if (outcome.created || outcome.dropped || outcome.delivered || outcome.pruned) {
-          console.log(
-            `[scheduler] ${account.id.slice(0, 8)} created=${outcome.created}` +
-              ` dropped=${outcome.dropped} delivered=${outcome.delivered} pruned=${outcome.pruned}`,
-          );
+          logLine("info", "scheduler", `${account.id.slice(0, 8)} created=${outcome.created} dropped=${outcome.dropped} delivered=${outcome.delivered} pruned=${outcome.pruned}`);
         }
       } catch (err) {
-        console.error(`[scheduler] sync failed for ${account.id.slice(0, 8)}`, err);
+        logError("scheduler", err);
       }
     }
+
+    // P21 backup: one zip a day in data/backups, kept for two weeks. Checked
+    // every tick because this machine being on is the exception (ADR-017) —
+    // the first tick after a day off is exactly when the backup matters.
+    if (backupIsStale()) {
+      const info = await backupNow(db);
+      logLine("info", "scheduler", `backup written: ${info.file} (${Math.round(info.bytes / 1024)} KB)`);
+    }
   } catch (err) {
-    console.error("[scheduler] tick failed", err);
+    logError("scheduler", err);
   } finally {
     inFlight = false;
   }

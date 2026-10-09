@@ -246,6 +246,16 @@
   font-size: 13px;
   color: var(--muted);
 }
+/* A selected row tints its own background (--iris-50). In light that tint is
+   near-white, where --muted lands at 4.44:1 — just under AA — so the helper
+   text steps down one rung. Dark's tint is near-black and --muted already
+   clears 6:1 there, so it keeps its colour. */
+.sq-onb-row[aria-pressed="true"] .sq-onb-row-text small {
+  color: var(--sand-600);
+}
+[data-theme="dark"] .sq-onb-row[aria-pressed="true"] .sq-onb-row-text small {
+  color: var(--muted);
+}
 .sq-onb-check {
   width: 22px;
   height: 22px;
@@ -1133,4 +1143,95 @@
   font-size: 26px;
   letter-spacing: 0.2em;
   color: var(--strong);
+}
+
+/* ---- P21: quality bar ---- */
+
+/* Route chunk loading (App.tsx / AppShell Suspense). Sits in the content
+   column so the shell never jumps, and is announced via role="status". */
+.sq-route-fallback {
+  padding: 48px 8px;
+  color: var(--muted);
+  font-size: 14px;
+  letter-spacing: 0.02em;
+}
+
+/* Error boundary (P21): full-page when nothing else can render. */
+.sq-boundary {
+  max-width: 560px;
+  margin: 12vh auto;
+  padding: 0 24px;
+}
+.sq-boundary h1 {
+  font-family: var(--font-display);
+  font-size: 28px;
+  color: var(--strong);
+  margin: 0 0 12px;
+}
+.sq-boundary p {
+  color: var(--text);
+  line-height: 1.55;
+  font-size: 15px;
+}
+.sq-boundary-detail {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 13px;
+  color: var(--muted) !important;
+  word-break: break-word;
+}
+.sq-boundary-actions {
+  display: flex;
+  gap: var(--s3);
+  margin-top: var(--s4);
+  flex-wrap: wrap;
+}
+
+/* Diagnostics card (P21). */
+.sq-diag-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--s3);
+  margin: var(--s3) 0 var(--s4);
+}
+.sq-diag-facts dt {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+.sq-diag-facts dd {
+  margin: 2px 0 0;
+  font-size: 14px;
+  color: var(--text);
+}
+.sq-diag-details {
+  margin-top: var(--s3);
+}
+.sq-diag-details summary {
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--muted);
+}
+.sq-diag-list {
+  margin: var(--s2) 0 0;
+  padding-left: 18px;
+  font-size: 13px;
+  color: var(--text);
+}
+.sq-diag-list li {
+  margin-bottom: 4px;
+  word-break: break-word;
+}
+.sq-diag-log {
+  max-height: 260px;
+  overflow: auto;
+  margin: var(--s2) 0 0;
+  padding: var(--s3);
+  background: var(--surface-2, var(--surface));
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
 }

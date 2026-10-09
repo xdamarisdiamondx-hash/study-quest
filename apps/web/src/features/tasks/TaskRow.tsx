@@ -8,6 +8,7 @@
 import { Button, Chip, IconButton } from "@sq/ui";
 import type { Task } from "@sq/core/schemas/tasks";
 import { dueLabel, isOverdue, ruleLabel, type TaskStatus } from "@sq/core/tasks";
+import { formatMonthDay } from "../../lib/i18n";
 
 interface TaskRowProps {
   task: Task;
@@ -28,7 +29,7 @@ interface TaskRowProps {
 }
 
 const shortDate = (iso: string) =>
-  new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  formatMonthDay(iso);
 
 const lower = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 

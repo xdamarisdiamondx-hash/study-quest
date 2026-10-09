@@ -15,6 +15,7 @@ import { Button, Card, Chip, EmptyState, Picker } from "@sq/ui";
 import type { Topic } from "@sq/core/schemas/subjects";
 
 import type { DueScope } from "../../lib/flashcardsApi";
+import { formatMonthDay } from "../../lib/i18n";
 import { useScrollToFocus } from "../../lib/useFocus";
 import {
   useCardsSummary,
@@ -33,7 +34,7 @@ interface FlashcardsPanelProps {
 }
 
 const shortDate = (iso: string) =>
-  new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  formatMonthDay(iso);
 
 export function FlashcardsPanel({ subjectId, topics }: FlashcardsPanelProps) {
   // A card result from search (P19) deep-links `?focus=<cardId>&deck=<deckId>`:

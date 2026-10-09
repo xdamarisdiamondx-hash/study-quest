@@ -384,7 +384,11 @@
   border-radius: var(--r-lg);
   font-size: 17px;
 }
-.sq-mono-active {
+/* The dark override above is `[data-theme="dark"] .sq-mono` (0,2,0), so the
+   active tile needs to out-rank it or dark mode paints sand-300 on the violet
+   accent (1.8:1). Spelling both selectors keeps the intent obvious. */
+.sq-mono-active,
+[data-theme="dark"] .sq-mono-active {
   background: var(--accent);
   color: var(--on-accent);
 }
@@ -868,6 +872,12 @@
 .sq-seg-btn[data-on="true"] .sq-seg-n {
   background: var(--iris-100);
   color: var(--iris-800);
+}
+/* Dark turns --iris-100 into a near-black tint, which a dark violet ink
+   (#5b21b6) cannot sit on — step up to the light end of the ramp. */
+[data-theme="dark"] .sq-seg-btn[data-on="true"] .sq-seg-n {
+  background: var(--iris-100);
+  color: var(--iris-300);
 }
 
 /* --- reordering ------------------------------------------------------- */

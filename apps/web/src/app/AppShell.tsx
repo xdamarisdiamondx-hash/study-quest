@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link, NavLink, Outlet } from "react-router-dom";
 import { useRegisterSW } from "virtual:pwa-register/react";
@@ -10,6 +10,7 @@ import { NotificationBell } from "../features/notifications/NotificationBell";
 import { SearchPalette } from "../features/search/SearchPalette";
 import { requestBackgroundSync } from "../offline/install";
 import { useOfflineState } from "../offline/useOffline";
+import { RouteFallback } from "./RouteFallback";
 import { useTheme } from "./useTheme";
 
 const SECTIONS = [
@@ -135,7 +136,7 @@ function AccountMenu() {
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-haspopup="menu"
-        aria-label="Account menu"
+        aria-label={`Account menu — ${initials(user.name) || "?"}`}
       >
         <Monogram text={initials(user.name) || "?"} />
       </button>
@@ -222,7 +223,9 @@ export function AppShell() {
             type="button"
             className="sq-btn sq-btn-secondary sq-btn-sm sq-search-btn"
             onClick={() => setSearchOpen(true)}
-            aria-label="Search"
+            // The visible "Ctrl K" hint is part of this button's text, so it has
+            // to appear in the accessible name too (axe label-content-name-mismatch).
+            aria-label={`Search (${SEARCH_KEY})`}
           >
             <svg
               viewBox="0 0 24 24"
@@ -307,7 +310,12 @@ export function AppShell() {
           </nav>
 
           <main className="sq-app-main">
-            <Outlet />
+            {/* Inner boundary: the shell (header, rail, strips) stays on screen
+                while the route's chunk loads; the outer one in App.tsx only
+                covers the pages that render without the shell. */}
+            <Suspense fallback={<RouteFallback />}>
+              <Outlet />
+            </Suspense>
           </main>
         </div>
 

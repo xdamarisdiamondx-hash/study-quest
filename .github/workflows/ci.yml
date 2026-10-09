@@ -61,6 +61,11 @@ jobs:
       - name: Build
         run: pnpm --filter @sq/web build
 
+      # Size budgets (P21): initial JS/CSS under the plan's caps, no web fonts,
+      # icons within the per-file limit — a budget nobody enforces is a wish.
+      - name: Size budgets
+        run: node scripts/budget.mjs
+
       # The database-backed services are checked against the same schema the app
       # generates, using a throwaway Postgres service container (ADR-013).
       - name: Migration check

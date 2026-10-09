@@ -16,8 +16,11 @@ import type { AiProviderName } from "@sq/core/schemas/ai";
 import { Button, Card, Chip, EmptyState, Input, Picker, Track } from "@sq/ui";
 
 import { aiApi, type AiSettingsView } from "../../lib/aiApi";
+import { formatStamp } from "../../lib/i18n";
 import { useFlash } from "../../lib/useAiStream";
 import { RemindersCard } from "../notifications/RemindersCard";
+import { DataCard } from "./DataCard";
+import { DiagnosticsCard } from "./DiagnosticsCard";
 import { LanCard } from "./LanCard";
 import { PwaCard } from "./PwaCard";
 
@@ -64,13 +67,7 @@ const labelFor = (name: string) => LABELS.get(name as AiProviderName) ?? name;
 const money = (usd: number) =>
   usd === 0 ? "$0.00" : usd < 0.01 ? `$${usd.toFixed(4)}` : `$${usd.toFixed(2)}`;
 
-const when = (iso: string) =>
-  new Date(iso).toLocaleString(undefined, {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+const when = (iso: string) => formatStamp(iso);
 
 const H1 = {
   font: "var(--t-h1)",
@@ -421,6 +418,12 @@ export function SettingsPage() {
       {/* Install, offline and LAN (P20): independent loads, like the card above. */}
       <PwaCard />
       <LanCard />
+
+      {/* Error reporting (P21): reads the log the server has been keeping. */}
+      <DiagnosticsCard />
+
+      {/* Portability (P21): export, restore, and the daily backup's status. */}
+      <DataCard />
     </div>
   );
 }

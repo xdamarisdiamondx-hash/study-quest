@@ -23,6 +23,15 @@ out/
 config.local.json
 config.local.json.example
 
+# Local smoke-test leftovers — sq-*cookies*.txt and .smoke-*.json carry live
+# session tokens, so they must never be committable (P21 security review).
+.smoke-*
+sq-*cookies*.txt
+errors.txt
+typecheck.txt
+server_typecheck.txt
+*.log
+
 # Local data: database backups, local-disk file fallback, uploads
 data/
 # …but not the source folder that happens to be named data.

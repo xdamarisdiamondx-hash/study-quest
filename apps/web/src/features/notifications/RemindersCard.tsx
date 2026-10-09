@@ -11,6 +11,7 @@
  */
 import { useState } from "react";
 import { Button, Card, Chip, Input } from "@sq/ui";
+import { formatMonthDay, formatTime } from "../../lib/i18n";
 
 import { useReminderSettings, useUpdateReminderSettings } from "../../lib/useReminders";
 
@@ -21,10 +22,10 @@ const when = (iso: string) => {
     d.getFullYear() === today.getFullYear() &&
     d.getMonth() === today.getMonth() &&
     d.getDate() === today.getDate();
-  const time = d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+  const time = formatTime(d);
   return sameDay
     ? `today ${time}`
-    : `${d.toLocaleDateString(undefined, { month: "short", day: "numeric" })}, ${time}`;
+    : `${formatMonthDay(d)}, ${time}`;
 };
 
 type Permission = NotificationPermission | "unsupported";

@@ -1,23 +1,56 @@
-import { useCallback, useEffect, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 
 import { AppShell } from "./app/AppShell";
 import { RedirectIfAuthed, RequireAuth } from "./app/guards";
-import { SignInPage } from "./features/auth/SignInPage";
-import { OnboardingPage } from "./features/onboarding/OnboardingPage";
-import { HomePage } from "./features/home/HomePage";
-import { PlanPage } from "./features/plan/PlanPage";
-import { TasksPage } from "./features/tasks/TasksPage";
-import { StudyPage } from "./features/study/StudyPage";
-import { SubjectDetailPage } from "./features/study/SubjectDetailPage";
-import { NotesPage } from "./features/study/NotesPage";
-import { SessionsPage } from "./features/sessions/SessionsPage";
-import { QuestsPage } from "./features/quests/QuestsPage";
-import { ProgressPage } from "./features/progress/ProgressPage";
-import { SearchPage } from "./features/search/SearchPage";
-import { SettingsPage } from "./features/settings/SettingsPage";
+import { RouteFallback } from "./app/RouteFallback";
 import { LanGate } from "./features/settings/LanGate";
 import { lanApi } from "./lib/lanApi";
+
+/* Route-level code splitting (P21): every page is its own chunk so the first
+   paint ships the shell — React, router, auth, chrome — instead of all
+   fifteen screens. The named exports are unwrapped here once, so routes keep
+   reading like components. Guards, the shell and the gate stay static: they
+   are what has to exist before any route can decide what to render. */
+const SignInPage = lazy(() =>
+  import("./features/auth/SignInPage").then((m) => ({ default: m.SignInPage })),
+);
+const OnboardingPage = lazy(() =>
+  import("./features/onboarding/OnboardingPage").then((m) => ({ default: m.OnboardingPage })),
+);
+const HomePage = lazy(() =>
+  import("./features/home/HomePage").then((m) => ({ default: m.HomePage })),
+);
+const PlanPage = lazy(() =>
+  import("./features/plan/PlanPage").then((m) => ({ default: m.PlanPage })),
+);
+const TasksPage = lazy(() =>
+  import("./features/tasks/TasksPage").then((m) => ({ default: m.TasksPage })),
+);
+const StudyPage = lazy(() =>
+  import("./features/study/StudyPage").then((m) => ({ default: m.StudyPage })),
+);
+const SubjectDetailPage = lazy(() =>
+  import("./features/study/SubjectDetailPage").then((m) => ({ default: m.SubjectDetailPage })),
+);
+const NotesPage = lazy(() =>
+  import("./features/study/NotesPage").then((m) => ({ default: m.NotesPage })),
+);
+const SessionsPage = lazy(() =>
+  import("./features/sessions/SessionsPage").then((m) => ({ default: m.SessionsPage })),
+);
+const QuestsPage = lazy(() =>
+  import("./features/quests/QuestsPage").then((m) => ({ default: m.QuestsPage })),
+);
+const ProgressPage = lazy(() =>
+  import("./features/progress/ProgressPage").then((m) => ({ default: m.ProgressPage })),
+);
+const SearchPage = lazy(() =>
+  import("./features/search/SearchPage").then((m) => ({ default: m.SearchPage })),
+);
+const SettingsPage = lazy(() =>
+  import("./features/settings/SettingsPage").then((m) => ({ default: m.SettingsPage })),
+);
 
 type Gate = { phase: "checking" } | { phase: "open" } | { phase: "locked" };
 
@@ -66,37 +99,39 @@ export function App() {
   if (gate.phase === "locked") return <LanGate onUnlocked={() => void readGate().then(setGate)} />;
 
   return (
-    <Routes>
-      <Route
-        path="/sign-in"
-        element={
-          <RedirectIfAuthed>
-            <SignInPage />
-          </RedirectIfAuthed>
-        }
-      />
+    <Suspense fallback={<RouteFallback />}>
+      <Routes>
+        <Route
+          path="/sign-in"
+          element={
+            <RedirectIfAuthed>
+              <SignInPage />
+            </RedirectIfAuthed>
+          }
+        />
 
-      {/* Everything below requires a session (P3). */}
-      <Route element={<RequireAuth />}>
-        <Route path="onboarding" element={<OnboardingPage />} />
+        {/* Everything below requires a session (P3). */}
+        <Route element={<RequireAuth />}>
+          <Route path="onboarding" element={<OnboardingPage />} />
 
-        <Route element={<AppShell />}>
-          <Route index element={<HomePage />} />
-          <Route path="plan" element={<PlanPage />} />
-          <Route path="tasks" element={<TasksPage />} />
-          <Route path="study" element={<StudyPage />} />
-          <Route path="study/:subjectId" element={<SubjectDetailPage />} />
-          <Route path="study/:subjectId/notes" element={<NotesPage />} />
-          <Route path="study/:subjectId/:topicId/notes" element={<NotesPage />} />
-          <Route path="sessions" element={<SessionsPage />} />
-          <Route path="quests" element={<QuestsPage />} />
-          <Route path="progress" element={<ProgressPage />} />
-          <Route path="search" element={<SearchPage />} />
-          <Route path="settings" element={<SettingsPage />} />
+          <Route element={<AppShell />}>
+            <Route index element={<HomePage />} />
+            <Route path="plan" element={<PlanPage />} />
+            <Route path="tasks" element={<TasksPage />} />
+            <Route path="study" element={<StudyPage />} />
+            <Route path="study/:subjectId" element={<SubjectDetailPage />} />
+            <Route path="study/:subjectId/notes" element={<NotesPage />} />
+            <Route path="study/:subjectId/:topicId/notes" element={<NotesPage />} />
+            <Route path="sessions" element={<SessionsPage />} />
+            <Route path="quests" element={<QuestsPage />} />
+            <Route path="progress" element={<ProgressPage />} />
+            <Route path="search" element={<SearchPage />} />
+            <Route path="settings" element={<SettingsPage />} />
+          </Route>
         </Route>
-      </Route>
 
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Suspense>
   );
 }

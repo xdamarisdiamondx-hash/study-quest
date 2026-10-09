@@ -79,6 +79,10 @@ registerRoute(({ url }) => url.pathname === "/api/health", new NetworkOnly());
 // Attachments stay network-only (ADR-027): "reconnect to view", never stale bytes.
 registerRoute(({ url }) => url.pathname.startsWith("/api/files/"), new NetworkOnly());
 
+// Exports are never cached: a zip served from cache while offline would claim
+// to be the current state of the database and quietly be an old one.
+registerRoute(({ url }) => url.pathname === "/api/export", new NetworkOnly());
+
 // Everything else the API reads: network first, this device's last answer when
 // offline OR when a gateway reports the server unreachable (500/502/503/504 —
 // vite's proxy, a tunnel, a reverse proxy: all indistinguishable from being

@@ -77,6 +77,10 @@ export function SubjectDetailPage() {
   if (store.status === "loading") {
     return (
       <div className="sq-col" style={{ marginTop: "var(--s6)" }}>
+        {/* The subject's own h1 arrives with its data, so this screen would be
+            heading-less for a beat — axe (and a screen-reader user landing
+            here) should still find one. */}
+        <h1 className="sq-sr-only">Subject</h1>
         <Card>
           <p style={{ margin: 0, color: "var(--muted)", font: "var(--t-body-sm)" }}>Loading…</p>
         </Card>
@@ -87,6 +91,7 @@ export function SubjectDetailPage() {
   if (!store.subject) {
     return (
       <div className="sq-col" style={{ marginTop: "var(--s6)" }}>
+        <h1 className="sq-sr-only">Subject</h1>
         <Card>
           <EmptyState
             title="Subject not found"

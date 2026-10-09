@@ -14,8 +14,9 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 config({ path: join(__dirname, "..", "..", "..", ".env") });
 
 import { serve } from "@hono/node-server";
+import { bodyLimit } from "hono/body-limit";
 import { eq } from "drizzle-orm";
-import { Hono } from "hono";
+import { Hono, type Context } from "hono";
 
 import * as dbSchema from "@sq/db/schema";
 
@@ -23,6 +24,7 @@ import { createAuth, ensureProfile } from "./auth.ts";
 import type { AuthedEnv } from "./auth/session.ts";
 import { getSession } from "./auth/session.ts";
 import { ensureLanMatchesHost, isUnlocked, lanEnabled, setRebinder } from "./lan.ts";
+import { createLimiter } from "./ratelimit.ts";
 import { db } from "./db.ts";
 import { aiErrorStatus, AiError } from "./ai/types.ts";
 import { anyEnvConfigured } from "./ai/settings.ts";
@@ -42,6 +44,9 @@ import { recommendationsRouter } from "./routes/recommendations.ts";
 import { remindersRouter } from "./routes/reminders.ts";
 import { searchRouter } from "./routes/search.ts";
 import { lanRouter } from "./routes/lan.ts";
+import { diagnosticsRouter } from "./routes/diagnostics.ts";
+import { dataRouter } from "./routes/data.ts";
+import { logError } from "./log.ts";
 import { startScheduler } from "./scheduler.ts";
 import { fileStore } from "./files/store.ts";
 
@@ -89,6 +94,71 @@ app.use("/api/*", async (c, next) => {
 
 /* --- auth: Better Auth owns every route under /api/auth/* -------------- */
 app.on(["GET", "POST"], "/api/auth/*", (c) => auth.handler(c.req.raw));
+
+/* --- security headers and body cap (P21 review) --------------------------
+   Headers on every response the API makes. Body caps: 12 MB for everything
+   (10 MB attachments plus multipart overhead, so a stray upload cannot ask
+   Node to buffer an unbounded request), and 250 MB for /api/import alone —
+   that one carries every attachment in the archive. A document CSP
+   deliberately lives with the process that serves the document (Vite
+   dev/preview, or whatever fronts this in production) — setting it here would
+   claim a protection for pages this server never serves. */
+app.use("*", async (c, next) => {
+  await next();
+  c.header("X-Content-Type-Options", "nosniff");
+  c.header("Referrer-Policy", "no-referrer");
+  c.header("X-Frame-Options", "SAMEORIGIN");
+  c.header("Permissions-Policy", "camera=(), microphone=(), geolocation=(), usb=()");
+  c.header("Cross-Origin-Opener-Policy", "same-origin");
+});
+
+const jsonBodyLimit = bodyLimit({ maxSize: 12 * 1024 * 1024 });
+const importBodyLimit = bodyLimit({ maxSize: 250 * 1024 * 1024 });
+
+app.use("/api/*", async (c, next) => {
+  // /api/import gets its own, larger cap below: an export carries every
+  // attachment, and a backup you cannot restore is not a backup.
+  const limit = c.req.path === "/api/import" ? importBodyLimit : jsonBodyLimit;
+  return limit(c, next);
+});
+
+/* --- rate limits (P21): auth writes and AI runs, keyed by caller ----------
+   Better Auth only limits itself in production, so without this a dev or LAN
+   session had nothing at all; the daily AI cap prices generations but does not
+   slow a hammer. Both budgets are deliberately generous for a human — this
+   damps scripts, it is not a queue. When LAN mode fronts this process behind
+   a proxy the caller key collapses to the proxy's address, which is exactly
+   where the LAN PIN gate (above) is the real defence. */
+const authLimiter = createLimiter({ windowMs: 60_000, max: 15 });
+const aiLimiter = createLimiter({ windowMs: 60_000, max: 20 });
+
+function callerKey(headers: Headers): string {
+  const forwarded = headers.get("x-forwarded-for");
+  if (forwarded) return forwarded.split(",")[0]!.trim();
+  return headers.get("x-real-ip") ?? "local";
+}
+
+function rateLimited(c: Context, retryAfterSec: number): Response {
+  c.header("Retry-After", String(retryAfterSec));
+  return c.json(
+    { error: "rate_limited", message: "Too many requests — wait a moment and try again." },
+    429,
+  );
+}
+
+app.use("/api/auth/*", async (c, next) => {
+  if (c.req.method !== "POST") return next();
+  const decision = authLimiter.check(callerKey(c.req.raw.headers));
+  if (!decision.allowed) return rateLimited(c, decision.retryAfterSec);
+  await next();
+});
+
+app.use("/api/ai/*", async (c, next) => {
+  if (c.req.method !== "POST") return next();
+  const decision = aiLimiter.check(callerKey(c.req.raw.headers));
+  if (!decision.allowed) return rateLimited(c, decision.retryAfterSec);
+  await next();
+});
 
 /* --- session: who am I? ------------------------------------------------- */
 app.get("/api/me", async (c) => {
@@ -171,6 +241,12 @@ app.route("/api/search", searchRouter);
 /* --- LAN access and the app PIN (P20) ------------------------------------- */
 app.route("/api/lan", lanRouter);
 
+/* --- diagnostics: the tail of the log, for Copy diagnostics (P21) --------- */
+app.route("/api/diagnostics", diagnosticsRouter);
+
+/* --- export / import / backup (P21), before the files catch-all ---------- */
+app.route("/api", dataRouter);
+
 /* --- local file serving (ADR-027 fallback) ------------------------------- */
 app.get("/api/files/*", async (c) => {
   const key = c.req.path.replace("/api/files/", "");
@@ -225,7 +301,9 @@ app.onError((err, c) => {
   // been the defined mapping for this — it just was not wired into the path.
   if (err instanceof AiError)
     return c.json({ error: err.code, message: err.message }, aiErrorStatus(err.code));
-  console.error("[api]", err);
+  // To the console AND to data/logs/server.log — a crash nobody was watching
+  // still has a trace the Copy diagnostics action can hand over (P21).
+  logError("api", err);
   return c.json({ error: "internal_error", message: err.message }, 500);
 });
 

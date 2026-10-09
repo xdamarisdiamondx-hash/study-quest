@@ -8,6 +8,7 @@
  */
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { formatMonthDay, formatTime } from "../../lib/i18n";
 
 import {
   useDesktopNotifications,
@@ -24,10 +25,10 @@ const when = (iso: string) => {
     d.getFullYear() === today.getFullYear() &&
     d.getMonth() === today.getMonth() &&
     d.getDate() === today.getDate();
-  const time = d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+  const time = formatTime(d);
   return sameDay
     ? time
-    : d.toLocaleDateString(undefined, { month: "short", day: "numeric" }) + `, ${time}`;
+    : formatMonthDay(d) + `, ${time}`;
 };
 
 export function NotificationBell() {

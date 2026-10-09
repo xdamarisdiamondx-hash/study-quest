@@ -2233,20 +2233,22 @@ queues an edit that syncs when the network returns.
 
 **Goal:** the app is trustworthy.
 
-- [ ] Accessibility audit: axe on every screen, keyboard-only pass, screen-reader pass on the
+- [x] Accessibility audit: axe on every screen, keyboard-only pass, screen-reader pass on the
       five key flows, contrast verification in both themes
-- [ ] Performance: bundle budget enforced in CI, route splitting, image/font budgets, a real
+- [x] Performance: bundle budget enforced in CI, route splitting, image/font budgets, a real
       Lighthouse pass on a throttled profile
-- [ ] Security review: cookie flags, rate limits on auth and AI routes, input validation audit,
+- [x] Security review: cookie flags, rate limits on auth and AI routes, input validation audit,
       LAN PIN, key handling, no secrets in the repo
-- [ ] Data portability: full export (`.zip` of DB + attachments + config template) and restore
-- [ ] Backup automation: scheduled Windows task + a Settings nudge when the last backup is old
-- [ ] Error reporting: local log file with a "copy diagnostics" action, no external reporting
-- [ ] i18n scaffolding: strings extracted, date/number formatting centralised (first locale: en)
-- [ ] Empty/error/loading state sweep — no placeholder text left anywhere
+- [x] Data portability: full export (`.zip` of DB + attachments + config template) and restore
+- [x] Backup automation: scheduled Windows task + a Settings nudge when the last backup is old
+- [x] Error reporting: local log file with a "copy diagnostics" action, no external reporting
+- [x] i18n scaffolding: strings extracted, date/number formatting centralised (first locale: en)
+- [x] Empty/error/loading state sweep - no placeholder text left anywhere
 
 **Exit:** no axe violations, budgets enforced in CI, export/import round-trips cleanly.
 **Effort:** 4 d · **Depends on:** all previous
+
+Results are written up in [QUALITY.md](QUALITY.md).
 
 ## P22 · Release and daily use
 

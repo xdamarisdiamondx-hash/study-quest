@@ -8,12 +8,16 @@ import "@sq/ui/components.css";
 import "./styles/app.css";
 
 import { App } from "./App";
+import { ErrorBoundary } from "./app/ErrorBoundary";
 import { AuthProvider } from "./lib/useAuth";
+import { installErrorCapture } from "./lib/capture";
 import { installOffline } from "./offline/install";
 import { watchInstallPrompt } from "./offline/installPrompt";
 
 // The offline queue wraps fetch before any component can issue one, and the
-// install prompt is a page-lifetime subscription (P20).
+// install prompt is a page-lifetime subscription (P20). Error capture runs
+// first of all: the failures worth reporting are the early ones (P21).
+installErrorCapture();
 installOffline();
 watchInstallPrompt();
 
@@ -36,7 +40,10 @@ createRoot(host).render(
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <AuthProvider>
-          <App />
+          {/* Outermost so a crash in any route still explains itself (P21). */}
+          <ErrorBoundary>
+            <App />
+          </ErrorBoundary>
         </AuthProvider>
       </BrowserRouter>
     </QueryClientProvider>

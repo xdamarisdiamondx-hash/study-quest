@@ -19,6 +19,9 @@ export function NotesPage() {
   if (store.status === "loading") {
     return (
       <div className="sq-col" style={{ marginTop: "var(--s6)" }}>
+        {/* Heading-less for a beat while the subject loads — keep a page h1
+            present from the first paint (axe `page-has-heading-one`). */}
+        <h1 className="sq-sr-only">Notes</h1>
         <Card>
           <p style={{ margin: 0, color: "var(--muted)", font: "var(--t-body-sm)" }}>Loading…</p>
         </Card>
@@ -29,6 +32,7 @@ export function NotesPage() {
   if (!store.subject) {
     return (
       <div className="sq-col" style={{ marginTop: "var(--s6)" }}>
+        <h1 className="sq-sr-only">Notes</h1>
         <Card>
           <EmptyState
             title="Subject not found"
