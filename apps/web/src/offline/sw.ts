@@ -25,6 +25,7 @@ import { ExpirationPlugin } from "workbox-expiration";
 import { registerRoute } from "workbox-routing";
 import { NetworkFirst, NetworkOnly } from "workbox-strategies";
 
+import { API_CACHE } from "./caches";
 import { dropWrite, listQueued } from "./outbox";
 import { replayOutbox } from "./replay";
 
@@ -91,7 +92,7 @@ registerRoute(({ url }) => url.pathname === "/api/export", new NetworkOnly());
 // expiration plugin is the versioned cleanup — LRU plus an age cap keeps the
 // runtime cache from growing forever.
 const apiReads = new NetworkFirst({
-  cacheName: "sq-api",
+  cacheName: API_CACHE,
   networkTimeoutSeconds: 4,
   plugins: [new ExpirationPlugin({ maxEntries: 400, maxAgeSeconds: 14 * 24 * 60 * 60 })],
 });
@@ -101,7 +102,7 @@ registerRoute(
   async (ctx) => {
     const res = await apiReads.handle(ctx);
     if (res && res.status >= 500) {
-      const cached = await caches.match(ctx.request, { cacheName: "sq-api" });
+      const cached = await caches.match(ctx.request, { cacheName: API_CACHE });
       if (cached) return cached;
     }
     return res;

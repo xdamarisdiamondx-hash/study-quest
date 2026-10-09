@@ -91,3 +91,15 @@ export async function queuedCount(): Promise<number> {
   const request = db.transaction(STORE, "readonly").objectStore(STORE).count();
   return done(request);
 }
+
+/**
+ * Empty the whole queue — used on sign-out. Queued edits belong to the
+ * session that made them: keeping them would let them replay into whichever
+ * account signs in next on this browser (P20's replay is deliberately
+ * account-blind, so the boundary is here, at sign-out).
+ */
+export async function clearQueued(): Promise<void> {
+  const db = await openDb();
+  await done(db.transaction(STORE, "readwrite").objectStore(STORE).clear());
+  changed();
+}

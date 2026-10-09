@@ -1,11 +1,13 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
+import { useRegisterSW } from "virtual:pwa-register/react";
 
 import { AppShell } from "./app/AppShell";
 import { RedirectIfAuthed, RequireAuth } from "./app/guards";
 import { RouteFallback } from "./app/RouteFallback";
 import { LanGate } from "./features/settings/LanGate";
 import { lanApi } from "./lib/lanApi";
+import { requestBackgroundSync } from "./offline/install";
 
 /* Route-level code splitting (P21): every page is its own chunk so the first
    paint ships the shell — React, router, auth, chrome — instead of all
@@ -60,6 +62,20 @@ type Gate = { phase: "checking" } | { phase: "open" } | { phase: "locked" };
 export function App() {
   const [gate, setGate] = useState<Gate>({ phase: "checking" });
 
+  // The worker registers at PAGE level, not in the shell: /sign-in, /privacy
+  // and /onboarding render outside AppShell, and a first-time visitor has to
+  // get the same installable, updatable, offline-capable app a signed-in one
+  // does (PWA audit). The prompt-style update keeps the P20 contract — the
+  // student decides when to reload — and the strips follow it up to this
+  // level so no route can be left on a stale version with no way out.
+  const {
+    needRefresh: [needRefresh],
+    updateServiceWorker,
+    offlineReady: [ready, setReady],
+  } = useRegisterSW({
+    onRegistered: () => requestBackgroundSync(),
+  });
+
   // Reads where the gate stands WITHOUT touching state, so every trigger (boot,
   // a mid-session 423, a successful unlock) can share one path while setState
   // stays inside async callbacks — never in an effect body (lint, ADR-021).
@@ -102,41 +118,67 @@ export function App() {
   if (gate.phase === "locked") return <LanGate onUnlocked={() => void readGate().then(setGate)} />;
 
   return (
-    <Suspense fallback={<RouteFallback />}>
-      <Routes>
-        <Route
-          path="/sign-in"
-          element={
-            <RedirectIfAuthed>
-              <SignInPage />
-            </RedirectIfAuthed>
-          }
-        />
-        {/* Public on purpose: readable before an account exists (P22). */}
-        <Route path="/privacy" element={<PrivacyPage />} />
+    <>
+      {needRefresh ? (
+        <div className="sq-strip sq-strip-update" role="status">
+          <span>A new version of Study Quest is ready.</span>
+          <button
+            type="button"
+            className="sq-btn sq-btn-primary sq-btn-sm"
+            onClick={() => void updateServiceWorker(true)}
+          >
+            Reload
+          </button>
+        </div>
+      ) : null}
+      {ready ? (
+        <div className="sq-strip sq-strip-ready" role="status">
+          <span>Ready to work offline — your last-viewed pages are saved on this device.</span>
+          <button
+            type="button"
+            className="sq-btn sq-btn-secondary sq-btn-sm"
+            onClick={() => setReady(false)}
+          >
+            Dismiss
+          </button>
+        </div>
+      ) : null}
+      <Suspense fallback={<RouteFallback />}>
+        <Routes>
+          <Route
+            path="/sign-in"
+            element={
+              <RedirectIfAuthed>
+                <SignInPage />
+              </RedirectIfAuthed>
+            }
+          />
+          {/* Public on purpose: readable before an account exists (P22). */}
+          <Route path="/privacy" element={<PrivacyPage />} />
 
-        {/* Everything below requires a session (P3). */}
-        <Route element={<RequireAuth />}>
-          <Route path="onboarding" element={<OnboardingPage />} />
+          {/* Everything below requires a session (P3). */}
+          <Route element={<RequireAuth />}>
+            <Route path="onboarding" element={<OnboardingPage />} />
 
-          <Route element={<AppShell />}>
-            <Route index element={<HomePage />} />
-            <Route path="plan" element={<PlanPage />} />
-            <Route path="tasks" element={<TasksPage />} />
-            <Route path="study" element={<StudyPage />} />
-            <Route path="study/:subjectId" element={<SubjectDetailPage />} />
-            <Route path="study/:subjectId/notes" element={<NotesPage />} />
-            <Route path="study/:subjectId/:topicId/notes" element={<NotesPage />} />
-            <Route path="sessions" element={<SessionsPage />} />
-            <Route path="quests" element={<QuestsPage />} />
-            <Route path="progress" element={<ProgressPage />} />
-            <Route path="search" element={<SearchPage />} />
-            <Route path="settings" element={<SettingsPage />} />
+            <Route element={<AppShell />}>
+              <Route index element={<HomePage />} />
+              <Route path="plan" element={<PlanPage />} />
+              <Route path="tasks" element={<TasksPage />} />
+              <Route path="study" element={<StudyPage />} />
+              <Route path="study/:subjectId" element={<SubjectDetailPage />} />
+              <Route path="study/:subjectId/notes" element={<NotesPage />} />
+              <Route path="study/:subjectId/:topicId/notes" element={<NotesPage />} />
+              <Route path="sessions" element={<SessionsPage />} />
+              <Route path="quests" element={<QuestsPage />} />
+              <Route path="progress" element={<ProgressPage />} />
+              <Route path="search" element={<SearchPage />} />
+              <Route path="settings" element={<SettingsPage />} />
+            </Route>
           </Route>
-        </Route>
 
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </Suspense>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
+    </>
   );
 }

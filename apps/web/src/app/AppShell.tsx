@@ -1,14 +1,12 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link, NavLink, Outlet } from "react-router-dom";
-import { useRegisterSW } from "virtual:pwa-register/react";
 import { Monogram, Wordmark } from "@sq/ui";
 
 import { useAuth } from "../lib/useAuth";
 import { RewardsHost } from "../lib/rewards";
 import { NotificationBell } from "../features/notifications/NotificationBell";
 import { SearchPalette } from "../features/search/SearchPalette";
-import { requestBackgroundSync } from "../offline/install";
 import { useOfflineState } from "../offline/useOffline";
 import { RouteFallback } from "./RouteFallback";
 import { useTheme } from "./useTheme";
@@ -178,18 +176,6 @@ export function AppShell() {
   const queryClient = useQueryClient();
   const { online, queued } = useOfflineState();
 
-  // The worker registers with an update PROMPT (P20): the student decides when
-  // to reload, never a background swap underneath an unfinished quiz. Both
-  // values arrive as [boolean, setter] tuples — unpack them or the array itself
-  // is always truthy and the strip shows forever.
-  const {
-    needRefresh: [needRefresh],
-    updateServiceWorker,
-    offlineReady: [ready, setReady],
-  } = useRegisterSW({
-    onRegistered: () => requestBackgroundSync(),
-  });
-
   // One listener answers every completed sync — a page drain or the worker's
   // background sync — by refetching what the queue may have changed.
   useEffect(() => {
@@ -277,31 +263,6 @@ export function AppShell() {
           <AccountMenu />
         </header>
 
-        {needRefresh ? (
-          <div className="sq-strip sq-strip-update" role="status">
-            <span>A new version of Study Quest is ready.</span>
-            <button
-              type="button"
-              className="sq-btn sq-btn-primary sq-btn-sm"
-              onClick={() => void updateServiceWorker(true)}
-            >
-              Reload
-            </button>
-          </div>
-        ) : null}
-        {ready ? (
-          <div className="sq-strip sq-strip-ready" role="status">
-            <span>Ready to work offline — your last-viewed pages are saved on this device.</span>
-            <button
-              type="button"
-              className="sq-btn sq-btn-secondary sq-btn-sm"
-              onClick={() => setReady(false)}
-            >
-              Dismiss
-            </button>
-          </div>
-        ) : null}
-
         <div className="sq-app-body">
           <nav className="sq-rail" aria-label="Sections">
             {SECTIONS.map((s) => (
@@ -310,7 +271,7 @@ export function AppShell() {
           </nav>
 
           <main className="sq-app-main">
-            {/* Inner boundary: the shell (header, rail, strips) stays on screen
+            {/* Inner boundary: the shell (header, rail) stays on screen
                 while the route's chunk loads; the outer one in App.tsx only
                 covers the pages that render without the shell. */}
             <Suspense fallback={<RouteFallback />}>

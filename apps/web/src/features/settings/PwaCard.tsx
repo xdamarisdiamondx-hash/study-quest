@@ -41,7 +41,7 @@ export function PwaCard() {
             ? "This window is the installed app — its own icon, its own window."
             : install.available
               ? "Install Study Quest as an app: its own window and icon, with the shell and your last-viewed pages saved on this device."
-              : "No install button was offered here. In your browser's menu, choose “Install app” (Chrome, Edge) or “Add to Home Screen” (Safari, phones)."}
+              : "This browser did not offer a one-click install. On iPhone and iPad: in Safari, tap the Share button, then “Add to Home Screen”. On Chrome or Edge: open the menu and choose “Install app”."}
         </p>
         {install.available && !install.installed ? (
           <Button variant="secondary" disabled={busy} onClick={() => void installNow()}>

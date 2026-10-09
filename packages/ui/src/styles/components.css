@@ -60,7 +60,12 @@
   display: flex;
   align-items: center;
   gap: var(--s3);
-  padding: var(--s3) var(--s4);
+  /* Installed on a notched phone the app draws edge to edge (viewport-fit=cover):
+     the safe-area padding is what keeps the bar clear of the status bar and,
+     in landscape, of the notch. Zero on devices without insets. */
+  padding: calc(var(--s3) + env(safe-area-inset-top, 0px))
+    calc(var(--s4) + env(safe-area-inset-right, 0px)) var(--s3)
+    calc(var(--s4) + env(safe-area-inset-left, 0px));
   background: color-mix(in srgb, var(--page) 88%, transparent);
   backdrop-filter: saturate(180%) blur(16px);
   border-bottom: 1px solid var(--border);
@@ -952,7 +957,10 @@
   z-index: 50;
   display: flex;
   gap: var(--s1);
-  padding: var(--s2) var(--s2) var(--s3);
+  /* Bottom bar on a home-indicator device: the inset is the home bar itself. */
+  padding: var(--s2) calc(var(--s2) + env(safe-area-inset-right, 0px))
+    calc(var(--s3) + env(safe-area-inset-bottom, 0px))
+    calc(var(--s2) + env(safe-area-inset-left, 0px));
   background: color-mix(in srgb, var(--card) 92%, transparent);
   backdrop-filter: blur(16px);
   border-top: 1px solid var(--border);

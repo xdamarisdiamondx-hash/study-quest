@@ -1,6 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import type { ReactNode } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
+import { wipeSessionCaches } from "../offline/session";
 import { authClient } from "./authClient";
 
 export interface CurrentUser {
@@ -58,10 +60,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const queryClient = useQueryClient();
+
   const signOut = useCallback(async () => {
+    // The server call goes first and alone decides whether the session really
+    // ended; only then do the device's local copies of that session leave
+    // with it (see offline/session.ts for why both stores, and why best-effort).
     await authClient.signOut();
+    await wipeSessionCaches();
+    queryClient.clear(); // in-memory answers too: a fast next sign-in must not see them
     await refresh();
-  }, [refresh]);
+  }, [refresh, queryClient]);
 
   // Bootstrapping the session on mount is the one case where fetching in an effect is
   // correct: there is no event to fetch from, and no route may render until the app

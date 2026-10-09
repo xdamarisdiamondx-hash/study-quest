@@ -30,10 +30,13 @@ export default defineConfig({
       registerType: "prompt",
       injectRegister: false, // AppShell registers through virtual:pwa-register/react
       manifest: {
+        // A stable id so reinstalling or updating never forks the install
+        // identity — "Study Quest at this origin's root", whatever the URL.
+        id: "/",
         name: "Study Quest",
         short_name: "Study Quest",
         description:
-          "Plan, study, understand, practice, quiz, review and improve — with everything on your own machine.",
+          "A gamified study companion for organizing learning and tracking study progress.",
         theme_color: "#7c3aed",
         background_color: "#fafaf9",
         display: "standalone",
