@@ -28,6 +28,11 @@ if (!existsSync(LOCAL_MODULES)) {
 }
 
 process.env.VERCEL = "1";
+// The platform runs the function with NODE_ENV=production — that is what
+// makes Better Auth refuse its default secret — so the rehearsal must too,
+// or a missing BETTER_AUTH_SECRET passes here and 500s in production.
+process.env.NODE_ENV ??= "production";
+process.env.BETTER_AUTH_SECRET ??= "local-smoke-secret-for-the-rehearsal-only-000000000000";
 process.env.CRON_SECRET ??= "local-smoke-secret";
 const port = 0; // an ephemeral port: BASE_URL below names it for the auth check
 
