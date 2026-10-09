@@ -64,3 +64,16 @@ netlify/functions/api/index.mjs.map
 api/
 .vercel
 .env*
+
+# Android signing key for the TWA APK — never committable. Losing it means a
+# future APK can't upgrade an installed one (Android requires matching
+# signatures), so keep a copy outside this machine.
+.android/
+# TWA project machine-local state (sources themselves are committed).
+android/.gradle/
+android/local.properties
+android/.idea/
+# TWA build outputs; the distributed copy lives in apps/web/public/downloads/.
+android/*.apk
+android/*.aab
+android/*.idsig

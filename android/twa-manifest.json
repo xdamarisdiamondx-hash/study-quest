@@ -1,0 +1,50 @@
+{
+  "packageId": "app.studyquest.mobile",
+  "host": "study-quest-dun.vercel.app",
+  "name": "Study Quest",
+  "launcherName": "Study Quest",
+  "display": "standalone",
+  "themeColor": "#7C3AED",
+  "themeColorDark": "#000000",
+  "navigationColor": "#000000",
+  "navigationColorDark": "#000000",
+  "navigationDividerColor": "#000000",
+  "navigationDividerColorDark": "#000000",
+  "backgroundColor": "#FAFAF9",
+  "enableNotifications": true,
+  "startUrl": "/",
+  "iconUrl": "https://study-quest-dun.vercel.app/icons/icon-512.png",
+  "maskableIconUrl": "https://study-quest-dun.vercel.app/icons/maskable-512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "C:\\Users\\HP\\Desktop\\Study quest\\.android\\study-quest.keystore",
+    "alias": "androidkey"
+  },
+  "appVersionName": "0.1.0",
+  "appVersionCode": 3,
+  "shortcuts": [],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://study-quest-dun.vercel.app/manifest.webmanifest",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://study-quest-dun.vercel.app/",
+  "minSdkVersion": 24,
+  "orientation": "default",
+  "fingerprints": [],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "protocolHandlers": [],
+  "fileHandlers": [],
+  "launchHandlerClientMode": "",
+  "displayOverride": [
+    "standalone",
+    "minimal-ui"
+  ],
+  "appVersion": "0.1.0"
+}

@@ -33,9 +33,40 @@ function defaultDeps(): SessionWipeDeps {
   };
 }
 
-/** Wipe the session's local copies. Never rejects: both steps are best-effort. */
-export async function wipeSessionCaches(overrides: Partial<SessionWipeDeps> = {}): Promise<void> {
-  const deps = { ...defaultDeps(), ...overrides };
+/**
+ * Wipe the session's local copies. Never rejects: both steps are best-effort.
+ *
+ * `holdQueue` exists for one case only: a sign-out that failed because the
+ * network is down. The cached reads still go — they are copies that re-fetch
+ * when online — but the outbox holds real in-flight edits, so it stays until
+ * the session has actually ended.
+ */
+export async function wipeSessionCaches(
+  overrides: Partial<SessionWipeDeps> & { holdQueue?: boolean } = {},
+): Promise<void> {
+  const { holdQueue = false, ...depOverrides } = overrides;
+  const deps = { ...defaultDeps(), ...depOverrides };
   await deps.deleteCache(API_CACHE).catch(() => false);
-  await deps.clearQueue().catch(() => undefined);
+  if (!holdQueue) await deps.clearQueue().catch(() => undefined);
+}
+
+/**
+ * True when a sign-out failure is the network being down rather than the
+ * session being over. Sign-out must keep the local copies in that case: the
+ * cookie may still be valid server-side and queued edits belong in flight.
+ * Every other rejection — including "unauthorized", which the erase flow gets
+ * because the account is already gone by then — means the session is over on
+ * this device and the wipe has to run.
+ */
+export function isNetworkError(err: unknown): boolean {
+  if (err instanceof TypeError) return true; // fetch's own rejection
+  const message =
+    err instanceof Error
+      ? err.message
+      : typeof err === "object" && err !== null && "message" in err
+        ? String((err as { message: unknown }).message)
+        : "";
+  return /failed to fetch|networkerror|network request failed|load failed|fetch failed/i.test(
+    message,
+  );
 }

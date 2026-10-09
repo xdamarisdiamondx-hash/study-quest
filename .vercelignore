@@ -14,6 +14,10 @@
 config.local.json
 .certs/
 
+# Android TWA build (contains the signing keystore — never leaves this machine)
+.android/
+android/
+
 # Local state and data (the database lives in Neon; data/ is this machine's)
 data/
 *.log

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { API_CACHE } from "./caches";
-import { wipeSessionCaches, type SessionWipeDeps } from "./session";
+import { isNetworkError, wipeSessionCaches, type SessionWipeDeps } from "./session";
 
 function harness() {
   const cachesWiped: string[] = [];
@@ -60,5 +60,38 @@ describe("wipeSessionCaches", () => {
     ).resolves.toBeUndefined();
 
     expect(h.cachesWiped).toEqual([API_CACHE]);
+  });
+
+  it("with holdQueue keeps the queue but still wipes the cache", async () => {
+    const h = harness();
+
+    await wipeSessionCaches({ ...h.deps, holdQueue: true });
+
+    expect(h.cachesWiped).toEqual([API_CACHE]);
+    expect(h.queueCleared).toBe(0);
+  });
+});
+
+describe("isNetworkError", () => {
+  it("treats fetch's own TypeError as the network being down", () => {
+    expect(isNetworkError(new TypeError("Failed to fetch"))).toBe(true);
+  });
+
+  it("treats a better-auth style network message as the network being down", () => {
+    expect(isNetworkError({ message: "NetworkError when attempting to fetch resource." })).toBe(
+      true,
+    );
+    expect(isNetworkError(new Error("fetch failed"))).toBe(true);
+  });
+
+  it("treats an authorization rejection as the session being over", () => {
+    // What the erase flow gets: the account is already gone, so sign-out
+    // answers 401 — the wipe must still run.
+    expect(isNetworkError({ message: "Invalid session" })).toBe(false);
+    expect(isNetworkError(new Error("Unauthorized"))).toBe(false);
+  });
+
+  it("treats an abort as neither — the request was cancelled, not lost", () => {
+    expect(isNetworkError(new DOMException("Aborted", "AbortError"))).toBe(false);
   });
 });

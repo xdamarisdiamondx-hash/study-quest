@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.studyquest.mobile",
+      "sha256_cert_fingerprints": [
+        "7E:FF:69:9E:57:FD:56:1E:FE:C3:62:FE:7A:30:45:64:43:4B:98:9E:DF:81:8F:9D:F7:DC:48:E6:B6:21:E6:7E"
+      ]
+    }
+  }
+]

@@ -50,6 +50,15 @@ export function PwaCard() {
         ) : null}
       </div>
 
+      <p className="sq-help" style={{ marginTop: "var(--s3)" }}>
+        <b>Android app</b> — install the signed package directly:{" "}
+        <a href="/downloads/study-quest.apk" download>
+          download the APK
+        </a>
+        , open it in Chrome and allow “Install unknown apps” when asked. It opens this same site as
+        a standalone app with its own icon.
+      </p>
+
       <ul className="sq-bullets">
         <li>
           <b>Offline reading</b> — the app and every page you have already opened keep working with

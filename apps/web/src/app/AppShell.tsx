@@ -8,6 +8,7 @@ import { RewardsHost } from "../lib/rewards";
 import { NotificationBell } from "../features/notifications/NotificationBell";
 import { SearchPalette } from "../features/search/SearchPalette";
 import { useOfflineState } from "../offline/useOffline";
+import { InstallButton } from "./InstallButton";
 import { RouteFallback } from "./RouteFallback";
 import { useTheme } from "./useTheme";
 
@@ -260,6 +261,7 @@ export function AppShell() {
                 : `${queued} queued`}
             </span>
           ) : null}
+          <InstallButton />
           <AccountMenu />
         </header>
 
